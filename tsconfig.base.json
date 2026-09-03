@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "paths": {
+      "@attendance/types": ["packages/types/src/index.ts"],
+      "@attendance/validation": ["packages/validation/src/index.ts"],
+      "@attendance/api-client": ["packages/api-client/src/index.ts"],
+      "@attendance/shared-utils": ["packages/shared-utils/src/index.ts"]
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "name": "attendance-system",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Location-based student attendance tracking system with Expo mobile, Next.js admin dashboard, and Supabase backend.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev:mobile",
+    "dev:mobile": "npm --workspace @attendance/mobile run start",
+    "dev:mobile:web": "npm --workspace @attendance/mobile run web",
+    "dev:pwa": "npm --workspace @attendance/mobile run web",
+    "dev:admin": "npm --workspace @attendance/admin-web run dev",
+    "mobile": "npm run dev:mobile",
+    "admin": "npm run dev:admin",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "db:types": "supabase gen types typescript --local > packages/types/src/supabase.ts",
+    "db:reset": "supabase db reset",
+    "functions:serve": "supabase functions serve"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "devDependencies": {
+    "babel-preset-expo": "~57.0.10",
+    "expo-router": "~57.0.18"
+  },
+  "overrides": {
+    "react-native": "0.86.3",
+    "react-native-reanimated": "4.5.1",
+    "@types/react": "~19.2.4"
+  }
+}

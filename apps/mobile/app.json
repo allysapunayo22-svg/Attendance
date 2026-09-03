@@ -1,0 +1,65 @@
+{
+  "expo": {
+    "name": "Campus Attendance",
+    "slug": "campus-attendance",
+    "scheme": "attendance",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "platforms": ["ios", "android", "web"],
+    "icon": "./assets/icon.png",
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "name": "Campus Attendance",
+      "shortName": "Attendance",
+      "backgroundColor": "#f8fafc",
+      "themeColor": "#1D70F7",
+      "display": "standalone",
+      "orientation": "portrait",
+      "favicon": "./assets/favicon.png"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Camera access is used only to capture live attendance photos during check-in and check-out.",
+        "NSLocationWhenInUseUsageDescription": "Location access is used only to verify eligibility for school event attendance.",
+        "NSPhotoLibraryUsageDescription": "Photo library access is not used for attendance evidence."
+      }
+    },
+    "android": {
+      "permissions": ["ACCESS_FINE_LOCATION", "CAMERA", "POST_NOTIFICATIONS"],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#021B79"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Location is requested only during attendance eligibility checks."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Camera access is required for live attendance photos."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#0f766e"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

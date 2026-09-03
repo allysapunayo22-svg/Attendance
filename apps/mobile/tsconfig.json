@@ -1,0 +1,23 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "types": [
+      "nativewind/types"
+    ],
+    "paths": {
+      "@attendance/types": ["../../packages/types/src/index.ts"],
+      "@attendance/validation": ["../../packages/validation/src/index.ts"],
+      "@attendance/api-client": ["../../packages/api-client/src/index.ts"],
+      "@attendance/shared-utils": ["../../packages/shared-utils/src/index.ts"]
+    },
+    "allowJs": false
+  },
+  "include": [
+    "app",
+    "src",
+    "nativewind-env.d.ts",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
+  ]
+}

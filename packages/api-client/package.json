@@ -1,0 +1,12 @@
+{
+  "name": "@attendance/api-client",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "dependencies": {
+    "@attendance/types": "0.1.0",
+    "@supabase/supabase-js": "^2.45.4"
+  }
+}
