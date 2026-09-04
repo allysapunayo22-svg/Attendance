@@ -21,12 +21,20 @@ import { cn } from "@/lib/utils";
 
 const LocationPicker = dynamic(() => import("./LocationPicker").then((module) => module.LocationPicker), { ssr: false });
 
+function getTodayDateString() {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 export const defaultEventFormValues: EventFormInput = {
   title: "",
   description: "",
   type: "school_event",
   requirement: "required",
-  eventDate: new Date().toISOString().slice(0, 10),
+  eventDate: getTodayDateString(),
   startsAt: "09:00",
   endsAt: "12:00",
   checkInOpensAt: "08:30",
