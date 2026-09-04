@@ -1,25 +1,50 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import {
   BarChart3,
   Bell,
   CalendarDays,
   ClipboardCheck,
   LayoutDashboard,
+  LogOut,
   Megaphone,
   PanelLeftClose,
   PanelLeftOpen,
+  Radio,
   Users,
   X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
 
 const groups = [
-  { label: "Workspace", items: [{ href: "/", label: "Overview", icon: LayoutDashboard }, { href: "/events", label: "Events", icon: CalendarDays }] },
-  { label: "Attendance", items: [{ href: "/attendance/live", label: "Live", icon: ClipboardCheck }, { href: "/attendance/review", label: "Review", icon: Bell }] },
-  { label: "Management", items: [{ href: "/students", label: "Students", icon: Users }, { href: "/announcements", label: "Announcements", icon: Megaphone }, { href: "/reports", label: "Reports", icon: BarChart3 }] }
+  {
+    label: "Workspace",
+    items: [
+      { href: "/", label: "Overview", icon: LayoutDashboard },
+      { href: "/events", label: "Events", icon: CalendarDays }
+    ]
+  },
+  {
+    label: "Attendance",
+    items: [
+      { href: "/attendance/live", label: "Live Radar", icon: ClipboardCheck },
+      { href: "/attendance/review", label: "Review Queue", icon: Bell, badgeKey: "review" }
+    ]
+  },
+  {
+    label: "Management",
+    items: [
+      { href: "/students", label: "Students", icon: Users },
+      { href: "/announcements", label: "Announcements", icon: Megaphone },
+      { href: "/reports", label: "Reports", icon: BarChart3 }
+    ]
+  }
 ];
 
 interface SidebarProps {
@@ -43,7 +68,7 @@ export function Sidebar({ collapsed, mobileOpen, onToggle, onMobileClose }: Side
 
       {mobileOpen ? (
         <div className="fixed inset-0 z-40 md:hidden">
-          <button type="button" aria-label="Close sidebar" className="absolute inset-0 bg-slate-950/40" onClick={onMobileClose} />
+          <button type="button" aria-label="Close sidebar" className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm" onClick={onMobileClose} />
           <aside className="relative h-full w-72 overflow-hidden border-r border-slate-200 bg-white shadow-2xl">
             <SidebarContent collapsed={false} onToggle={onMobileClose} mobile />
           </aside>
@@ -55,67 +80,174 @@ export function Sidebar({ collapsed, mobileOpen, onToggle, onMobileClose }: Side
 
 function SidebarContent({ collapsed, onToggle, mobile }: { collapsed: boolean; onToggle: () => void; mobile?: boolean }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [adminEmail, setAdminEmail] = useState("admin@csu.edu.ph");
   const ToggleIcon = mobile ? X : collapsed ? PanelLeftOpen : PanelLeftClose;
 
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user?.email) {
+        setAdminEmail(data.user.email);
+      }
+    });
+  }, []);
+
+  const pendingReviewQuery = useQuery({
+    queryKey: ["sidebar-pending-reviews"],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("attendance_sessions")
+        .select("*", { count: "exact", head: true })
+        .or("status.eq.pending_verification,sync_status.eq.requires_review");
+      return count ?? 0;
+    },
+    refetchInterval: 25_000
+  });
+
+  const pendingCount = pendingReviewQuery.data ?? 0;
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    router.replace("/login");
+  }
+
   return (
-    <div className="flex h-full flex-col">
-      <div className={cn("flex min-h-20 items-center border-b border-slate-200/80", collapsed ? "justify-center px-3" : "justify-between gap-3 p-5")}>
-        {collapsed ? (
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-700 text-sm font-black text-white">AA</div>
-        ) : (
-          <div className="min-w-0">
-            <div className="truncate text-xl font-black tracking-tight text-slate-950">Attendance Admin</div>
-            <div className="mt-1 truncate text-sm text-slate-500">Event attendance control</div>
+    <div className="flex h-full flex-col bg-white">
+      {/* Header with App Logo */}
+      <div className={cn("flex min-h-20 items-center border-b border-slate-100", collapsed ? "justify-center px-3" : "justify-between gap-3 p-5")}>
+        <Link href="/" className="flex items-center gap-3">
+          <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-b from-[#021B79] to-[#0A2FB6] p-1.5 shadow-md shadow-blue-900/20 ring-1 ring-blue-500/20">
+            <Image
+              src="/logo.png"
+              alt="Logo"
+              width={34}
+              height={34}
+              className="h-full w-full object-contain"
+            />
+            <span className="absolute -bottom-0.5 -right-0.5 flex h-3 w-3 items-center justify-center rounded-full bg-emerald-500 ring-2 ring-white">
+              <span className="h-1 w-1 rounded-full bg-white" />
+            </span>
           </div>
-        )}
+
+          {!collapsed ? (
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="truncate text-base font-black tracking-tight text-slate-950">Campus Attendance</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-blue-600">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="truncate">Admin Console</span>
+              </div>
+            </div>
+          ) : null}
+        </Link>
+
         <button
           type="button"
           aria-label={mobile ? "Close sidebar" : collapsed ? "Expand sidebar" : "Collapse sidebar"}
           title={mobile ? "Close sidebar" : collapsed ? "Expand sidebar" : "Collapse sidebar"}
           onClick={onToggle}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-600 transition hover:bg-slate-100 hover:text-slate-950 focus:outline-none focus:ring-2 focus:ring-brand-100"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-100"
         >
-          <ToggleIcon size={19} />
+          <ToggleIcon size={18} />
         </button>
       </div>
 
-      <nav aria-label="Admin navigation" className={cn("min-h-0 flex-1 space-y-5 overflow-y-auto p-3", collapsed && "space-y-2 px-2")}> 
-        {groups.map((group) => <div key={group.label}>
-          {!collapsed ? <p className="mb-2 px-3 text-[11px] font-black uppercase tracking-widest text-slate-400">{group.label}</p> : null}
-          <div className="space-y-1">{group.items.map((item) => {
-          const Icon = item.icon;
-          const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+      {/* Navigation Links */}
+      <nav aria-label="Admin navigation" className={cn("min-h-0 flex-1 space-y-5 overflow-y-auto p-3", collapsed && "space-y-2 px-2")}>
+        {groups.map((group) => (
+          <div key={group.label}>
+            {!collapsed ? (
+              <p className="mb-2 px-3 text-[11px] font-black uppercase tracking-widest text-slate-400">{group.label}</p>
+            ) : null}
+            <div className="space-y-1">
+              {group.items.map((item) => {
+                const Icon = item.icon;
+                const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+                const hasBadge = item.badgeKey === "review" && pendingCount > 0;
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              title={collapsed ? item.label : undefined}
-              className={cn(
-                "group flex min-h-11 items-center rounded-xl text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-brand-100",
-                collapsed ? "justify-center px-0" : "gap-3 px-3 py-2",
-                active
-                  ? "bg-brand-50 text-brand-900 shadow-sm ring-1 ring-brand-100"
-                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
-              )}
-            >
-              <Icon className={cn("shrink-0", active ? "text-brand-700" : "text-slate-500 group-hover:text-slate-800")} size={collapsed ? 20 : 18} />
-              {collapsed ? <span className="sr-only">{item.label}</span> : <span className="truncate">{item.label}</span>}
-            </Link>
-          );
-          })}</div>
-        </div>)}
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    title={collapsed ? item.label : undefined}
+                    className={cn(
+                      "group relative flex min-h-11 items-center rounded-xl text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-200",
+                      collapsed ? "justify-center px-0" : "gap-3 px-3 py-2",
+                      active
+                        ? "bg-blue-50 text-blue-800 shadow-sm ring-1 ring-blue-200 font-bold"
+                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
+                    )}
+                  >
+                    <Icon
+                      className={cn("shrink-0 transition", active ? "text-blue-700" : "text-slate-400 group-hover:text-slate-700")}
+                      size={collapsed ? 20 : 18}
+                    />
+                    {collapsed ? (
+                      <span className="sr-only">{item.label}</span>
+                    ) : (
+                      <span className="flex-1 truncate">{item.label}</span>
+                    )}
+
+                    {/* Pending Review count badge */}
+                    {hasBadge ? (
+                      collapsed ? (
+                        <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[10px] font-black text-white ring-2 ring-white">
+                          {pendingCount > 9 ? "9+" : pendingCount}
+                        </span>
+                      ) : (
+                        <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[11px] font-black text-white shadow-sm shadow-amber-500/20">
+                          {pendingCount}
+                        </span>
+                      )
+                    ) : null}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
-      {collapsed ? null : (
-        <div className="border-t border-slate-200/80 p-4">
-          <div className="rounded-2xl bg-slate-50 p-3 text-xs leading-5 text-slate-600">
-            <span className="font-bold text-slate-900">Admin tools</span>
-            <br />
-            Manage events, attendance, and reports from one workspace.
+      {/* Admin Profile Footer */}
+      <div className="border-t border-slate-100 p-3">
+        {collapsed ? (
+          <button
+            type="button"
+            onClick={handleLogout}
+            title="Log out"
+            aria-label="Log out"
+            className="flex h-11 w-full items-center justify-center rounded-xl text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition"
+          >
+            <LogOut size={18} />
+          </button>
+        ) : (
+          <div className="flex items-center justify-between rounded-2xl bg-slate-50 p-2.5">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-700 to-indigo-600 text-xs font-bold text-white shadow-sm">
+                AD
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-xs font-bold text-slate-900">{adminEmail}</p>
+                <div className="flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  <p className="text-[10px] font-semibold text-slate-500">Super Administrator</p>
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleLogout}
+              title="Log out"
+              aria-label="Log out"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition"
+            >
+              <LogOut size={15} />
+            </button>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

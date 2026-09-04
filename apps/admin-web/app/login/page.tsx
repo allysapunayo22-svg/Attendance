@@ -1,18 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Eye, EyeOff, Lock, Mail, ShieldCheck, Sparkles } from "lucide-react";
 import { loginSchema, type LoginInput } from "@attendance/validation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase";
 
 export default function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const form = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -28,14 +30,14 @@ export default function LoginPage() {
       password: values.password
     });
     if (authError || !data.user) {
-      setError(authError?.message ?? "Login failed.");
+      setError(authError?.message ?? "Invalid login credentials.");
       return;
     }
 
     const { data: profile } = await supabase.from("users").select("role").eq("id", data.user.id).single();
     if (!profile || !["admin", "super_admin"].includes(profile.role)) {
       await supabase.auth.signOut();
-      setError("Administrator access required.");
+      setError("Access denied: Administrator privileges required.");
       return;
     }
 
@@ -43,31 +45,117 @@ export default function LoginPage() {
   });
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-50 p-6">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <h1 className="text-2xl font-bold text-slate-950">Admin Dashboard</h1>
-          <p className="mt-1 text-sm text-slate-500">Sign in to manage events and attendance verification.</p>
-        </CardHeader>
-        <CardContent>
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-[#02144d] via-[#081330] to-[#030712] p-4 sm:p-6 lg:p-8">
+      {/* Ambient background glow effects */}
+      <div className="pointer-events-none absolute -top-40 left-1/2 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-blue-600/20 blur-[130px]" />
+      <div className="pointer-events-none absolute -bottom-40 right-10 h-[400px] w-[400px] rounded-full bg-indigo-600/15 blur-[120px]" />
+
+      <div className="relative w-full max-w-md">
+        {/* Brand Header */}
+        <div className="mb-6 flex flex-col items-center text-center">
+          <div className="relative mb-3 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-b from-blue-500/20 to-blue-900/40 p-2 shadow-2xl shadow-blue-500/30 ring-1 ring-white/20 backdrop-blur-xl">
+            <Image
+              src="/logo.png"
+              alt="Campus Attendance Logo"
+              width={72}
+              height={72}
+              className="h-full w-full object-contain drop-shadow-md"
+              priority
+            />
+            <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 ring-2 ring-[#081330]">
+              <span className="h-1.5 w-1.5 rounded-full bg-white animate-ping" />
+            </span>
+          </div>
+
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1 text-xs font-bold tracking-wide text-blue-300">
+            <Sparkles size={13} className="text-blue-400" /> CSU Attendance System
+          </span>
+          <h1 className="mt-3 text-2xl font-black tracking-tight text-white sm:text-3xl">Admin Operations Portal</h1>
+          <p className="mt-1 text-sm text-slate-400">Sign in to supervise events, geofences, and attendance records.</p>
+        </div>
+
+        {/* Login Card */}
+        <div className="overflow-hidden rounded-3xl border border-white/10 bg-slate-900/75 p-6 shadow-2xl backdrop-blur-2xl sm:p-8">
           <form onSubmit={submit} className="space-y-4">
-            <label className="block">
-              <span className="mb-2 block text-sm font-semibold text-slate-700">Email</span>
-              <Input type="email" {...form.register("identifier")} />
-              {form.formState.errors.identifier ? <span className="mt-1 block text-sm text-red-600">{form.formState.errors.identifier.message}</span> : null}
-            </label>
-            <label className="block">
-              <span className="mb-2 block text-sm font-semibold text-slate-700">Password</span>
-              <Input type="password" {...form.register("password")} />
-              {form.formState.errors.password ? <span className="mt-1 block text-sm text-red-600">{form.formState.errors.password.message}</span> : null}
-            </label>
-            {error ? <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">{error}</div> : null}
-            <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? "Signing in" : "Log In"}
+            <div>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
+                Administrator Email
+              </label>
+              <div className="relative">
+                <Mail size={17} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Input
+                  type="email"
+                  placeholder="admin@csu.edu.ph"
+                  className="h-12 rounded-xl border-white/10 bg-white/5 pl-10 text-white placeholder:text-slate-500 focus:border-blue-500 focus:bg-white/10"
+                  {...form.register("identifier")}
+                />
+              </div>
+              {form.formState.errors.identifier ? (
+                <span className="mt-1.5 block text-xs font-semibold text-rose-400">{form.formState.errors.identifier.message}</span>
+              ) : null}
+            </div>
+
+            <div>
+              <div className="mb-1.5 flex items-center justify-between">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-300">Password</label>
+              </div>
+              <div className="relative">
+                <Lock size={17} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••••••"
+                  className="h-12 rounded-xl border-white/10 bg-white/5 pl-10 pr-11 text-white placeholder:text-slate-500 focus:border-blue-500 focus:bg-white/10"
+                  {...form.register("password")}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              {form.formState.errors.password ? (
+                <span className="mt-1.5 block text-xs font-semibold text-rose-400">{form.formState.errors.password.message}</span>
+              ) : null}
+            </div>
+
+            {error ? (
+              <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs font-semibold text-rose-300">
+                {error}
+              </div>
+            ) : null}
+
+            <Button
+              type="submit"
+              disabled={form.formState.isSubmitting}
+              className="mt-2 h-12 w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 font-bold text-white shadow-lg shadow-blue-600/30 transition hover:from-blue-500 hover:to-indigo-500 active:scale-[0.99] disabled:opacity-60"
+            >
+              {form.formState.isSubmitting ? (
+                <span className="flex items-center gap-2">
+                  <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                  Authenticating…
+                </span>
+              ) : (
+                "Sign In to Console"
+              )}
             </Button>
           </form>
-        </CardContent>
-      </Card>
+
+          <div className="mt-6 border-t border-white/10 pt-4 text-center">
+            <div className="flex items-center justify-center gap-1.5 text-xs text-slate-400">
+              <ShieldCheck size={14} className="text-blue-400" />
+              <span>Campus Role-Based Access Control</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer info */}
+        <p className="mt-6 text-center text-xs text-slate-500">
+          Caraga State University • Attendance Verification Portal
+        </p>
+      </div>
     </main>
   );
 }

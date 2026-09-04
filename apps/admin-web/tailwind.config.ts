@@ -1,17 +1,30 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
-  content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./lib/**/*.{ts,tsx}"],
+  content: [
+    "./app/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./lib/**/*.{ts,tsx}",
+    "./apps/admin-web/app/**/*.{ts,tsx}",
+    "./apps/admin-web/components/**/*.{ts,tsx}",
+    "./apps/admin-web/lib/**/*.{ts,tsx}"
+  ],
   theme: {
     extend: {
       colors: {
         brand: {
-          50: "#eefdf8",
-          100: "#d5f7ee",
-          500: "#14b8a6",
-          600: "#0d9488",
-          700: "#0f766e",
-          900: "#134e4a"
+          50: "#eff6ff",
+          100: "#dbeafe",
+          200: "#bfdbfe",
+          300: "#93c5fd",
+          400: "#60a5fa",
+          500: "#3b82f6",
+          600: "#2563eb",
+          700: "#1d4ed8",
+          800: "#1e40af",
+          900: "#1e3a8a",
+          950: "#0f172a",
+          navy: "#021B79"
         }
       }
     }

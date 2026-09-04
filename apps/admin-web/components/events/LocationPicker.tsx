@@ -2,6 +2,16 @@
 
 import { MapContainer, Marker, Circle, Polygon, TileLayer, useMapEvents } from "react-leaflet";
 import type { LatLngExpression } from "leaflet";
+import L from "leaflet";
+
+if (typeof window !== "undefined") {
+  delete (L.Icon.Default.prototype as any)._getIconUrl;
+  L.Icon.Default.mergeOptions({
+    iconRetinaUrl: "/marker-icon-2x.png",
+    iconUrl: "/marker-icon.png",
+    shadowUrl: "/marker-shadow.png"
+  });
+}
 
 interface LocationPickerProps {
   latitude: number;

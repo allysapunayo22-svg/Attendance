@@ -4,6 +4,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, Check, ChevronRight, MapPin, RefreshCw, ShieldAlert, X } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Badge, labelize } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -61,7 +62,27 @@ export function AttendanceReviewQueue() {
 
   if (query.isLoading) return <div className="grid gap-4 lg:grid-cols-[360px_1fr]">{[1,2,3].map((item) => <div key={item} className="h-36 animate-pulse rounded-2xl bg-slate-100" />)}</div>;
   if (query.isError) return <Card><CardContent className="flex flex-col items-start gap-3"><p className="font-bold">Review queue could not be loaded.</p><Button variant="outline" onClick={() => void query.refetch()}><RefreshCw size={16} />Try again</Button></CardContent></Card>;
-  if (!rows.length) return <Card><CardContent className="py-14 text-center"><span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-700"><Check /></span><h2 className="mt-4 text-xl font-black">Review queue is clear</h2><p className="mt-1 text-sm text-slate-500">Flagged and pending records will appear here.</p></CardContent></Card>;
+  if (!rows.length) return (
+    <Card className="rounded-3xl border-slate-200/80 shadow-sm">
+      <CardContent className="py-16 text-center">
+        <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 shadow-sm">
+          <Check size={28} />
+        </span>
+        <h2 className="mt-4 text-xl font-black text-slate-900">Review queue is clear</h2>
+        <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
+          All student check-ins passed automatic verification! Flagged, outside-zone, or suspicious records will appear here for manual review.
+        </p>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+          <Button asChild className="rounded-xl bg-blue-600 px-5 font-bold hover:bg-blue-700 shadow-sm">
+            <Link href="/attendance/live">View Live Radar Stream →</Link>
+          </Button>
+          <Button asChild variant="outline" className="rounded-xl border-slate-200 font-bold">
+            <Link href="/">Back to Dashboard</Link>
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   return (
     <div className="space-y-3">
