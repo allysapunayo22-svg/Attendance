@@ -63,9 +63,9 @@ function MetricCard({
       iconBg: "bg-rose-100 text-rose-700"
     },
     brand: {
-      bg: "bg-blue-50/50 text-blue-900",
-      border: "border-blue-200/70",
-      iconBg: "bg-blue-100 text-blue-700"
+      bg: "bg-emerald-50/60 text-emerald-950",
+      border: "border-emerald-200/80",
+      iconBg: "bg-emerald-100 text-[#0f766e]"
     }
   };
 
@@ -84,7 +84,7 @@ function MetricCard({
         </div>
       </div>
       {href ? (
-        <div className="mt-4 flex items-center text-xs font-bold text-blue-700 transition group-hover:translate-x-1">
+        <div className="mt-4 flex items-center text-xs font-bold text-[#0f766e] transition group-hover:translate-x-1 group-hover:text-emerald-900">
           <span>View details</span>
           <ChevronRight size={14} className="ml-1" />
         </div>
@@ -109,15 +109,15 @@ export default function DashboardOverviewPage() {
   return (
     <div className="mx-auto w-full max-w-[1600px] space-y-6">
       {/* Hero Welcome Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#021B79] via-[#0A2FB6] to-[#1E3A8A] p-6 text-white shadow-xl shadow-blue-950/20 lg:p-8">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#042f2e] via-[#0a3831] to-[#0a1622] p-6 text-white shadow-xl shadow-slate-950/20 lg:p-8">
         {/* Subtle background glow circle */}
-        <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-blue-400/20 blur-3xl" />
+        <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" />
 
         <div className="relative z-10 flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-2xl space-y-2">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-bold tracking-wide text-blue-100 backdrop-blur-sm">
-                <Sparkles size={13} className="text-blue-300" />
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-bold tracking-wide text-emerald-200 border border-emerald-400/20 backdrop-blur-sm">
+                <Sparkles size={13} className="text-emerald-300" />
                 {todayStr}
               </span>
               {(stats?.ongoingEvents ?? 0) > 0 ? (
@@ -131,7 +131,7 @@ export default function DashboardOverviewPage() {
             <h1 className="text-2xl font-black tracking-tight sm:text-3xl lg:text-4xl text-white">
               Campus Operations Console
             </h1>
-            <p className="text-sm font-medium text-blue-100/80">
+            <p className="text-sm font-medium text-emerald-100/80">
               Live geofence verification signals, student rosters, and real-time attendance telemetries.
             </p>
           </div>
@@ -140,7 +140,7 @@ export default function DashboardOverviewPage() {
           <div className="flex flex-wrap items-center gap-2.5">
             <Button
               asChild
-              className="h-10 rounded-xl bg-white text-xs font-bold text-[#021B79] shadow-md transition hover:bg-blue-50 active:scale-[0.98]"
+              className="h-10 rounded-xl bg-white text-xs font-bold text-[#0f766e] shadow-md transition hover:bg-emerald-50 active:scale-[0.98]"
             >
               <Link href="/events/new">
                 <Plus size={15} />
@@ -185,7 +185,7 @@ export default function DashboardOverviewPage() {
           </div>
           <Link
             href="/attendance/review"
-            className="flex items-center gap-1 text-xs font-bold text-blue-700 transition hover:text-blue-900"
+            className="flex items-center gap-1 text-xs font-bold text-[#0f766e] transition hover:text-emerald-900"
           >
             <span>Open Review Queue</span>
             <ArrowRight size={14} />
@@ -266,8 +266,8 @@ export default function DashboardOverviewPage() {
             <div>
               <div className="flex items-center gap-2">
                 <span className="relative flex h-2.5 w-2.5">
-                  <span className="absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75 animate-ping" />
-                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-blue-600" />
+                  <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
                 </span>
                 <h2 className="text-base font-black text-slate-950">Live Attendance Feed</h2>
               </div>
@@ -275,7 +275,7 @@ export default function DashboardOverviewPage() {
             </div>
             <Link
               href="/attendance/live"
-              className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 transition hover:bg-blue-100"
+              className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-800 transition hover:bg-emerald-100"
             >
               Open Live Radar →
             </Link>
@@ -296,7 +296,7 @@ export default function DashboardOverviewPage() {
                   className="flex items-center justify-between gap-4 border-b border-slate-100 px-5 py-3.5 transition hover:bg-slate-50/70 last:border-0"
                 >
                   <div className="flex min-w-0 items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-xs font-bold text-white shadow-sm">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-[#0f766e] to-[#047857] text-xs font-bold text-white shadow-sm">
                       {initials || "ST"}
                     </div>
                     <div className="min-w-0">
@@ -349,7 +349,7 @@ export default function DashboardOverviewPage() {
                 </div>
                 <Link
                   href="/students"
-                  className="flex h-9 items-center rounded-xl bg-white px-3 text-xs font-bold text-blue-700 shadow-sm ring-1 ring-slate-200 hover:bg-blue-50"
+                  className="flex h-9 items-center rounded-xl bg-white px-3 text-xs font-bold text-[#0f766e] shadow-sm ring-1 ring-slate-200 hover:bg-emerald-50"
                 >
                   Manage
                 </Link>
@@ -362,7 +362,7 @@ export default function DashboardOverviewPage() {
                 </div>
                 <Link
                   href="/events"
-                  className="flex h-9 items-center rounded-xl bg-white px-3 text-xs font-bold text-blue-700 shadow-sm ring-1 ring-slate-200 hover:bg-blue-50"
+                  className="flex h-9 items-center rounded-xl bg-white px-3 text-xs font-bold text-[#0f766e] shadow-sm ring-1 ring-slate-200 hover:bg-emerald-50"
                 >
                   Browse
                 </Link>
@@ -370,7 +370,7 @@ export default function DashboardOverviewPage() {
 
               <Button
                 asChild
-                className="h-11 w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-xs font-bold text-white shadow-md shadow-blue-500/20 hover:from-blue-700 hover:to-indigo-700"
+                className="h-11 w-full rounded-xl bg-gradient-to-r from-[#0f766e] to-[#047857] text-xs font-bold text-white shadow-md shadow-emerald-950/20 hover:from-[#115e59] hover:to-[#065f46]"
               >
                 <Link href="/events/new">
                   <CalendarDays size={16} />
@@ -384,7 +384,7 @@ export default function DashboardOverviewPage() {
           <Card className="rounded-3xl border-slate-200/80 shadow-sm">
             <CardContent className="flex items-center justify-between p-5">
               <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-[#0f766e]">
                   <FileSpreadsheet size={22} />
                 </div>
                 <div>
@@ -392,7 +392,7 @@ export default function DashboardOverviewPage() {
                   <p className="text-xs text-slate-500">Generate CSV & Excel sheets</p>
                 </div>
               </div>
-              <Button asChild variant="outline" className="h-9 rounded-xl border-slate-200 text-xs font-bold">
+              <Button asChild variant="outline" className="h-9 rounded-xl border-slate-200 text-xs font-bold hover:bg-slate-50">
                 <Link href="/reports">Export</Link>
               </Button>
             </CardContent>

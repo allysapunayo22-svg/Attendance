@@ -59,7 +59,7 @@ export function Sidebar({ collapsed, mobileOpen, onToggle, onMobileClose }: Side
     <>
       <aside
         className={cn(
-          "hidden h-screen shrink-0 overflow-hidden border-r border-slate-200/80 bg-white shadow-sm transition-[width] duration-200 md:flex md:flex-col",
+          "hidden h-screen shrink-0 overflow-hidden border-r border-slate-800/80 bg-[#0a1120] shadow-lg transition-[width] duration-200 md:flex md:flex-col",
           collapsed ? "w-20" : "w-72"
         )}
       >
@@ -68,8 +68,8 @@ export function Sidebar({ collapsed, mobileOpen, onToggle, onMobileClose }: Side
 
       {mobileOpen ? (
         <div className="fixed inset-0 z-40 md:hidden">
-          <button type="button" aria-label="Close sidebar" className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm" onClick={onMobileClose} />
-          <aside className="relative h-full w-72 overflow-hidden border-r border-slate-200 bg-white shadow-2xl">
+          <button type="button" aria-label="Close sidebar" className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={onMobileClose} />
+          <aside className="relative h-full w-72 overflow-hidden border-r border-slate-800 bg-[#0a1120] shadow-2xl">
             <SidebarContent collapsed={false} onToggle={onMobileClose} mobile />
           </aside>
         </div>
@@ -112,11 +112,11 @@ function SidebarContent({ collapsed, onToggle, mobile }: { collapsed: boolean; o
   }
 
   return (
-    <div className="flex h-full flex-col bg-white">
+    <div className="flex h-full flex-col bg-[#0a1120]">
       {/* Header with App Logo */}
-      <div className={cn("flex min-h-20 items-center border-b border-slate-100", collapsed ? "justify-center px-3" : "justify-between gap-3 p-5")}>
+      <div className={cn("flex min-h-20 items-center border-b border-slate-800/80", collapsed ? "justify-center px-3" : "justify-between gap-3 p-5")}>
         <Link href="/" className="flex items-center gap-3">
-          <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-b from-[#021B79] to-[#0A2FB6] p-1.5 shadow-md shadow-blue-900/20 ring-1 ring-blue-500/20">
+          <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-950/80 p-1.5 shadow-md shadow-emerald-950/50 ring-1 ring-emerald-500/30">
             <Image
               src="/logo.png"
               alt="Logo"
@@ -124,7 +124,7 @@ function SidebarContent({ collapsed, onToggle, mobile }: { collapsed: boolean; o
               height={34}
               className="h-full w-full object-contain"
             />
-            <span className="absolute -bottom-0.5 -right-0.5 flex h-3 w-3 items-center justify-center rounded-full bg-emerald-500 ring-2 ring-white">
+            <span className="absolute -bottom-0.5 -right-0.5 flex h-3 w-3 items-center justify-center rounded-full bg-emerald-400 ring-2 ring-[#0a1120]">
               <span className="h-1 w-1 rounded-full bg-white" />
             </span>
           </div>
@@ -132,10 +132,10 @@ function SidebarContent({ collapsed, onToggle, mobile }: { collapsed: boolean; o
           {!collapsed ? (
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <span className="truncate text-base font-black tracking-tight text-slate-950">Campus Attendance</span>
+                <span className="truncate text-base font-black tracking-tight text-white">Campus Attendance</span>
               </div>
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-blue-600">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 <span className="truncate">Admin Console</span>
               </div>
             </div>
@@ -147,7 +147,7 @@ function SidebarContent({ collapsed, onToggle, mobile }: { collapsed: boolean; o
           aria-label={mobile ? "Close sidebar" : collapsed ? "Expand sidebar" : "Collapse sidebar"}
           title={mobile ? "Close sidebar" : collapsed ? "Expand sidebar" : "Collapse sidebar"}
           onClick={onToggle}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-100"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-800/80 hover:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
         >
           <ToggleIcon size={18} />
         </button>
@@ -158,7 +158,7 @@ function SidebarContent({ collapsed, onToggle, mobile }: { collapsed: boolean; o
         {groups.map((group) => (
           <div key={group.label}>
             {!collapsed ? (
-              <p className="mb-2 px-3 text-[11px] font-black uppercase tracking-widest text-slate-400">{group.label}</p>
+              <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-wider text-slate-400">{group.label}</p>
             ) : null}
             <div className="space-y-1">
               {group.items.map((item) => {
@@ -172,15 +172,15 @@ function SidebarContent({ collapsed, onToggle, mobile }: { collapsed: boolean; o
                     href={item.href}
                     title={collapsed ? item.label : undefined}
                     className={cn(
-                      "group relative flex min-h-11 items-center rounded-xl text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-200",
-                      collapsed ? "justify-center px-0" : "gap-3 px-3 py-2",
+                      "group relative flex min-h-11 items-center rounded-xl text-sm font-semibold transition focus:outline-none",
+                      collapsed ? "justify-center px-0" : "gap-3 px-3 py-2.5",
                       active
-                        ? "bg-blue-50 text-blue-800 shadow-sm ring-1 ring-blue-200 font-bold"
-                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
+                        ? "bg-emerald-500/15 text-emerald-300 font-bold border border-emerald-500/30 shadow-sm"
+                        : "text-slate-300 hover:bg-slate-850 hover:text-white hover:bg-white/5"
                     )}
                   >
                     <Icon
-                      className={cn("shrink-0 transition", active ? "text-blue-700" : "text-slate-400 group-hover:text-slate-700")}
+                      className={cn("shrink-0 transition", active ? "text-emerald-400" : "text-slate-400 group-hover:text-slate-200")}
                       size={collapsed ? 20 : 18}
                     />
                     {collapsed ? (
@@ -192,11 +192,11 @@ function SidebarContent({ collapsed, onToggle, mobile }: { collapsed: boolean; o
                     {/* Pending Review count badge */}
                     {hasBadge ? (
                       collapsed ? (
-                        <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[10px] font-black text-white ring-2 ring-white">
+                        <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[10px] font-black text-slate-950 ring-2 ring-[#0a1120]">
                           {pendingCount > 9 ? "9+" : pendingCount}
                         </span>
                       ) : (
-                        <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[11px] font-black text-white shadow-sm shadow-amber-500/20">
+                        <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[11px] font-black text-slate-950 shadow-sm">
                           {pendingCount}
                         </span>
                       )
@@ -210,28 +210,28 @@ function SidebarContent({ collapsed, onToggle, mobile }: { collapsed: boolean; o
       </nav>
 
       {/* Admin Profile Footer */}
-      <div className="border-t border-slate-100 p-3">
+      <div className="border-t border-slate-800/80 p-3">
         {collapsed ? (
           <button
             type="button"
             onClick={handleLogout}
             title="Log out"
             aria-label="Log out"
-            className="flex h-11 w-full items-center justify-center rounded-xl text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition"
+            className="flex h-11 w-full items-center justify-center rounded-xl text-slate-400 hover:bg-rose-950/40 hover:text-rose-400 transition"
           >
             <LogOut size={18} />
           </button>
         ) : (
-          <div className="flex items-center justify-between rounded-2xl bg-slate-50 p-2.5">
+          <div className="flex items-center justify-between rounded-2xl bg-slate-900/90 border border-slate-800/80 p-2.5">
             <div className="flex min-w-0 items-center gap-2.5">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-700 to-indigo-600 text-xs font-bold text-white shadow-sm">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-[#0f766e] to-[#047857] text-xs font-bold text-white shadow-sm ring-1 ring-emerald-400/30">
                 AD
               </div>
               <div className="min-w-0">
-                <p className="truncate text-xs font-bold text-slate-900">{adminEmail}</p>
-                <div className="flex items-center gap-1">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  <p className="text-[10px] font-semibold text-slate-500">Super Administrator</p>
+                <p className="truncate text-xs font-bold text-slate-200">{adminEmail}</p>
+                <div className="flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                  <p className="text-[10px] font-semibold text-emerald-400">System Admin</p>
                 </div>
               </div>
             </div>
@@ -241,7 +241,7 @@ function SidebarContent({ collapsed, onToggle, mobile }: { collapsed: boolean; o
               onClick={handleLogout}
               title="Log out"
               aria-label="Log out"
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-rose-950/40 hover:text-rose-400 transition"
             >
               <LogOut size={15} />
             </button>

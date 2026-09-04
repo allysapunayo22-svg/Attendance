@@ -45,15 +45,15 @@ export default function LoginPage() {
   });
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-[#02144d] via-[#081330] to-[#030712] p-4 sm:p-6 lg:p-8">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-[#041d1a] via-[#09151c] to-[#02070a] p-4 sm:p-6 lg:p-8">
       {/* Ambient background glow effects */}
-      <div className="pointer-events-none absolute -top-40 left-1/2 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-blue-600/20 blur-[130px]" />
-      <div className="pointer-events-none absolute -bottom-40 right-10 h-[400px] w-[400px] rounded-full bg-indigo-600/15 blur-[120px]" />
+      <div className="pointer-events-none absolute -top-40 left-1/2 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-emerald-600/15 blur-[130px]" />
+      <div className="pointer-events-none absolute -bottom-40 right-10 h-[400px] w-[400px] rounded-full bg-teal-600/15 blur-[120px]" />
 
       <div className="relative w-full max-w-md">
         {/* Brand Header */}
         <div className="mb-6 flex flex-col items-center text-center">
-          <div className="relative mb-3 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-b from-blue-500/20 to-blue-900/40 p-2 shadow-2xl shadow-blue-500/30 ring-1 ring-white/20 backdrop-blur-xl">
+          <div className="relative mb-3 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-b from-emerald-500/20 to-emerald-950/50 p-2 shadow-2xl shadow-emerald-950/40 ring-1 ring-emerald-400/30 backdrop-blur-xl">
             <Image
               src="/logo.png"
               alt="Campus Attendance Logo"
@@ -62,20 +62,20 @@ export default function LoginPage() {
               className="h-full w-full object-contain drop-shadow-md"
               priority
             />
-            <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 ring-2 ring-[#081330]">
+            <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-400 ring-2 ring-[#09151c]">
               <span className="h-1.5 w-1.5 rounded-full bg-white animate-ping" />
             </span>
           </div>
 
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1 text-xs font-bold tracking-wide text-blue-300">
-            <Sparkles size={13} className="text-blue-400" /> CSU Attendance System
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-xs font-bold tracking-wide text-emerald-300">
+            <Sparkles size={13} className="text-emerald-400" /> CSU Attendance System
           </span>
           <h1 className="mt-3 text-2xl font-black tracking-tight text-white sm:text-3xl">Admin Operations Portal</h1>
           <p className="mt-1 text-sm text-slate-400">Sign in to supervise events, geofences, and attendance records.</p>
         </div>
 
         {/* Login Card */}
-        <div className="overflow-hidden rounded-3xl border border-white/10 bg-slate-900/75 p-6 shadow-2xl backdrop-blur-2xl sm:p-8">
+        <div className="overflow-hidden rounded-3xl border border-white/10 bg-slate-900/80 p-6 shadow-2xl backdrop-blur-2xl sm:p-8">
           <form onSubmit={submit} className="space-y-4">
             <div>
               <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
@@ -86,7 +86,7 @@ export default function LoginPage() {
                 <Input
                   type="email"
                   placeholder="admin@csu.edu.ph"
-                  className="h-12 rounded-xl border-white/10 bg-white/5 pl-10 text-white placeholder:text-slate-500 focus:border-blue-500 focus:bg-white/10"
+                  className="h-12 rounded-xl border-white/10 bg-white/5 pl-10 text-white placeholder:text-slate-500 focus:border-emerald-500 focus:bg-white/10"
                   {...form.register("identifier")}
                 />
               </div>
@@ -104,7 +104,7 @@ export default function LoginPage() {
                 <Input
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••••••"
-                  className="h-12 rounded-xl border-white/10 bg-white/5 pl-10 pr-11 text-white placeholder:text-slate-500 focus:border-blue-500 focus:bg-white/10"
+                  className="h-12 rounded-xl border-white/10 bg-white/5 pl-10 pr-11 text-white placeholder:text-slate-500 focus:border-emerald-500 focus:bg-white/10"
                   {...form.register("password")}
                 />
                 <button
@@ -130,7 +130,7 @@ export default function LoginPage() {
             <Button
               type="submit"
               disabled={form.formState.isSubmitting}
-              className="mt-2 h-12 w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 font-bold text-white shadow-lg shadow-blue-600/30 transition hover:from-blue-500 hover:to-indigo-500 active:scale-[0.99] disabled:opacity-60"
+              className="mt-2 h-12 w-full rounded-xl bg-gradient-to-r from-[#0f766e] to-[#047857] font-bold text-white shadow-lg shadow-emerald-950/40 transition hover:from-[#115e59] hover:to-[#065f46] active:scale-[0.99] disabled:opacity-60"
             >
               {form.formState.isSubmitting ? (
                 <span className="flex items-center gap-2">
@@ -145,7 +145,7 @@ export default function LoginPage() {
 
           <div className="mt-6 border-t border-white/10 pt-4 text-center">
             <div className="flex items-center justify-center gap-1.5 text-xs text-slate-400">
-              <ShieldCheck size={14} className="text-blue-400" />
+              <ShieldCheck size={14} className="text-emerald-400" />
               <span>Campus Role-Based Access Control</span>
             </div>
           </div>

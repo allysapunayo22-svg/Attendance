@@ -131,18 +131,18 @@ export function TopNav({ onOpenSidebar }: { onOpenSidebar: () => void }) {
         {/* Action Controls: Live Status & Create Event Button */}
         <div className="flex items-center gap-2.5">
           {/* Live System Indicator */}
-          <div className="hidden lg:flex items-center gap-2 rounded-full border border-emerald-200/80 bg-emerald-50/80 px-3 py-1.5 text-xs font-bold text-emerald-800 shadow-sm">
+          <div className="hidden lg:flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-800 shadow-sm">
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
             </span>
-            <span>Realtime Geofence</span>
+            <span>Realtime Radar</span>
           </div>
 
           {/* Quick Create Event Button */}
           <Button
             asChild
-            className="h-10 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 text-xs font-bold text-white shadow-md shadow-blue-500/20 transition hover:from-blue-700 hover:to-indigo-700 active:scale-[0.98]"
+            className="h-10 rounded-xl bg-gradient-to-r from-[#0f766e] to-[#047857] px-4 text-xs font-bold text-white shadow-md shadow-emerald-950/20 transition hover:from-[#115e59] hover:to-[#065f46] active:scale-[0.98]"
           >
             <Link href="/events/new">
               <Plus size={15} />
