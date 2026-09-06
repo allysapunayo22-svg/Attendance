@@ -8,6 +8,7 @@
     "packages/*"
   ],
   "scripts": {
+    "build": "npm --workspace @attendance/admin-web run build",
     "dev": "npm run dev:mobile",
     "dev:mobile": "npm --workspace @attendance/mobile run start",
     "dev:mobile:web": "npm --workspace @attendance/mobile run web",
