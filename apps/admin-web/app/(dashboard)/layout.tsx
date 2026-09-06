@@ -42,14 +42,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#0a1120]">
+    <div className="flex h-screen overflow-hidden bg-[#0c1527]">
       <Sidebar
         collapsed={sidebarCollapsed}
         mobileOpen={mobileSidebarOpen}
         onToggle={toggleSidebar}
         onMobileClose={() => setMobileSidebarOpen(false)}
       />
-      <div className="flex h-screen min-w-0 flex-1 flex-col overflow-hidden bg-[#f1f4f9]">
+      <div className="flex h-screen min-w-0 flex-1 flex-col overflow-hidden bg-[#f8fafc]">
         <TopNav onOpenSidebar={() => setMobileSidebarOpen(true)} />
         <main className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">{children}</main>
       </div>

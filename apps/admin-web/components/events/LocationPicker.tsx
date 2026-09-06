@@ -62,7 +62,7 @@ export function LocationPicker({ latitude, longitude, radiusMeters, drawPolygon,
             }
           }}
         />
-        <Circle center={center} radius={radiusMeters} pathOptions={{ color: "#0f766e", fillColor: "#14b8a6", fillOpacity: 0.16 }} />
+        <Circle center={center} radius={radiusMeters} pathOptions={{ color: "#1d4ed8", fillColor: "#3b82f6", fillOpacity: 0.16 }} />
         {polygon.length >= 3 ? <Polygon positions={polygon} pathOptions={{ color: "#2563eb", fillColor: "#60a5fa", fillOpacity: 0.18 }} /> : null}
         {polygonPoints.map((point, index) => (
           <Marker key={`${point.latitude}-${point.longitude}-${index}`} position={[point.latitude, point.longitude]} />

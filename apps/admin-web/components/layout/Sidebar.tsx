@@ -59,7 +59,7 @@ export function Sidebar({ collapsed, mobileOpen, onToggle, onMobileClose }: Side
     <>
       <aside
         className={cn(
-          "hidden h-screen shrink-0 overflow-hidden border-r border-slate-800/80 bg-[#0a1120] shadow-lg transition-[width] duration-200 md:flex md:flex-col",
+          "hidden h-screen shrink-0 overflow-hidden border-r border-slate-800/80 bg-[#0c1527] shadow-lg transition-[width] duration-200 md:flex md:flex-col",
           collapsed ? "w-20" : "w-72"
         )}
       >
@@ -69,7 +69,7 @@ export function Sidebar({ collapsed, mobileOpen, onToggle, onMobileClose }: Side
       {mobileOpen ? (
         <div className="fixed inset-0 z-40 md:hidden">
           <button type="button" aria-label="Close sidebar" className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={onMobileClose} />
-          <aside className="relative h-full w-72 overflow-hidden border-r border-slate-800 bg-[#0a1120] shadow-2xl">
+          <aside className="relative h-full w-72 overflow-hidden border-r border-slate-800 bg-[#0c1527] shadow-2xl">
             <SidebarContent collapsed={false} onToggle={onMobileClose} mobile />
           </aside>
         </div>
@@ -112,11 +112,11 @@ function SidebarContent({ collapsed, onToggle, mobile }: { collapsed: boolean; o
   }
 
   return (
-    <div className="flex h-full flex-col bg-[#0a1120]">
+    <div className="flex h-full flex-col bg-[#0c1527]">
       {/* Header with App Logo */}
       <div className={cn("flex min-h-20 items-center border-b border-slate-800/80", collapsed ? "justify-center px-3" : "justify-between gap-3 p-5")}>
         <Link href="/" className="flex items-center gap-3">
-          <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-950/80 p-1.5 shadow-md shadow-emerald-950/50 ring-1 ring-emerald-500/30">
+          <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand-900/60 p-1.5 shadow-md shadow-slate-950/40 ring-1 ring-brand-500/30">
             <Image
               src="/logo.png"
               alt="Logo"
@@ -124,7 +124,7 @@ function SidebarContent({ collapsed, onToggle, mobile }: { collapsed: boolean; o
               height={34}
               className="h-full w-full object-contain"
             />
-            <span className="absolute -bottom-0.5 -right-0.5 flex h-3 w-3 items-center justify-center rounded-full bg-emerald-400 ring-2 ring-[#0a1120]">
+            <span className="absolute -bottom-0.5 -right-0.5 flex h-3 w-3 items-center justify-center rounded-full bg-brand-500 ring-2 ring-[#0c1527]">
               <span className="h-1 w-1 rounded-full bg-white" />
             </span>
           </div>
@@ -134,8 +134,8 @@ function SidebarContent({ collapsed, onToggle, mobile }: { collapsed: boolean; o
               <div className="flex items-center gap-1.5">
                 <span className="truncate text-base font-black tracking-tight text-white">Campus Attendance</span>
               </div>
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-400">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-brand-300">
+                <span className="h-1.5 w-1.5 rounded-full bg-brand-400 animate-pulse" />
                 <span className="truncate">Admin Console</span>
               </div>
             </div>
@@ -147,7 +147,7 @@ function SidebarContent({ collapsed, onToggle, mobile }: { collapsed: boolean; o
           aria-label={mobile ? "Close sidebar" : collapsed ? "Expand sidebar" : "Collapse sidebar"}
           title={mobile ? "Close sidebar" : collapsed ? "Expand sidebar" : "Collapse sidebar"}
           onClick={onToggle}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-800/80 hover:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-800/80 hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/30"
         >
           <ToggleIcon size={18} />
         </button>
@@ -175,12 +175,12 @@ function SidebarContent({ collapsed, onToggle, mobile }: { collapsed: boolean; o
                       "group relative flex min-h-11 items-center rounded-xl text-sm font-semibold transition focus:outline-none",
                       collapsed ? "justify-center px-0" : "gap-3 px-3 py-2.5",
                       active
-                        ? "bg-emerald-500/15 text-emerald-300 font-bold border border-emerald-500/30 shadow-sm"
-                        : "text-slate-300 hover:bg-slate-850 hover:text-white hover:bg-white/5"
+                        ? "bg-brand-700/25 text-white font-bold border border-brand-500/40 shadow-sm"
+                        : "text-slate-300 hover:bg-white/[0.07] hover:text-white"
                     )}
                   >
                     <Icon
-                      className={cn("shrink-0 transition", active ? "text-emerald-400" : "text-slate-400 group-hover:text-slate-200")}
+                      className={cn("shrink-0 transition", active ? "text-brand-400" : "text-slate-400 group-hover:text-slate-200")}
                       size={collapsed ? 20 : 18}
                     />
                     {collapsed ? (
@@ -192,7 +192,7 @@ function SidebarContent({ collapsed, onToggle, mobile }: { collapsed: boolean; o
                     {/* Pending Review count badge */}
                     {hasBadge ? (
                       collapsed ? (
-                        <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[10px] font-black text-slate-950 ring-2 ring-[#0a1120]">
+                        <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[10px] font-black text-slate-950 ring-2 ring-[#0c1527]">
                           {pendingCount > 9 ? "9+" : pendingCount}
                         </span>
                       ) : (
@@ -224,14 +224,14 @@ function SidebarContent({ collapsed, onToggle, mobile }: { collapsed: boolean; o
         ) : (
           <div className="flex items-center justify-between rounded-2xl bg-slate-900/90 border border-slate-800/80 p-2.5">
             <div className="flex min-w-0 items-center gap-2.5">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-[#0f766e] to-[#047857] text-xs font-bold text-white shadow-sm ring-1 ring-emerald-400/30">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-brand-800 to-brand-600 text-xs font-bold text-white shadow-sm ring-1 ring-brand-400/30">
                 AD
               </div>
               <div className="min-w-0">
                 <p className="truncate text-xs font-bold text-slate-200">{adminEmail}</p>
                 <div className="flex items-center gap-1.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                  <p className="text-[10px] font-semibold text-emerald-400">System Admin</p>
+                  <span className="h-1.5 w-1.5 rounded-full bg-brand-400" />
+                  <p className="text-[10px] font-semibold text-brand-300">System Admin</p>
                 </div>
               </div>
             </div>

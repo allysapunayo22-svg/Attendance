@@ -90,15 +90,15 @@ export function DynamicQrPanel() {
 
   return (
     <>
-      <Card className="rounded-3xl border-slate-200/80 shadow-sm overflow-hidden">
-        <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 p-5 bg-gradient-to-r from-blue-50/50 to-white">
+      <Card className="rounded-2xl border-slate-200/80 shadow-xs overflow-hidden">
+        <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 p-5 bg-white">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-md shadow-blue-600/20">
-              <QrCode size={22} />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700 ring-1 ring-brand-100">
+              <QrCode size={20} />
             </div>
             <div>
-              <h2 className="text-base font-black text-slate-950">Dynamic Anti-Spoofing QR Code</h2>
-              <p className="text-xs text-slate-500">
+              <h2 className="text-base font-bold text-slate-900">Dynamic Anti-Spoofing QR Code</h2>
+              <p className="mt-0.5 text-xs text-slate-500">
                 Rotates dynamically every 30 seconds to prevent student photo sharing and proxy check-ins.
               </p>
             </div>
@@ -109,7 +109,7 @@ export function DynamicQrPanel() {
               type="button"
               variant="outline"
               onClick={() => setIsProjectorOpen(true)}
-              className="h-9 rounded-xl border-blue-200 bg-blue-50/80 text-xs font-bold text-blue-700 hover:bg-blue-100"
+              className="h-9 rounded-xl border-slate-200 text-xs font-semibold text-brand-700 hover:bg-slate-50 shadow-xs"
             >
               <Maximize2 size={14} />
               <span>Projector Mode</span>
@@ -122,13 +122,13 @@ export function DynamicQrPanel() {
             {/* Event selection controls */}
             <div className="flex-1 space-y-4">
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
                   Select Event for QR Attendance
                 </label>
                 <select
                   value={selectedEventId}
                   onChange={(e) => setSelectedEventId(e.target.value)}
-                  className="w-full h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100"
+                  className="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-100"
                 >
                   {events.map((evt) => (
                     <option key={evt.id} value={evt.id}>
@@ -143,19 +143,19 @@ export function DynamicQrPanel() {
                 <Button
                   onClick={generateQR}
                   disabled={!selectedEventId || generating}
-                  className="h-11 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 text-sm font-bold text-white shadow-md shadow-blue-500/20 hover:from-blue-700 hover:to-indigo-700"
+                  className="h-10 rounded-xl bg-brand-700 hover:bg-brand-800 px-5 text-xs font-semibold text-white shadow-xs"
                 >
-                  <RefreshCw size={15} className={generating ? "animate-spin" : ""} />
+                  <RefreshCw size={14} className={generating ? "animate-spin" : ""} />
                   <span>{token ? "Refresh QR Now" : "Launch Dynamic QR"}</span>
                 </Button>
 
                 {token ? (
-                  <label className="flex items-center gap-2 text-xs font-semibold text-slate-600 cursor-pointer select-none">
+                  <label className="flex items-center gap-2 text-xs font-medium text-slate-600 cursor-pointer select-none">
                     <input
                       type="checkbox"
                       checked={autoRotate}
                       onChange={(e) => setAutoRotate(e.target.checked)}
-                      className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                      className="h-4 w-4 rounded border-slate-300 text-brand-700 focus:ring-brand-500"
                     />
                     <span>Auto-refresh every 30s</span>
                   </label>
@@ -168,8 +168,8 @@ export function DynamicQrPanel() {
                 </div>
               ) : null}
 
-              <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4 text-xs text-slate-600 space-y-1">
-                <p className="font-bold text-slate-900">How students verify with QR:</p>
+              <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-4 text-xs text-slate-600 space-y-1">
+                <p className="font-semibold text-slate-900">How students verify with QR:</p>
                 <p>1. Students open the CSU Campus Attendance mobile app.</p>
                 <p>2. Tap "Time In" and point their camera at this rotating code.</p>
                 <p>3. The mobile app automatically verifies GPS geofence + cryptographic QR token in one step.</p>
@@ -178,38 +178,38 @@ export function DynamicQrPanel() {
 
             {/* QR Code Canvas Card */}
             {token ? (
-              <div className="flex flex-col items-center rounded-3xl border border-slate-200/90 bg-white p-6 shadow-md text-center">
-                <div className="relative p-3 rounded-2xl bg-white ring-1 ring-slate-200 shadow-inner">
+              <div className="flex flex-col items-center rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs text-center">
+                <div className="relative p-2.5 rounded-xl bg-white ring-1 ring-slate-200">
                   <QRCodeCanvas
                     value={token}
-                    size={200}
+                    size={190}
                     level="H"
                     includeMargin
                   />
                 </div>
 
                 {/* Progress bar countdown */}
-                <div className="mt-4 w-full max-w-[200px]">
-                  <div className="flex items-center justify-between text-xs font-bold">
+                <div className="mt-4 w-full max-w-[190px]">
+                  <div className="flex items-center justify-between text-xs font-semibold">
                     <span className="flex items-center gap-1 text-slate-500">
                       <Clock size={12} />
                       Rotating in
                     </span>
-                    <span className={secondsLeft <= 5 ? "text-rose-600 font-black animate-pulse" : "text-blue-700"}>
+                    <span className={secondsLeft <= 5 ? "text-rose-600 font-bold animate-pulse" : "text-brand-700 font-bold"}>
                       {secondsLeft}s
                     </span>
                   </div>
                   <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-slate-100">
                     <div
                       className={`h-full transition-all duration-1000 ${
-                        secondsLeft <= 5 ? "bg-rose-500" : "bg-gradient-to-r from-blue-600 to-indigo-600"
+                        secondsLeft <= 5 ? "bg-rose-500" : "bg-brand-700"
                       }`}
                       style={{ width: `${(secondsLeft / 30) * 100}%` }}
                     />
                   </div>
                 </div>
 
-                <p className="mt-3 text-xs font-bold text-slate-900 line-clamp-1 max-w-[220px]">
+                <p className="mt-3 text-xs font-bold text-slate-900 line-clamp-1 max-w-[200px]">
                   {selectedEvent?.title ?? "Campus Event"}
                 </p>
                 <p className="text-[11px] text-slate-500">Scan via CSU Mobile App</p>

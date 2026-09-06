@@ -91,17 +91,17 @@ export function LiveAttendanceTable() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Filter by student name, ID, or event…"
-            className="h-10 rounded-xl border-slate-200 bg-white pl-9 text-xs shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            className="h-10 rounded-xl border-slate-200 bg-white pl-9 text-xs shadow-xs focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
           />
         </div>
 
         {/* Status Filter Tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto rounded-xl border border-slate-200 bg-slate-100/80 p-1 text-xs font-semibold text-slate-600">
+        <div className="flex items-center gap-1.5 overflow-x-auto rounded-xl border border-slate-200 bg-slate-100/80 p-1 text-xs font-medium text-slate-600">
           <button
             type="button"
             onClick={() => setStatusFilter("all")}
             className={`rounded-lg px-3 py-1.5 transition ${
-              statusFilter === "all" ? "bg-white font-bold text-slate-950 shadow-sm" : "hover:text-slate-900"
+              statusFilter === "all" ? "bg-white font-semibold text-slate-900 shadow-xs" : "hover:text-slate-900"
             }`}
           >
             All ({rawRows.length})
@@ -110,7 +110,7 @@ export function LiveAttendanceTable() {
             type="button"
             onClick={() => setStatusFilter("verified")}
             className={`rounded-lg px-3 py-1.5 transition ${
-              statusFilter === "verified" ? "bg-white font-bold text-emerald-700 shadow-sm" : "hover:text-emerald-700"
+              statusFilter === "verified" ? "bg-white font-semibold text-emerald-700 shadow-xs" : "hover:text-emerald-700"
             }`}
           >
             Verified
@@ -119,7 +119,7 @@ export function LiveAttendanceTable() {
             type="button"
             onClick={() => setStatusFilter("late")}
             className={`rounded-lg px-3 py-1.5 transition ${
-              statusFilter === "late" ? "bg-white font-bold text-orange-700 shadow-sm" : "hover:text-orange-700"
+              statusFilter === "late" ? "bg-white font-semibold text-amber-700 shadow-xs" : "hover:text-amber-700"
             }`}
           >
             Late
@@ -128,7 +128,7 @@ export function LiveAttendanceTable() {
             type="button"
             onClick={() => setStatusFilter("requires_review")}
             className={`rounded-lg px-3 py-1.5 transition ${
-              statusFilter === "requires_review" ? "bg-white font-bold text-amber-800 shadow-sm" : "hover:text-amber-800"
+              statusFilter === "requires_review" ? "bg-white font-semibold text-amber-800 shadow-xs" : "hover:text-amber-800"
             }`}
           >
             Flagged
@@ -137,10 +137,10 @@ export function LiveAttendanceTable() {
       </div>
 
       {/* Main Table Card */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="border-b border-slate-100 bg-slate-50/80 text-[11px] font-black uppercase tracking-wider text-slate-500">
+            <thead className="border-b border-slate-100 bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-500">
               <tr>
                 <th className="px-4 py-3.5">Student Profile</th>
                 <th className="px-4 py-3.5">Campus Event</th>
@@ -159,29 +159,29 @@ export function LiveAttendanceTable() {
                   <tr
                     key={row.id}
                     onClick={() => setSelectedRecord(row)}
-                    className="cursor-pointer transition hover:bg-blue-50/40"
+                    className="cursor-pointer transition hover:bg-blue-50/30"
                   >
                     <td className="px-4 py-3.5">
-                      <div className="font-bold text-slate-950 text-sm">{row.student?.full_name ?? "Student"}</div>
-                      <div className="text-xs font-semibold text-slate-500">{row.student?.student_id ?? "-"}</div>
+                      <div className="font-semibold text-slate-900 text-sm">{row.student?.full_name ?? "Student"}</div>
+                      <div className="text-xs font-medium text-slate-500">{row.student?.student_id ?? "-"}</div>
                     </td>
                     <td className="px-4 py-3.5">
-                      <div className="max-w-xs truncate font-medium text-slate-900">{row.event?.title ?? "-"}</div>
+                      <div className="max-w-xs truncate font-medium text-slate-800">{row.event?.title ?? "-"}</div>
                     </td>
-                    <td className="px-4 py-3.5 text-xs text-slate-600 font-semibold">
+                    <td className="px-4 py-3.5 text-xs text-slate-600 font-medium">
                       {row.time_in_server_timestamp
                         ? new Date(row.time_in_server_timestamp).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
                         : "—"}
                     </td>
-                    <td className="px-4 py-3.5 text-xs text-slate-600 font-semibold">
+                    <td className="px-4 py-3.5 text-xs text-slate-600 font-medium">
                       {row.time_out_server_timestamp
                         ? new Date(row.time_out_server_timestamp).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
                         : "—"}
                     </td>
                     <td className="px-4 py-3.5">
                       {row.time_in_distance != null ? (
-                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700">
-                          <MapPin size={13} className="text-blue-600" />
+                        <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-700">
+                          <MapPin size={13} className="text-brand-700" />
                           {Math.round(row.time_in_distance)}m away
                           {row.time_in_accuracy ? <span className="text-slate-400">(±{Math.round(row.time_in_accuracy)}m)</span> : null}
                         </span>
@@ -201,7 +201,7 @@ export function LiveAttendanceTable() {
                           e.stopPropagation();
                           setSelectedRecord(row);
                         }}
-                        className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-bold text-blue-700 hover:bg-blue-50"
+                        className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-brand-700 hover:bg-brand-50 hover:border-brand-200 shadow-xs transition"
                       >
                         Inspect
                       </button>
@@ -233,7 +233,7 @@ export function LiveAttendanceTable() {
       {/* Record Inspector Drawer / Modal */}
       {selectedRecord ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
-          <div className="relative w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
+          <div className="relative w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
             <button
               type="button"
               onClick={() => setSelectedRecord(null)}
@@ -244,11 +244,11 @@ export function LiveAttendanceTable() {
             </button>
 
             <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-600 text-white font-bold">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-700 text-white font-bold">
                 {selectedRecord.student?.full_name?.charAt(0) ?? "S"}
               </div>
               <div>
-                <h3 className="text-base font-black text-slate-950">{selectedRecord.student?.full_name ?? "Student"}</h3>
+                <h3 className="text-base font-bold text-slate-900">{selectedRecord.student?.full_name ?? "Student"}</h3>
                 <p className="text-xs text-slate-500">
                   {selectedRecord.student?.student_id} · {selectedRecord.event?.title}
                 </p>

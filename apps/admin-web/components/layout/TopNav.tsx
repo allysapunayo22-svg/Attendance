@@ -131,10 +131,10 @@ export function TopNav({ onOpenSidebar }: { onOpenSidebar: () => void }) {
         {/* Action Controls: Live Status & Create Event Button */}
         <div className="flex items-center gap-2.5">
           {/* Live System Indicator */}
-          <div className="hidden lg:flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-800 shadow-sm">
+          <div className="hidden lg:flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50/80 px-3 py-1.5 text-xs font-semibold text-blue-800 shadow-xs">
             <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+              <span className="absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75 animate-ping" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-600" />
             </span>
             <span>Realtime Radar</span>
           </div>
@@ -142,7 +142,7 @@ export function TopNav({ onOpenSidebar }: { onOpenSidebar: () => void }) {
           {/* Quick Create Event Button */}
           <Button
             asChild
-            className="h-10 rounded-xl bg-gradient-to-r from-[#0f766e] to-[#047857] px-4 text-xs font-bold text-white shadow-md shadow-emerald-950/20 transition hover:from-[#115e59] hover:to-[#065f46] active:scale-[0.98]"
+            className="h-10 rounded-xl bg-brand-700 hover:bg-brand-800 px-4 text-xs font-bold text-white shadow-sm transition active:scale-[0.98]"
           >
             <Link href="/events/new">
               <Plus size={15} />

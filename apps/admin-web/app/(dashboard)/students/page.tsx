@@ -111,61 +111,64 @@ export default function StudentsPage() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-950">Student Management</h1>
-          <p className="mt-1 text-sm text-slate-500">Add, import, edit, assign sections, deactivate accounts, reset devices, and review attendance percentages.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Student Management</h1>
+          <p className="mt-1 text-sm text-slate-500">Add, import, edit, assign sections, deactivate accounts, reset devices, and review attendance records.</p>
         </div>
-        <div className="flex gap-2">
-          <Input aria-label="Choose student roster CSV" type="file" accept=".csv" className="max-w-64" onChange={(event) => setRosterFile(event.target.files?.[0] ?? null)} />
-          <Button variant="outline" onClick={() => void importRoster()} disabled={importing}>
-            <Upload size={16} />{importing ? "Importing" : "Import CSV"}
+        <div className="flex items-center gap-2">
+          <Input aria-label="Choose student roster CSV" type="file" accept=".csv" className="max-w-64 text-xs" onChange={(event) => setRosterFile(event.target.files?.[0] ?? null)} />
+          <Button onClick={() => void importRoster()} disabled={importing} className="h-10 rounded-xl bg-brand-700 hover:bg-brand-800 text-xs font-semibold text-white shadow-xs">
+            <Upload size={15} />
+            <span>{importing ? "Importing…" : "Import CSV"}</span>
           </Button>
         </div>
       </div>
-      <Card>
-        <CardContent className="p-4">
-          <h2 className="font-bold text-slate-950">Approved CBEA Registration Roster</h2>
+
+      <Card className="rounded-2xl border-slate-200/80 shadow-xs">
+        <CardContent className="p-5">
+          <h2 className="font-bold text-slate-900">Approved CBEA Registration Roster</h2>
           <p className="mt-1 text-sm text-slate-500">
-            Registering students must match this roster by student_id and school_email. CSV columns: student_id, school_email, full_name, year_level, status.
+            Registering students must match this roster by student_id and school_email. Required CSV columns: student_id, school_email, full_name, year_level, status.
           </p>
-          {importMessage ? <p role="status" className="mt-3 rounded-xl bg-slate-50 p-3 text-sm text-slate-700">{importMessage}</p> : null}
+          {importMessage ? <p role="status" className="mt-3 rounded-xl bg-blue-50/80 border border-blue-200 p-3 text-sm text-blue-800 font-medium">{importMessage}</p> : null}
         </CardContent>
       </Card>
-      <Card>
+
+      <Card className="rounded-2xl border-slate-200/80 shadow-xs overflow-hidden">
         <CardContent className="overflow-x-auto p-0">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+            <thead className="border-b border-slate-100 bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-500">
               <tr>
-                <th className="px-4 py-3">Student</th>
-                <th className="px-4 py-3">Course</th>
-                <th className="px-4 py-3">Section</th>
-                <th className="px-4 py-3">Year</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Actions</th>
+                <th className="px-5 py-3.5">Student</th>
+                <th className="px-5 py-3.5">Course</th>
+                <th className="px-5 py-3.5">Section</th>
+                <th className="px-5 py-3.5">Year</th>
+                <th className="px-5 py-3.5">Status</th>
+                <th className="px-5 py-3.5">Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-slate-100">
               {(query.data ?? []).map((student) => (
-                <tr key={student.id} className="border-t border-slate-200">
-                  <td className="px-4 py-3">
-                    <div className="font-semibold text-slate-950">{student.full_name}</div>
-                    <div className="text-xs text-slate-500">{student.student_id}</div>
+                <tr key={student.id} className="transition hover:bg-blue-50/25">
+                  <td className="px-5 py-3.5">
+                    <div className="font-semibold text-slate-900 text-sm">{student.full_name}</div>
+                    <div className="text-xs font-medium text-slate-500">{student.student_id}</div>
                   </td>
-                  <td className="px-4 py-3">{student.course?.code ?? "-"}</td>
-                  <td className="px-4 py-3">{student.section?.name ?? "-"}</td>
-                  <td className="px-4 py-3">{student.year_level ?? "-"}</td>
-                  <td className="px-4 py-3"><Badge tone={student.is_active ? "verified" : "rejected"}>{student.is_active ? "Active" : "Inactive"}</Badge></td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-2">
-                      <Button variant="outline" onClick={() => setPendingAction({ kind: "toggle", studentId: student.id, active: student.is_active })}>{student.is_active ? "Deactivate" : "Activate"}</Button>
-                      <Button variant="outline" onClick={() => setPendingAction({ kind: "reset", studentId: student.id })}>Reset Device</Button>
+                  <td className="px-5 py-3.5 text-xs text-slate-700 font-medium">{student.course?.code ?? "-"}</td>
+                  <td className="px-5 py-3.5 text-xs text-slate-700 font-medium">{student.section?.name ?? "-"}</td>
+                  <td className="px-5 py-3.5 text-xs text-slate-700 font-medium">{student.year_level ?? "-"}</td>
+                  <td className="px-5 py-3.5"><Badge tone={student.is_active ? "verified" : "rejected"}>{student.is_active ? "Active" : "Inactive"}</Badge></td>
+                  <td className="px-5 py-3.5">
+                    <div className="flex flex-wrap gap-1.5">
+                      <Button variant="outline" className="h-8 rounded-lg px-2.5 text-xs font-semibold" onClick={() => setPendingAction({ kind: "toggle", studentId: student.id, active: student.is_active })}>{student.is_active ? "Deactivate" : "Activate"}</Button>
+                      <Button variant="outline" className="h-8 rounded-lg px-2.5 text-xs font-semibold" onClick={() => setPendingAction({ kind: "reset", studentId: student.id })}>Reset Device</Button>
                     </div>
                   </td>
                 </tr>
               ))}
-              {!query.isLoading && !query.data?.length ? <tr><td colSpan={6} className="px-4 py-12 text-center"><p className="font-bold text-slate-900">No students found</p><p className="mt-1 text-sm text-slate-500">Import an approved roster to begin.</p></td></tr> : null}
+              {!query.isLoading && !query.data?.length ? <tr><td colSpan={6} className="px-5 py-12 text-center"><p className="font-semibold text-slate-900">No students found</p><p className="mt-1 text-sm text-slate-500">Import an approved roster to begin.</p></td></tr> : null}
             </tbody>
           </table>
         </CardContent>
