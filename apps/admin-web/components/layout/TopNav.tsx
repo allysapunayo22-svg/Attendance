@@ -34,7 +34,9 @@ export function TopNav({ onOpenSidebar }: { onOpenSidebar: () => void }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
   const [search, setSearch] = useState("");
+  const [activeResult, setActiveResult] = useState(0);
 
   const currentPage = useMemo(() => pageMeta.find((item) => item.match.test(pathname)) ?? pageMeta[0], [pathname]);
   const matches = useMemo(() => {
@@ -42,6 +44,8 @@ export function TopNav({ onOpenSidebar }: { onOpenSidebar: () => void }) {
     if (!term) return [];
     return destinations.filter((item) => `${item.label} ${item.description}`.toLowerCase().includes(term)).slice(0, 5);
   }, [search]);
+
+  useEffect(() => { setActiveResult(0); }, [search]);
 
   // Global keyboard shortcut to focus search: '/' or 'Ctrl+K' / 'Cmd+K'
   useEffect(() => {
@@ -52,7 +56,11 @@ export function TopNav({ onOpenSidebar }: { onOpenSidebar: () => void }) {
       }
     }
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    function handlePointerDown(event: MouseEvent) {
+      if (!searchContainerRef.current?.contains(event.target as Node)) setSearch("");
+    }
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => { window.removeEventListener("keydown", handleKeyDown); document.removeEventListener("mousedown", handlePointerDown); };
   }, []);
 
   async function logout() {
@@ -81,7 +89,7 @@ export function TopNav({ onOpenSidebar }: { onOpenSidebar: () => void }) {
         </div>
 
         {/* Global Quick Search Bar */}
-        <div className="relative max-w-lg flex-1">
+        <div ref={searchContainerRef} className="relative max-w-lg flex-1">
           <Search className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
           <Input
             ref={searchInputRef}
@@ -90,29 +98,40 @@ export function TopNav({ onOpenSidebar }: { onOpenSidebar: () => void }) {
             onChange={(event) => setSearch(event.target.value)}
             onKeyDown={(event) => {
               if (event.key === "Escape") setSearch("");
-              if (event.key === "Enter" && matches[0]) {
-                router.push(matches[0].href);
+              if (event.key === "ArrowDown") { event.preventDefault(); setActiveResult((index) => Math.min(index + 1, Math.max(matches.length - 1, 0))); }
+              if (event.key === "ArrowUp") { event.preventDefault(); setActiveResult((index) => Math.max(index - 1, 0)); }
+              if (event.key === "Enter" && matches[activeResult]) {
+                router.push(matches[activeResult].href);
                 setSearch("");
               }
             }}
-            placeholder="Search screens, actions, or jump to… (⌘K)"
+            placeholder="Jump to a screen… (Ctrl/⌘ K)"
             aria-label="Search dashboard destinations"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-expanded={Boolean(search.trim())}
+            aria-controls="dashboard-search-results"
+            aria-activedescendant={matches[activeResult] ? `dashboard-result-${activeResult}` : undefined}
           />
           <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 hidden items-center gap-0.5 rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-bold text-slate-400 sm:flex">
             ⌘K
           </div>
 
           {search.trim() ? (
-            <div className="absolute left-0 right-0 top-12 z-30 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl">
-              {matches.map((item) => (
+            <div id="dashboard-search-results" role="listbox" className="absolute left-0 right-0 top-12 z-30 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl">
+              {matches.map((item, index) => (
                 <button
+                  id={`dashboard-result-${index}`}
                   key={item.href + item.label}
                   type="button"
+                  role="option"
+                  aria-selected={index === activeResult}
+                  onMouseEnter={() => setActiveResult(index)}
                   onClick={() => {
                     router.push(item.href);
                     setSearch("");
                   }}
-                  className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left transition hover:bg-blue-50/70 focus:bg-blue-50"
+                  className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left transition ${index === activeResult ? "bg-blue-50" : "hover:bg-blue-50/70"}`}
                 >
                   <div>
                     <span className="block text-sm font-bold text-slate-950">{item.label}</span>

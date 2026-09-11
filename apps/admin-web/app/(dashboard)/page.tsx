@@ -40,21 +40,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { fetchDashboardStats } from "@/lib/queries";
 
-// Trend chart sample model - adapts dynamically to live stats
-const hourlyTemplate = [
-  { time: "07:00", count: 4, verified: 4, flagged: 0 },
-  { time: "08:00", count: 28, verified: 26, flagged: 2 },
-  { time: "09:00", count: 64, verified: 61, flagged: 3 },
-  { time: "10:00", count: 42, verified: 40, flagged: 2 },
-  { time: "11:00", count: 18, verified: 17, flagged: 1 },
-  { time: "12:00", count: 12, verified: 12, flagged: 0 },
-  { time: "13:00", count: 35, verified: 33, flagged: 2 },
-  { time: "14:00", count: 52, verified: 50, flagged: 2 },
-  { time: "15:00", count: 29, verified: 28, flagged: 1 },
-  { time: "16:00", count: 15, verified: 15, flagged: 0 },
-  { time: "17:00", count: 6, verified: 6, flagged: 0 }
-];
-
 function MetricCard({
   label,
   value,
@@ -132,20 +117,23 @@ export default function DashboardOverviewPage() {
     year: "numeric"
   });
 
-  // Calculate proportional chart values if real data is available
-  const totalToday = stats?.attendanceToday ?? 0;
-  const chartData = hourlyTemplate.map((item) => {
-    const scale = totalToday > 0 ? Math.max(1, Math.round(totalToday / 8)) : 1;
-    return {
-      time: item.time,
-      verified: totalToday > 0 ? Math.round(item.verified * (scale / 10)) : item.verified,
-      flagged: totalToday > 0 ? Math.round(item.flagged * (scale / 10)) : item.flagged,
-      total: totalToday > 0 ? Math.round(item.count * (scale / 10)) : item.count
-    };
-  });
+  const chartData = chartView === "today"
+    ? (stats?.hourlyTraffic ?? []).filter((item) => item.total > 0)
+    : [
+        { time: "Verified", total: stats?.present ?? 0, verified: stats?.present ?? 0, flagged: 0 },
+        { time: "Late", total: stats?.late ?? 0, verified: stats?.late ?? 0, flagged: 0 },
+        { time: "Review", total: stats?.pendingReviews ?? 0, verified: 0, flagged: stats?.pendingReviews ?? 0 },
+        { time: "Missed", total: stats?.absent ?? 0, verified: 0, flagged: stats?.absent ?? 0 }
+      ].filter((item) => item.total > 0);
 
   return (
     <div className="mx-auto w-full max-w-[1600px] space-y-6">
+      {query.isError ? (
+        <div role="alert" className="flex flex-col gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 sm:flex-row sm:items-center sm:justify-between">
+          <span>Dashboard data could not be loaded. Values shown below are unavailable.</span>
+          <Button variant="outline" className="shrink-0 border-red-200 bg-white" onClick={() => void query.refetch()}>Try again</Button>
+        </div>
+      ) : null}
       {/* Top Header & Context Controls */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -209,8 +197,8 @@ export default function DashboardOverviewPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           label="Today's Activity"
-          value={stats?.attendanceToday ?? 0}
-          helper="Total student check-ins today"
+          value={query.isLoading || query.isError ? "—" : stats?.attendanceToday ?? 0}
+          helper={query.isError ? "Data unavailable" : "Total student check-ins today"}
           icon={Users}
           badgeText={stats?.attendanceToday ? "+live" : undefined}
           badgeTone="brand"
@@ -218,8 +206,8 @@ export default function DashboardOverviewPage() {
         />
         <MetricCard
           label="Verified Inside Geofence"
-          value={stats?.present ?? 0}
-          helper={`${stats?.attendanceRate ?? 0}% overall verification compliance`}
+          value={query.isLoading || query.isError ? "—" : stats?.present ?? 0}
+          helper={query.isError ? "Data unavailable" : `${stats?.attendanceRate ?? 0}% overall verification compliance`}
           icon={UserRoundCheck}
           badgeText={`${stats?.attendanceRate ?? 0}%`}
           badgeTone="good"
@@ -227,8 +215,8 @@ export default function DashboardOverviewPage() {
         />
         <MetricCard
           label="Requires Review"
-          value={stats?.pendingReviews ?? 0}
-          helper="Submissions with GPS or photo anomaly"
+          value={query.isLoading || query.isError ? "—" : stats?.pendingReviews ?? 0}
+          helper={query.isError ? "Data unavailable" : "Submissions with GPS or photo anomaly"}
           icon={AlertTriangle}
           badgeText={(stats?.pendingReviews ?? 0) > 0 ? "Action needed" : "Clean"}
           badgeTone={(stats?.pendingReviews ?? 0) > 0 ? "warn" : "good"}
@@ -236,8 +224,8 @@ export default function DashboardOverviewPage() {
         />
         <MetricCard
           label="Active Campus Events"
-          value={stats?.ongoingEvents ?? 0}
-          helper={`${stats?.upcomingEvents ?? 0} scheduled upcoming`}
+          value={query.isLoading || query.isError ? "—" : stats?.ongoingEvents ?? 0}
+          helper={query.isError ? "Data unavailable" : `${stats?.upcomingEvents ?? 0} scheduled upcoming`}
           icon={CalendarClock}
           badgeText={(stats?.ongoingEvents ?? 0) > 0 ? "Live" : undefined}
           badgeTone="brand"
@@ -262,6 +250,7 @@ export default function DashboardOverviewPage() {
               <button
                 type="button"
                 onClick={() => setChartView("today")}
+                aria-pressed={chartView === "today"}
                 className={`rounded-lg px-3 py-1 transition ${
                   chartView === "today" ? "bg-white font-bold text-brand-700 shadow-xs" : "hover:text-slate-900"
                 }`}
@@ -271,17 +260,18 @@ export default function DashboardOverviewPage() {
               <button
                 type="button"
                 onClick={() => setChartView("trend")}
+                aria-pressed={chartView === "trend"}
                 className={`rounded-lg px-3 py-1 transition ${
                   chartView === "trend" ? "bg-white font-bold text-brand-700 shadow-xs" : "hover:text-slate-900"
                 }`}
               >
-                Distribution
+                Status breakdown
               </button>
             </div>
           </CardHeader>
 
           <CardContent className="p-5">
-            {mounted ? (
+            {mounted && chartData.length ? (
               <div className="h-64 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -341,6 +331,8 @@ export default function DashboardOverviewPage() {
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
+            ) : mounted ? (
+              <div className="flex h-64 items-center justify-center rounded-xl bg-slate-50 text-sm text-slate-500">No attendance activity recorded for this view.</div>
             ) : (
               <div className="h-64 w-full animate-pulse rounded-xl bg-slate-50" />
             )}

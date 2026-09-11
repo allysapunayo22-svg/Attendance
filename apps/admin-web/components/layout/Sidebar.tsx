@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import * as Dialog from "@radix-ui/react-dialog";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -66,14 +67,16 @@ export function Sidebar({ collapsed, mobileOpen, onToggle, onMobileClose }: Side
         <SidebarContent collapsed={collapsed} onToggle={onToggle} />
       </aside>
 
-      {mobileOpen ? (
-        <div className="fixed inset-0 z-40 md:hidden">
-          <button type="button" aria-label="Close sidebar" className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={onMobileClose} />
-          <aside className="relative h-full w-72 overflow-hidden border-r border-slate-800 bg-[#0c1527] shadow-2xl">
+      <Dialog.Root open={mobileOpen} onOpenChange={(open) => { if (!open) onMobileClose(); }}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-sm md:hidden" />
+          <Dialog.Content className="fixed inset-y-0 left-0 z-50 w-72 overflow-hidden border-r border-slate-800 bg-[#0c1527] shadow-2xl md:hidden">
+            <Dialog.Title className="sr-only">Admin navigation</Dialog.Title>
+            <Dialog.Description className="sr-only">Navigate between administration screens.</Dialog.Description>
             <SidebarContent collapsed={false} onToggle={onMobileClose} mobile />
-          </aside>
-        </div>
-      ) : null}
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </>
   );
 }
@@ -170,6 +173,7 @@ function SidebarContent({ collapsed, onToggle, mobile }: { collapsed: boolean; o
                   <Link
                     key={item.href}
                     href={item.href}
+                    onClick={() => { if (mobile) onToggle(); }}
                     title={collapsed ? item.label : undefined}
                     className={cn(
                       "group relative flex min-h-11 items-center rounded-xl text-sm font-semibold transition focus:outline-none",

@@ -78,31 +78,39 @@ export default function LoginPage() {
         <div className="overflow-hidden rounded-3xl border border-white/10 bg-slate-900/85 p-6 shadow-2xl backdrop-blur-2xl sm:p-8">
           <form onSubmit={submit} className="space-y-4">
             <div>
-              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-300">
+              <label htmlFor="admin-email" className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-300">
                 Administrator Email
               </label>
               <div className="relative">
                 <Mail size={17} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <Input
+                  id="admin-email"
                   type="email"
+                  autoComplete="username"
+                  aria-invalid={Boolean(form.formState.errors.identifier)}
+                  aria-describedby={form.formState.errors.identifier ? "admin-email-error" : undefined}
                   placeholder="admin@csu.edu.ph"
                   className="h-12 rounded-xl border-white/10 bg-white/5 pl-10 text-white placeholder:text-slate-500 focus:border-brand-500 focus:bg-white/10"
                   {...form.register("identifier")}
                 />
               </div>
               {form.formState.errors.identifier ? (
-                <span className="mt-1.5 block text-xs font-semibold text-rose-400">{form.formState.errors.identifier.message}</span>
+                <span id="admin-email-error" role="alert" className="mt-1.5 block text-xs font-semibold text-rose-400">{form.formState.errors.identifier.message}</span>
               ) : null}
             </div>
 
             <div>
               <div className="mb-1.5 flex items-center justify-between">
-                <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">Password</label>
+                <label htmlFor="admin-password" className="text-xs font-semibold uppercase tracking-wider text-slate-300">Password</label>
               </div>
               <div className="relative">
                 <Lock size={17} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <Input
+                  id="admin-password"
                   type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  aria-invalid={Boolean(form.formState.errors.password)}
+                  aria-describedby={form.formState.errors.password ? "admin-password-error" : undefined}
                   placeholder="••••••••••••"
                   className="h-12 rounded-xl border-white/10 bg-white/5 pl-10 pr-11 text-white placeholder:text-slate-500 focus:border-brand-500 focus:bg-white/10"
                   {...form.register("password")}
@@ -117,12 +125,12 @@ export default function LoginPage() {
                 </button>
               </div>
               {form.formState.errors.password ? (
-                <span className="mt-1.5 block text-xs font-semibold text-rose-400">{form.formState.errors.password.message}</span>
+                <span id="admin-password-error" role="alert" className="mt-1.5 block text-xs font-semibold text-rose-400">{form.formState.errors.password.message}</span>
               ) : null}
             </div>
 
             {error ? (
-              <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs font-semibold text-rose-300">
+              <div role="alert" className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs font-semibold text-rose-300">
                 {error}
               </div>
             ) : null}

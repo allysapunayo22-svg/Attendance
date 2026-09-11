@@ -199,6 +199,10 @@ function stepIndexFor(stepKey: WizardStepKey) {
   return index >= 0 ? index : 0;
 }
 
+function FieldErrorMessage({ message }: { message: string | undefined }) {
+  return message ? <span role="alert" className="mt-1 block text-xs font-medium text-red-700">{message}</span> : null;
+}
+
 interface EventWizardFormProps {
   form: UseFormReturn<EventFormInput>;
   onValidSubmit: SubmitHandler<EventFormInput>;
@@ -376,15 +380,18 @@ export function EventWizardForm({
             </div>
             <label className="md:col-span-2">
               <span className="mb-2 block text-sm font-semibold">Event title</span>
-              <Input {...form.register("title")} />
+              <Input aria-invalid={Boolean(form.formState.errors.title)} {...form.register("title")} />
+              <FieldErrorMessage message={form.formState.errors.title?.message} />
             </label>
             <label className="md:col-span-2">
               <span className="mb-2 block text-sm font-semibold">Description</span>
-              <Textarea {...form.register("description")} />
+              <Textarea aria-invalid={Boolean(form.formState.errors.description)} {...form.register("description")} />
+              <FieldErrorMessage message={form.formState.errors.description?.message} />
             </label>
             <label>
               <span className="mb-2 block text-sm font-semibold">Type</span>
-              <Input {...form.register("type")} />
+              <Input aria-invalid={Boolean(form.formState.errors.type)} {...form.register("type")} />
+              <FieldErrorMessage message={form.formState.errors.type?.message} />
             </label>
             {statusControl}
             <label>
@@ -407,12 +414,14 @@ export function EventWizardForm({
             <div className="rounded-xl bg-brand-50 p-4 text-sm text-brand-900 md:col-span-4"><strong>Summary:</strong> {values.eventDate} · event {values.startsAt || "—"}–{values.endsAt || "—"} · Time In {values.checkInOpensAt || "—"}–{values.checkInClosesAt || "—"} · Time Out {values.checkOutOpensAt || "—"}–{values.checkOutClosesAt || "—"}</div>
             <label>
               <span className="mb-2 block text-sm font-semibold">Date</span>
-              <Input type="date" {...form.register("eventDate")} />
+              <Input type="date" aria-invalid={Boolean(form.formState.errors.eventDate)} {...form.register("eventDate")} />
+              <FieldErrorMessage message={form.formState.errors.eventDate?.message} />
             </label>
             {timeFields.map((name) => (
               <label key={name}>
                 <span className="mb-2 block text-sm font-semibold">{timeFieldLabels[name]}</span>
-                <Input type="time" {...form.register(name)} />
+                <Input type="time" aria-invalid={Boolean(form.formState.errors[name])} {...form.register(name)} />
+                <FieldErrorMessage message={form.formState.errors[name]?.message} />
               </label>
             ))}
           </CardContent>
@@ -427,7 +436,8 @@ export function EventWizardForm({
           <CardContent className="grid gap-4 md:grid-cols-2">
             <label>
               <span className="mb-2 block text-sm font-semibold">Venue name</span>
-              <Input {...form.register("venueName")} />
+              <Input aria-invalid={Boolean(form.formState.errors.venueName)} {...form.register("venueName")} />
+              <FieldErrorMessage message={form.formState.errors.venueName?.message} />
             </label>
             <label>
               <span className="mb-2 block text-sm font-semibold">Address</span>

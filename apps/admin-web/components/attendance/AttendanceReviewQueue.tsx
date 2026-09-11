@@ -42,7 +42,7 @@ export function AttendanceReviewQueue() {
   const [decision, setDecision] = useState<Decision | null>(null);
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [notice, setNotice] = useState<{ tone: "success" | "error"; text: string } | null>(null);
   const rows = query.data ?? [];
   const filtered = useMemo(() => { const term = filter.trim().toLowerCase(); return term ? rows.filter((row) => `${row.student?.full_name} ${row.student?.student_id} ${row.event?.title} ${row.verification_reason}`.toLowerCase().includes(term)) : rows; }, [filter, rows]);
   const selected = rows.find((row) => row.id === selectedId) ?? filtered[0] ?? null;
@@ -50,13 +50,13 @@ export function AttendanceReviewQueue() {
 
   async function submitDecision() {
     if (!selected || !decision || (decision === "reject" && !notes.trim())) return;
-    setSubmitting(true); setMessage(null);
+    setSubmitting(true); setNotice(null);
     const { error } = await supabase.functions.invoke("review-attendance", { body: { attendanceId: selected.id, decision, notes: notes.trim(), rejectionReason: decision === "reject" ? notes.trim() : undefined } });
     setSubmitting(false);
-    if (error) { setMessage(error.message); return; }
+    if (error) { setNotice({ tone: "error", text: error.message }); return; }
     const currentIndex = filtered.findIndex((row) => row.id === selected.id);
     const next = filtered[currentIndex + 1] ?? filtered[currentIndex - 1] ?? null;
-    setSelectedId(next?.id ?? null); setDecision(null); setNotes(""); setMessage("Decision saved. The next record is ready.");
+    setSelectedId(next?.id ?? null); setDecision(null); setNotes(""); setNotice({ tone: "success", text: "Decision saved. The next record is ready." });
     await Promise.all([queryClient.invalidateQueries({ queryKey: ["attendance-review"] }), queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] })]);
   }
 
@@ -86,7 +86,7 @@ export function AttendanceReviewQueue() {
 
   return (
     <div className="space-y-3">
-      {message ? <div role="status" className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800"><span>{message}</span><button aria-label="Dismiss message" onClick={() => setMessage(null)}><X size={16} /></button></div> : null}
+      {notice ? <div role={notice.tone === "error" ? "alert" : "status"} className={cn("flex items-center justify-between rounded-xl border px-4 py-3 text-sm font-semibold", notice.tone === "error" ? "border-red-200 bg-red-50 text-red-800" : "border-emerald-200 bg-emerald-50 text-emerald-800")}><span>{notice.text}</span><button aria-label="Dismiss message" onClick={() => setNotice(null)}><X size={16} /></button></div> : null}
       <div className="grid min-h-[650px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:grid-cols-[340px_minmax(0,1fr)_280px]">
         <aside className="border-b border-slate-200 lg:border-b-0 lg:border-r">
           <div className="border-b border-slate-200 p-4"><div className="flex items-center justify-between"><h2 className="font-black">Queue</h2><Badge tone="requires_review">{rows.length} open</Badge></div><Input className="mt-3" value={filter} onChange={(event) => setFilter(event.target.value)} placeholder="Find student or event" aria-label="Filter review queue" /></div>
@@ -101,7 +101,7 @@ export function AttendanceReviewQueue() {
         <aside className="border-t border-slate-200 bg-slate-50 p-5 lg:border-l lg:border-t-0"><h2 className="font-black">Decision</h2><p className="mt-1 text-sm leading-5 text-slate-500">Review the evidence before resolving this record.</p><div className="mt-5 space-y-2"><Button className="w-full" onClick={() => setDecision("approve")}><Check size={16} />Approve</Button><Button variant="outline" className="w-full" onClick={() => setDecision("late")}>Mark late</Button><Button variant="outline" className="w-full" onClick={() => setDecision("excuse")}>Mark excused</Button><Button variant="destructive" className="w-full" onClick={() => setDecision("reject")}>Reject</Button></div><p className="mt-5 text-xs leading-5 text-slate-500">Decisions are recorded in the audit trail. Rejections require a reason.</p></aside>
       </div>
 
-      <Dialog.Root open={Boolean(decision)} onOpenChange={(open) => { if (!open) { setDecision(null); setNotes(""); } }}><Dialog.Portal><Dialog.Overlay className="fixed inset-0 z-40 bg-slate-950/50" /><Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-2xl"><Dialog.Title className="text-xl font-black">Confirm {decision ? labelize(decision) : "decision"}</Dialog.Title><Dialog.Description className="mt-2 text-sm leading-6 text-slate-600">This updates {selected?.student?.full_name ?? "the student"}’s attendance record and adds an audit entry.</Dialog.Description><label className="mt-5 block text-sm font-bold text-slate-700" htmlFor="decision-notes">{decision === "reject" ? "Reason (required)" : "Administrator notes (optional)"}</label><textarea id="decision-notes" value={notes} onChange={(event) => setNotes(event.target.value)} className="mt-2 min-h-28 w-full rounded-xl border border-slate-300 p-3 text-sm focus:border-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-100" placeholder={decision === "reject" ? "Explain why this attendance cannot be accepted…" : "Add context for the audit trail…"} />{message && decision ? <p className="mt-2 text-sm text-red-700">{message}</p> : null}<div className="mt-5 flex justify-end gap-3"><Dialog.Close asChild><Button variant="outline">Cancel</Button></Dialog.Close><Button variant={decision === "reject" ? "destructive" : "default"} disabled={submitting || (decision === "reject" && !notes.trim())} onClick={() => void submitDecision()}>{submitting ? "Saving…" : "Confirm decision"}</Button></div></Dialog.Content></Dialog.Portal></Dialog.Root>
+      <Dialog.Root open={Boolean(decision)} onOpenChange={(open) => { if (!open) { setDecision(null); setNotes(""); setNotice(null); } }}><Dialog.Portal><Dialog.Overlay className="fixed inset-0 z-40 bg-slate-950/50" /><Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-2xl"><Dialog.Title className="text-xl font-black">Confirm {decision ? labelize(decision) : "decision"}</Dialog.Title><Dialog.Description className="mt-2 text-sm leading-6 text-slate-600">This updates {selected?.student?.full_name ?? "the student"}’s attendance record and adds an audit entry.</Dialog.Description><label className="mt-5 block text-sm font-bold text-slate-700" htmlFor="decision-notes">{decision === "reject" ? "Reason (required)" : "Administrator notes (optional)"}</label><textarea id="decision-notes" value={notes} onChange={(event) => setNotes(event.target.value)} className="mt-2 min-h-28 w-full rounded-xl border border-slate-300 p-3 text-sm focus:border-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-100" placeholder={decision === "reject" ? "Explain why this attendance cannot be accepted…" : "Add context for the audit trail…"} />{notice?.tone === "error" && decision ? <p role="alert" className="mt-2 text-sm text-red-700">{notice.text}</p> : null}<div className="mt-5 flex justify-end gap-3"><Dialog.Close asChild><Button variant="outline">Cancel</Button></Dialog.Close><Button variant={decision === "reject" ? "destructive" : "default"} disabled={submitting || (decision === "reject" && !notes.trim())} onClick={() => void submitDecision()}>{submitting ? "Saving…" : "Confirm decision"}</Button></div></Dialog.Content></Dialog.Portal></Dialog.Root>
     </div>
   );
 }

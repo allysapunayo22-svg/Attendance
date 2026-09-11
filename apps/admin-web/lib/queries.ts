@@ -11,16 +11,35 @@ export async function fetchDashboardStats() {
     supabase.from("absence_requests").select("id", { count: "exact", head: true }).in("status", ["submitted", "under_review"])
   ]);
 
-  const today = new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfTomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
   const { data: todayRows, error: todayError } = await supabase
     .from("attendance_sessions")
-    .select("id,status,sync_status,updated_at,student:student_profiles(full_name,student_id),event:events(title)")
-    .gte("created_at", `${today}T00:00:00.000Z`)
-    .lte("created_at", `${today}T23:59:59.999Z`);
+    .select("id,status,sync_status,updated_at,time_in_server_timestamp,student:student_profiles(full_name,student_id),event:events(title)")
+    .gte("created_at", startOfToday.toISOString())
+    .lt("created_at", startOfTomorrow.toISOString());
 
   if (todayError) throw todayError;
+  const countErrors = [students.error, upcoming.error, ongoing.error, pending.error, absence.error].filter(Boolean);
+  if (countErrors[0]) throw countErrors[0];
   const resolved = todayRows?.filter((row) => ["verified", "completed", "time_in_recorded", "late", "excused"].includes(row.status)).length ?? 0;
   const attendanceRate = todayRows?.length ? Math.round((resolved / todayRows.length) * 100) : 0;
+  const hourlyTraffic = Array.from({ length: 24 }, (_, hour) => ({
+    time: new Intl.DateTimeFormat(undefined, { hour: "numeric" }).format(new Date(2000, 0, 1, hour)),
+    total: 0,
+    verified: 0,
+    flagged: 0
+  }));
+
+  for (const row of todayRows ?? []) {
+    const hour = new Date(row.time_in_server_timestamp ?? row.updated_at).getHours();
+    const bucket = hourlyTraffic[hour];
+    if (!bucket) continue;
+    bucket.total += 1;
+    if (["verified", "completed", "time_in_recorded", "late", "excused"].includes(row.status)) bucket.verified += 1;
+    if (row.status === "pending_verification" || row.sync_status === "requires_review") bucket.flagged += 1;
+  }
 
   return {
     totalStudents: students.count ?? 0,
@@ -31,8 +50,9 @@ export async function fetchDashboardStats() {
     late: todayRows?.filter((row) => row.status === "late").length ?? 0,
     absent: todayRows?.filter((row) => row.status === "missed").length ?? 0,
     pendingReviews: pending.count ?? 0,
-    pendingAbsenceRequests: absence.count ?? 0
-    ,attendanceRate,
+    pendingAbsenceRequests: absence.count ?? 0,
+    attendanceRate,
+    hourlyTraffic,
     recentActivity: [...(todayRows ?? [])].sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()).slice(0, 6)
   };
 }

@@ -199,6 +199,10 @@ export function EventsTable() {
     );
   }
 
+  if (query.isError) {
+    return <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-800"><p className="font-bold">Events could not be loaded.</p><p className="mt-1">Check your connection and try again.</p><Button variant="outline" className="mt-3 border-red-200 bg-white" onClick={() => void query.refetch()}>Try again</Button></div>;
+  }
+
   return (
     <div className="space-y-4">
       <div className="grid gap-3 md:grid-cols-4">
@@ -262,7 +266,30 @@ export function EventsTable() {
 
         {pagedRows.length ? (
           <>
-            <div className="overflow-x-auto">
+            <div className="divide-y divide-slate-100 lg:hidden">
+              {pagedRows.map((row) => {
+                const stats = eventStats(row);
+                return (
+                  <article key={row.id} className="space-y-4 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0"><h3 className="truncate font-black text-slate-950">{row.title}</h3><p className="mt-1 truncate text-xs text-slate-500">{eventDate(row) || "No date"} · {eventVenue(row) || "No venue"}</p></div>
+                      <Badge tone={row.status}>{labelize(row.status)}</Badge>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 rounded-xl bg-slate-50 p-3 text-center text-xs"><div><p className="text-slate-500">Present</p><p className="font-black text-slate-900">{stats.present}</p></div><div><p className="text-slate-500">Late</p><p className="font-black text-slate-900">{stats.late}</p></div><div><p className="text-slate-500">Absent</p><p className="font-black text-slate-900">{stats.absent}</p></div></div>
+                    <div className="flex flex-wrap gap-2">
+                      <ActionLink href={`/attendance/live?event=${row.id}`} label="View live attendance" icon={Eye} />
+                      <ActionLink href={`/events/${row.id}/edit`} label="Edit event" icon={Pencil} />
+                      <ActionButton label="Publish event" icon={Send} disabled={row.status === "published" || Boolean(busyAction)} onClick={() => void updateStatus(row.id, "published")} />
+                      <ActionButton label="Duplicate event" icon={Copy} disabled={Boolean(busyAction)} onClick={() => void duplicate(row)} />
+                      <ActionButton label="Export CSV" icon={FileDown} disabled={Boolean(busyAction)} onClick={() => exportEvent(row)} />
+                      <ActionButton label="Cancel event" icon={XCircle} disabled={row.status === "cancelled" || Boolean(busyAction)} onClick={() => void updateStatus(row.id, "cancelled")} />
+                      <ActionButton label="Delete event" icon={Trash2} danger disabled={Boolean(busyAction)} onClick={() => setDeleteEventId(row.id)} />
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+            <div className="hidden overflow-x-auto lg:block" aria-label="Events table. Scroll horizontally to view all columns.">
               <table className="min-w-[1050px] w-full text-left text-sm">
                 <thead className="bg-slate-50/80 text-xs uppercase tracking-wide text-slate-500">
                   <tr>
@@ -300,13 +327,13 @@ export function EventsTable() {
                             <ActionButton
                               label="Publish event"
                               icon={Send}
-                              disabled={row.status === "published" || busyAction === `${row.id}-published`}
+                              disabled={row.status === "published" || Boolean(busyAction)}
                               onClick={() => void updateStatus(row.id, "published")}
                             />
                             <ActionButton
                               label="Duplicate event"
                               icon={Copy}
-                              disabled={busyAction === `${row.id}-duplicate`}
+                              disabled={Boolean(busyAction)}
                               onClick={() => void duplicate(row)}
                             />
                             <ActionLink href={`/events/${row.id}/edit`} label="Edit event" icon={Pencil} />
@@ -314,14 +341,14 @@ export function EventsTable() {
                             <ActionButton
                               label="Cancel event"
                               icon={XCircle}
-                              disabled={row.status === "cancelled" || busyAction === `${row.id}-cancelled`}
+                              disabled={row.status === "cancelled" || Boolean(busyAction)}
                               onClick={() => void updateStatus(row.id, "cancelled")}
                             />
                             <ActionButton
                               label="Delete event"
                               icon={Trash2}
                               danger
-                              disabled={busyAction === `${row.id}-delete`}
+                              disabled={Boolean(busyAction)}
                               onClick={() => setDeleteEventId(row.id)}
                             />
                           </div>
@@ -424,7 +451,7 @@ function ActionLink({ href, label, icon: Icon }: { href: string; label: string; 
       className="inline-flex h-9 min-w-9 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 text-slate-700 transition hover:border-brand-200 hover:bg-brand-50 hover:text-brand-800 focus:outline-none focus:ring-2 focus:ring-brand-100"
     >
       <Icon size={15} />
-      <span className="hidden text-xs font-bold 2xl:inline">{label.replace(" event", "")}</span>
+      <span className="text-xs font-bold lg:hidden 2xl:inline">{label.replace(" event", "")}</span>
     </Link>
   );
 }
@@ -457,7 +484,7 @@ function ActionButton({
       )}
     >
       <Icon size={15} />
-      <span className="hidden text-xs font-bold 2xl:inline">{label.replace(" event", "")}</span>
+      <span className="text-xs font-bold lg:hidden 2xl:inline">{label.replace(" event", "")}</span>
     </button>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import * as Dialog from "@radix-ui/react-dialog";
 import Image from "next/image";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -36,6 +37,8 @@ export function LiveAttendanceTable() {
   const [statusFilter, setStatusFilter] = useState<"all" | "verified" | "late" | "requires_review">("all");
   const [selectedRecord, setSelectedRecord] = useState<AttendanceRow | null>(null);
   const [evidenceUrl, setEvidenceUrl] = useState<string | null>(null);
+  const [evidenceLoading, setEvidenceLoading] = useState(false);
+  const [evidenceError, setEvidenceError] = useState(false);
 
   // Realtime Supabase change listener
   useEffect(() => {
@@ -54,11 +57,14 @@ export function LiveAttendanceTable() {
   // Load photo signed URL when a record is selected
   useEffect(() => {
     setEvidenceUrl(null);
+    setEvidenceError(false);
+    setEvidenceLoading(Boolean(selectedRecord?.time_in_photo_path));
     if (selectedRecord?.time_in_photo_path) {
       void supabase.storage
         .from("attendance-evidence")
         .createSignedUrl(selectedRecord.time_in_photo_path, 300)
-        .then(({ data }) => setEvidenceUrl(data?.signedUrl ?? null));
+        .then(({ data, error }) => { setEvidenceUrl(data?.signedUrl ?? null); setEvidenceError(Boolean(error) || !data?.signedUrl); })
+        .finally(() => setEvidenceLoading(false));
     }
   }, [selectedRecord]);
 
@@ -83,6 +89,8 @@ export function LiveAttendanceTable() {
 
   return (
     <div className="space-y-4">
+      {query.isError ? <div role="alert" className="flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800"><span>Live attendance could not be loaded.</span><button className="font-bold underline" onClick={() => void query.refetch()}>Try again</button></div> : null}
+      {query.isLoading ? <div role="status" className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-500 md:hidden">Loading live attendance records…</div> : null}
       {/* Controls Bar: Search & Status Filters */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative max-w-sm flex-1">
@@ -138,7 +146,25 @@ export function LiveAttendanceTable() {
 
       {/* Main Table Card */}
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
-        <div className="overflow-x-auto">
+        {!query.isLoading && !query.isError ? (
+          <div className="divide-y divide-slate-100 md:hidden">
+            {filteredRows.map((row) => {
+              const flagged = row.sync_status === "requires_review" || row.status === "pending_verification";
+              return (
+                <button key={row.id} type="button" onClick={() => setSelectedRecord(row)} className="block w-full p-4 text-left">
+                  <div className="flex items-start justify-between gap-3">
+                    <div><p className="font-bold text-slate-900">{row.student?.full_name ?? "Student"}</p><p className="text-xs text-slate-500">{row.student?.student_id ?? "—"} · {row.event?.title ?? "Event"}</p></div>
+                    <Badge tone={flagged ? "requires_review" : row.status}>{labelize(flagged ? "Requires Review" : row.status)}</Badge>
+                  </div>
+                  <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-600"><span>Time in: {row.time_in_server_timestamp ? new Date(row.time_in_server_timestamp).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "—"}</span><span>Distance: {row.time_in_distance != null ? `${Math.round(row.time_in_distance)}m` : "—"}</span></div>
+                  <span className="mt-3 inline-block text-xs font-bold text-brand-700">Inspect record →</span>
+                </button>
+              );
+            })}
+            {!filteredRows.length ? <div className="p-8 text-center text-sm text-slate-500">No attendance records match your search or filter.</div> : null}
+          </div>
+        ) : null}
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-slate-100 bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-500">
               <tr>
@@ -210,7 +236,7 @@ export function LiveAttendanceTable() {
                 );
               })}
 
-              {!query.isLoading && filteredRows.length === 0 ? (
+              {!query.isLoading && !query.isError && filteredRows.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="p-8 text-center text-sm text-slate-500">
                     No attendance records match your search or filter.
@@ -231,9 +257,10 @@ export function LiveAttendanceTable() {
       </div>
 
       {/* Record Inspector Drawer / Modal */}
-      {selectedRecord ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
-          <div className="relative w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+      <Dialog.Root open={Boolean(selectedRecord)} onOpenChange={(open) => { if (!open) setSelectedRecord(null); }}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-50 bg-slate-950/50 backdrop-blur-sm" />
+          {selectedRecord ? <Dialog.Content className="fixed left-1/2 top-1/2 z-50 max-h-[calc(100vh-2rem)] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
             <button
               type="button"
               onClick={() => setSelectedRecord(null)}
@@ -248,10 +275,10 @@ export function LiveAttendanceTable() {
                 {selectedRecord.student?.full_name?.charAt(0) ?? "S"}
               </div>
               <div>
-                <h3 className="text-base font-bold text-slate-900">{selectedRecord.student?.full_name ?? "Student"}</h3>
-                <p className="text-xs text-slate-500">
+                <Dialog.Title className="text-base font-bold text-slate-900">{selectedRecord.student?.full_name ?? "Student"}</Dialog.Title>
+                <Dialog.Description className="text-xs text-slate-500">
                   {selectedRecord.student?.student_id} · {selectedRecord.event?.title}
-                </p>
+                </Dialog.Description>
               </div>
             </div>
 
@@ -289,7 +316,9 @@ export function LiveAttendanceTable() {
             <div className="mt-4">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Submitted Photo Evidence</span>
               <div className="mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
-                {evidenceUrl ? (
+                {evidenceLoading ? (
+                  <div role="status" className="flex aspect-video animate-pulse items-center justify-center text-xs text-slate-500">Loading photo evidence…</div>
+                ) : evidenceUrl ? (
                   <Image
                     src={evidenceUrl}
                     alt="Student Attendance Evidence"
@@ -297,6 +326,8 @@ export function LiveAttendanceTable() {
                     height={320}
                     className="aspect-video w-full object-cover"
                   />
+                ) : evidenceError ? (
+                  <div role="alert" className="flex aspect-video items-center justify-center px-4 text-center text-xs text-red-700">Photo evidence could not be loaded.</div>
                 ) : (
                   <div className="flex aspect-video items-center justify-center text-xs text-slate-400">
                     No photo attached for this record
@@ -314,9 +345,9 @@ export function LiveAttendanceTable() {
                 Close
               </button>
             </div>
-          </div>
-        </div>
-      ) : null}
+          </Dialog.Content> : null}
+        </Dialog.Portal>
+      </Dialog.Root>
     </div>
   );
 }

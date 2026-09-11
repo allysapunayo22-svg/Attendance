@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import * as Dialog from "@radix-ui/react-dialog";
 import { useQuery } from "@tanstack/react-query";
 import { QRCodeCanvas } from "qrcode.react";
 import { Clock, ExternalLink, Maximize2, Minimize2, QrCode, RefreshCw, Sparkles, X } from "lucide-react";
@@ -25,7 +26,7 @@ export function DynamicQrPanel() {
       const { data, error } = await supabase
         .from("events")
         .select("id, title, status, location:event_locations(venue_name)")
-        .in("status", ["published", "ongoing", "draft"])
+        .in("status", ["published", "ongoing"])
         .order("created_at", { ascending: false })
         .limit(20);
       if (error) throw error;
@@ -49,6 +50,15 @@ export function DynamicQrPanel() {
   }, [events, selectedEventId]);
 
   const selectedEvent = events.find((e) => e.id === selectedEventId);
+
+  function changeEvent(eventId: string) {
+    setSelectedEventId(eventId);
+    setToken(null);
+    setExpiresAt(null);
+    setSecondsLeft(30);
+    setErrorMessage(null);
+    setIsProjectorOpen(false);
+  }
 
   async function generateQR() {
     if (!selectedEventId) return;
@@ -80,13 +90,13 @@ export function DynamicQrPanel() {
       const remaining = Math.max(0, Math.ceil(diffMs / 1000));
       setSecondsLeft(remaining);
 
-      if (remaining === 0 && autoRotate) {
+      if (remaining === 0 && autoRotate && !generating) {
         void generateQR();
       }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [token, expiresAt, autoRotate, selectedEventId]);
+  }, [token, expiresAt, autoRotate, selectedEventId, generating]);
 
   return (
     <>
@@ -122,13 +132,15 @@ export function DynamicQrPanel() {
             {/* Event selection controls */}
             <div className="flex-1 space-y-4">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+                <label htmlFor="qr-event" className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
                   Select Event for QR Attendance
                 </label>
                 <select
+                  id="qr-event"
                   value={selectedEventId}
-                  onChange={(e) => setSelectedEventId(e.target.value)}
-                  className="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                  onChange={(e) => changeEvent(e.target.value)}
+                  disabled={eventsQuery.isLoading || eventsQuery.isError}
+                  className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-100 disabled:bg-slate-100"
                 >
                   {events.map((evt) => (
                     <option key={evt.id} value={evt.id}>
@@ -138,6 +150,8 @@ export function DynamicQrPanel() {
                   {events.length === 0 ? <option value="">No published events found</option> : null}
                 </select>
               </div>
+
+              {eventsQuery.isError ? <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-700">Events could not be loaded. <button className="underline" onClick={() => void eventsQuery.refetch()}>Try again</button></div> : null}
 
               <div className="flex flex-wrap items-center gap-3">
                 <Button
@@ -220,8 +234,11 @@ export function DynamicQrPanel() {
       </Card>
 
       {/* Projector Fullscreen Modal */}
-      {isProjectorOpen && token ? (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-950/95 p-6 text-white backdrop-blur-md">
+      <Dialog.Root open={isProjectorOpen && Boolean(token)} onOpenChange={setIsProjectorOpen}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md" />
+          <Dialog.Content className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-y-auto p-6 text-white" aria-describedby="projector-description">
+          <Dialog.Title className="sr-only">Event QR projector mode</Dialog.Title>
           <button
             type="button"
             onClick={() => setIsProjectorOpen(false)}
@@ -238,13 +255,13 @@ export function DynamicQrPanel() {
             <h1 className="mt-4 text-3xl sm:text-4xl font-black tracking-tight text-white">
               {selectedEvent?.title ?? "Campus Event"}
             </h1>
-            <p className="mt-2 text-base text-slate-400">
+            <Dialog.Description id="projector-description" className="mt-2 text-base text-slate-400">
               Point your CSU Attendance mobile camera to verify attendance
-            </p>
+            </Dialog.Description>
 
             <div className="my-8 p-6 rounded-3xl bg-white shadow-2xl shadow-blue-500/20 ring-4 ring-white/20">
               <QRCodeCanvas
-                value={token}
+                value={token ?? ""}
                 size={320}
                 level="H"
                 includeMargin
@@ -272,8 +289,9 @@ export function DynamicQrPanel() {
               Caraga State University • Location Verified Check-in
             </p>
           </div>
-        </div>
-      ) : null}
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </>
   );
 }
