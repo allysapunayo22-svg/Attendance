@@ -2,28 +2,16 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { Bell, CalendarPlus, CheckCircle2, Command, LogOut, Menu, Plus, Radio, Search, ShieldCheck } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Menu, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { supabase } from "@/lib/supabase";
-
-const pageMeta = [
-  { match: /^\/$/, title: "Operations Console", description: "Campus live signals and administrative summary." },
-  { match: /^\/events\/new/, title: "Create New Event", description: "Define geofence boundaries, schedule, and attendance windows." },
-  { match: /^\/events/, title: "Event Management", description: "Supervise campus events, geofences, and attendance rules." },
-  { match: /^\/attendance\/live/, title: "Live Attendance Radar", description: "Realtime incoming student check-ins and device telemetries." },
-  { match: /^\/attendance\/review/, title: "Attendance Review Queue", description: "Inspect submitted evidence photos, GPS offsets, and verify claims." },
-  { match: /^\/students/, title: "Student Roster", description: "Manage student accounts, CSU student IDs, and verification status." },
-  { match: /^\/announcements/, title: "Announcements & Broadcasts", description: "Publish urgent notices directly to student mobile devices." },
-  { match: /^\/reports/, title: "Reports & Analytics", description: "Export CSV/PDF attendance registers and compliance analytics." }
-];
 
 const destinations = [
-  { label: "Operations Overview", description: "Operational summary & stats", href: "/" },
+  { label: "Overview", description: "Today’s attendance summary", href: "/" },
   { label: "Create New Event", description: "Set up geofence & schedule", href: "/events/new" },
   { label: "Event Management", description: "Browse and edit campus events", href: "/events" },
-  { label: "Live Attendance Radar", description: "Monitor incoming time-ins", href: "/attendance/live" },
+  { label: "Live Attendance", description: "Monitor incoming check-ins", href: "/attendance/live" },
   { label: "Review Queue", description: "Resolve flagged attendance records", href: "/attendance/review" },
   { label: "Student Roster", description: "Student accounts and IDs", href: "/students" },
   { label: "Announcements", description: "Broadcast updates to mobile app", href: "/announcements" },
@@ -32,13 +20,11 @@ const destinations = [
 
 export function TopNav({ onOpenSidebar }: { onOpenSidebar: () => void }) {
   const router = useRouter();
-  const pathname = usePathname();
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const [search, setSearch] = useState("");
   const [activeResult, setActiveResult] = useState(0);
 
-  const currentPage = useMemo(() => pageMeta.find((item) => item.match.test(pathname)) ?? pageMeta[0], [pathname]);
   const matches = useMemo(() => {
     const term = search.trim().toLowerCase();
     if (!term) return [];
@@ -63,11 +49,6 @@ export function TopNav({ onOpenSidebar }: { onOpenSidebar: () => void }) {
     return () => { window.removeEventListener("keydown", handleKeyDown); document.removeEventListener("mousedown", handlePointerDown); };
   }, []);
 
-  async function logout() {
-    await supabase.auth.signOut();
-    router.replace("/login");
-  }
-
   return (
     <header className="sticky top-0 z-30 shrink-0 border-b border-slate-200/80 bg-white/85 backdrop-blur-md">
       <div className="flex min-h-18 items-center justify-between gap-3 px-4 py-3 lg:px-6">
@@ -82,10 +63,6 @@ export function TopNav({ onOpenSidebar }: { onOpenSidebar: () => void }) {
             <Menu size={20} />
           </button>
 
-          <div className="hidden sm:block">
-            <h2 className="text-base font-black tracking-tight text-slate-950">{currentPage?.title}</h2>
-            <p className="mt-0.5 text-xs text-slate-500 line-clamp-1">{currentPage?.description}</p>
-          </div>
         </div>
 
         {/* Global Quick Search Bar */}
@@ -147,17 +124,8 @@ export function TopNav({ onOpenSidebar }: { onOpenSidebar: () => void }) {
           ) : null}
         </div>
 
-        {/* Action Controls: Live Status & Create Event Button */}
+        {/* Primary action */}
         <div className="flex items-center gap-2.5">
-          {/* Live System Indicator */}
-          <div className="hidden lg:flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50/80 px-3 py-1.5 text-xs font-semibold text-blue-800 shadow-xs">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75 animate-ping" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-600" />
-            </span>
-            <span>Realtime Radar</span>
-          </div>
-
           {/* Quick Create Event Button */}
           <Button
             asChild

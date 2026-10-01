@@ -10,17 +10,19 @@ import { EmptyState, LoadingState } from "../../../src/components/ScreenState";
 import { SectionHeader } from "../../../src/components/SectionHeader";
 import { SegmentedFilter, type SegmentOption } from "../../../src/components/SegmentedFilter";
 import { useEvents } from "../../../src/hooks/useEvents";
+import { useNow } from "../../../src/hooks/useNow";
 import { getEventPhase, getEventSortTime } from "../../../src/utils/events";
 
-const filters = ["upcoming", "ongoing", "completed", "required", "optional"] as const;
+const filters = ["all", "today", "upcoming", "past"] as const;
 type EventFilter = (typeof filters)[number];
 
 export default function EventsScreen() {
   const insets = useSafeAreaInsets();
-  const [filter, setFilter] = useState<EventFilter>("upcoming");
+  const [filter, setFilter] = useState<EventFilter>("all");
+  const [requiredOnly, setRequiredOnly] = useState(false);
   const [search, setSearch] = useState("");
   const eventsQuery = useEvents();
-  const now = Date.now();
+  const now = useNow();
   const allEvents = eventsQuery.data ?? [];
   const contentStyle = { width: "100%", maxWidth: 620, alignSelf: "center" } as const;
 
@@ -33,34 +35,34 @@ export default function EventsScreen() {
     return allEvents
       .filter((event) => {
         const phase = getEventPhase(event, now);
+        if (requiredOnly && event.requirement !== "required") return false;
+        if (filter === "all") return true;
+        if (filter === "today") return event.schedule ? new Date(event.schedule.starts_at).toDateString() === new Date(now).toDateString() : false;
         if (filter === "upcoming") return phase === "upcoming";
-        if (filter === "ongoing") return phase === "ongoing";
-        if (filter === "completed") return phase === "completed";
-        if (filter === "required") return event.requirement === "required";
-        return event.requirement === "optional";
+        return phase === "completed";
       })
       .filter((event) => {
         if (!query) return true;
         return `${event.title} ${event.description} ${event.location?.venue_name ?? ""}`.toLowerCase().includes(query);
       })
       .sort((first, second) => getEventSortTime(first) - getEventSortTime(second));
-  }, [allEvents, filter, now, search]);
+  }, [allEvents, filter, now, requiredOnly, search]);
 
   const filterOptions = useMemo<SegmentOption<EventFilter>[]>(() => {
     return filters.map((item) => {
       const count = allEvents.filter((event) => {
         const phase = getEventPhase(event, now);
+        if (item === "all") return true;
+        if (item === "today") return event.schedule ? new Date(event.schedule.starts_at).toDateString() === new Date(now).toDateString() : false;
         if (item === "upcoming") return phase === "upcoming";
-        if (item === "ongoing") return phase === "ongoing";
-        if (item === "completed") return phase === "completed";
-        if (item === "required") return event.requirement === "required";
-        return event.requirement === "optional";
+        return phase === "completed";
       }).length;
       return { value: item, label: item.charAt(0).toUpperCase() + item.slice(1), count };
     });
   }, [allEvents, now]);
 
   if (eventsQuery.isLoading && !eventsQuery.data) return <LoadingState label="Loading cached events" />;
+  if (eventsQuery.isError) return <View className="flex-1 justify-center bg-slate-50 p-5"><EmptyState title="Events could not be loaded" body="Check your connection and try again." /><View className="mt-4"><Pressable accessibilityRole="button" onPress={() => void eventsQuery.refetch()} className="min-h-12 items-center justify-center rounded-full bg-brand-700"><Text className="font-bold text-white">Try Again</Text></Pressable></View></View>;
 
   return (
     <View className="flex-1 bg-slate-50">
@@ -107,7 +109,7 @@ export default function EventsScreen() {
               className="min-h-12 flex-1 px-3 text-sm text-slate-950"
             />
             {search.length > 0 ? (
-              <Pressable onPress={() => setSearch("")} className="p-1">
+              <Pressable accessibilityRole="button" accessibilityLabel="Clear event search" onPress={() => setSearch("")} className="p-1">
                 <Ionicons name="close-circle" size={18} color="#94a3b8" />
               </Pressable>
             ) : null}
@@ -115,6 +117,7 @@ export default function EventsScreen() {
 
           {/* Filter Bar */}
           <SegmentedFilter options={filterOptions} value={filter} onChange={setFilter} />
+          <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: requiredOnly }} onPress={() => setRequiredOnly((value) => !value)} className={`min-h-11 flex-row items-center justify-center rounded-full border px-4 ${requiredOnly ? "border-brand-700 bg-brand-50" : "border-slate-200 bg-white"}`}><Ionicons name={requiredOnly ? "checkbox" : "square-outline"} size={18} color="#0f766e" /><Text className="ml-2 text-sm font-semibold text-slate-700">Required events only</Text></Pressable>
         </View>
       </View>
 
@@ -125,12 +128,12 @@ export default function EventsScreen() {
         contentContainerStyle={{
           paddingHorizontal: 20,
           paddingTop: 16,
-          paddingBottom: Math.max(220, insets.bottom + 140)
+          paddingBottom: Math.max(150, insets.bottom + 110)
         }}
         ItemSeparatorComponent={() => <View className="h-3.5" />}
         ListEmptyComponent={
           <EmptyState
-            title={search ? "No matching events" : `No ${filter} events`}
+            title={search ? "No matching events" : filter === "all" ? "No assigned events" : `No ${filter} events`}
             body={
               search
                 ? `No events matched "${search}". Try clearing search or checking other filters.`

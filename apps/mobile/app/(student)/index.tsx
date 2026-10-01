@@ -13,10 +13,11 @@ import { ProgressBar } from "../../src/components/ProgressBar";
 import { SectionHeader } from "../../src/components/SectionHeader";
 import { StatusBadge } from "../../src/components/StatusBadge";
 import { useAnnouncements, useEvents } from "../../src/hooks/useEvents";
+import { useNow } from "../../src/hooks/useNow";
 import { getAttendanceHistory, getPendingAttendanceRecords } from "../../src/repositories/attendanceRepository";
 import { useAuthStore } from "../../src/stores/authStore";
 import { formatDate, formatRelativeStatusDate, formatTime, formatTimeRange } from "../../src/utils/format";
-import { getEventPhase, getEventSortTime, isAttendanceCounted, needsAttention } from "../../src/utils/events";
+import { getEventPhase, getEventSortTime, needsAttention } from "../../src/utils/events";
 
 type HistoryRecord = Awaited<ReturnType<typeof getAttendanceHistory>>[number];
 
@@ -44,30 +45,6 @@ function QuickAction({
       <Ionicons name={icon} size={22} color={active ? "#ffffff" : "#0f766e"} />
       <Text className={`ml-2 text-center text-sm font-semibold ${active ? "text-white" : "text-slate-800"}`}>{label}</Text>
     </Pressable>
-  );
-}
-
-function ProgressMetric({
-  label,
-  value,
-  icon,
-  tone = "default"
-}: {
-  label: string;
-  value: string | number;
-  icon: keyof typeof Ionicons.glyphMap;
-  tone?: "default" | "good" | "warn" | "danger";
-}) {
-  const color = tone === "good" ? "#0f766e" : tone === "warn" ? "#f97316" : tone === "danger" ? "#ef4444" : "#0d9488";
-
-  return (
-    <View className="w-[48%] rounded-2xl bg-slate-50 p-3">
-      <View className="h-8 w-8 items-center justify-center rounded-full bg-white">
-        <Ionicons name={icon} size={16} color={color} />
-      </View>
-      <Text className="mt-3 text-xl font-bold text-slate-950">{value}</Text>
-      <Text className="mt-1 text-xs font-semibold text-slate-500">{label}</Text>
-    </View>
   );
 }
 
@@ -237,6 +214,7 @@ export default function StudentHomeScreen() {
   const announcementsQuery = useAnnouncements();
   const historyQuery = useQuery({ queryKey: ["attendance-history"], queryFn: getAttendanceHistory });
   const pendingQuery = useQuery({ queryKey: ["pending-attendance"], queryFn: getPendingAttendanceRecords });
+  const now = useNow();
 
   function handleLogout() {
     setProfileMenuOpen(false);
@@ -267,12 +245,12 @@ export default function StudentHomeScreen() {
   const events = eventsQuery.data ?? [];
   const history = historyQuery.data ?? [];
   const pendingCount = pendingQuery.data?.length ?? 0;
-  const attended = history.filter((record) => isAttendanceCounted(record.status)).length;
-  const late = history.filter((record) => record.status === "late").length;
-  const completedRequired = events.filter((event) => event.requirement === "required" && getEventPhase(event) === "completed").length;
-  const missed = Math.max(0, completedRequired - attended);
+  const completedRequiredIds = new Set(events.filter((event) => event.requirement === "required" && getEventPhase(event, now) === "completed").map((event) => event.id));
+  const attendedRequiredIds = new Set(history.filter((record) => record.mode === "time_in" && completedRequiredIds.has(record.event_id) && ["verified", "completed", "time_in_recorded", "pending_verification", "late", "excused"].includes(record.status)).map((record) => record.event_id));
+  const attended = attendedRequiredIds.size;
+  const missed = Math.max(0, completedRequiredIds.size - attended);
   const reviewCount = history.filter((record) => needsAttention(record.sync_status) || needsAttention(record.status)).length;
-  const percentage = attended + missed === 0 ? 100 : Math.round((attended / (attended + missed)) * 100);
+  const percentage = attended + missed === 0 ? null : Math.round((attended / (attended + missed)) * 100);
 
   const studentInitials = student?.full_name
     ? student.full_name
@@ -283,7 +261,6 @@ export default function StudentHomeScreen() {
         .join("")
     : "ST";
 
-  const now = Date.now();
   const upcoming = events
     .filter((event) => getEventPhase(event, now) === "upcoming")
     .sort((first, second) => getEventSortTime(first) - getEventSortTime(second))
@@ -332,7 +309,7 @@ export default function StudentHomeScreen() {
       <StatusBar style="light" />
       <ScrollView
         className="flex-1 bg-slate-50"
-        contentContainerStyle={{ paddingBottom: Math.max(260, insets.bottom + 190) }}
+        contentContainerStyle={{ paddingBottom: Math.max(180, insets.bottom + 120) }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void refresh()} tintColor="#0f766e" />}
       >
         <View className="rounded-b-3xl bg-brand-900 px-5 pb-24 pt-6">
@@ -393,7 +370,7 @@ export default function StudentHomeScreen() {
                     <Text className="text-xs font-medium text-brand-100">Year {student.year_level}</Text>
                   </View>
                 ) : null}
-                <View className={`flex-row items-center gap-1.5 rounded-full px-2.5 py-1 border ${
+                <Pressable accessibilityRole="button" accessibilityLabel={pendingCount > 0 ? `${pendingCount} attendance records waiting to sync. Open attendance history.` : "All attendance records synced. Open attendance history."} onPress={() => router.push("/(student)/attendance")} className={`flex-row items-center gap-1.5 rounded-full px-2.5 py-1 border ${
                   pendingCount > 0
                     ? "bg-amber-500/20 border-amber-400/30"
                     : "bg-emerald-500/20 border-emerald-400/30"
@@ -406,13 +383,14 @@ export default function StudentHomeScreen() {
                   <Text className="text-xs font-semibold text-white">
                     {pendingCount > 0 ? `${pendingCount} offline queued` : "All records synced"}
                   </Text>
-                </View>
+                </Pressable>
               </View>
             </View>
           </View>
         </View>
 
         <View className="-mt-16 w-full max-w-[620px] self-center gap-5 px-5">
+          {eventsQuery.isError || historyQuery.isError || pendingQuery.isError ? <View accessibilityRole="alert" className="rounded-2xl border border-red-200 bg-red-50 p-4"><Text className="text-sm font-semibold text-red-800">Some dashboard data could not be refreshed. Cached information may be shown.</Text><Pressable accessibilityRole="button" onPress={() => void refresh()}><Text className="mt-2 font-bold text-red-800">Try again</Text></Pressable></View> : null}
           <SmartActionCard
             event={nextEvent}
             timeInRecord={nextTimeIn}
@@ -437,23 +415,25 @@ export default function StudentHomeScreen() {
               <View className="flex-row items-center justify-between gap-4">
                 <View className="min-w-0 flex-1">
                   <Text className="text-xs font-semibold uppercase tracking-wider text-slate-400">Current standing</Text>
-                  <Text className="mt-1 text-4xl font-extrabold text-white">{percentage}%</Text>
+                  <Text className="mt-1 text-4xl font-extrabold text-white">{percentage == null ? "—" : `${percentage}%`}</Text>
                 </View>
                 {reviewCount > 0 ? <StatusBadge status="requires_review" /> : <StatusBadge status="verified" />}
               </View>
 
               <View className="mt-2.5 flex-row items-center gap-1.5">
                 <Ionicons
-                  name={percentage >= 90 ? "flame" : percentage >= 75 ? "checkmark-circle" : "alert-circle"}
+                  name={percentage == null ? "information-circle" : percentage >= 90 ? "flame" : percentage >= 75 ? "checkmark-circle" : "alert-circle"}
                   size={14}
-                  color={percentage >= 90 ? "#fbbf24" : percentage >= 75 ? "#34d399" : "#f87171"}
+                  color={percentage == null ? "#94a3b8" : percentage >= 90 ? "#fbbf24" : percentage >= 75 ? "#34d399" : "#f87171"}
                 />
                 <Text
                   className={`text-xs font-bold ${
-                    percentage >= 90 ? "text-amber-300" : percentage >= 75 ? "text-emerald-300" : "text-rose-300"
+                    percentage == null ? "text-slate-300" : percentage >= 90 ? "text-amber-300" : percentage >= 75 ? "text-emerald-300" : "text-rose-300"
                   }`}
                 >
-                  {percentage >= 90
+                  {percentage == null
+                    ? "No completed required events yet"
+                    : percentage >= 90
                     ? "Excellent • On track for clearance"
                     : percentage >= 75
                     ? "Good Standing (Above 75% target)"
@@ -463,15 +443,10 @@ export default function StudentHomeScreen() {
             </View>
 
             <View className="mt-3">
-              <ProgressBar value={percentage} trackClassName="bg-brand-50" fillClassName="bg-brand-600" />
+              <ProgressBar value={percentage ?? 0} trackClassName="bg-brand-50" fillClassName="bg-brand-600" />
             </View>
 
-            <View className="mt-4 flex-row flex-wrap justify-between gap-y-3">
-              <ProgressMetric label="Attended" value={attended} icon="checkmark-circle" tone="good" />
-              <ProgressMetric label="Missed" value={missed} icon="close-circle" tone={missed > 0 ? "danger" : "default"} />
-              <ProgressMetric label="Late" value={late} icon="time" tone="warn" />
-              <ProgressMetric label="Review" value={reviewCount} icon="sync" />
-            </View>
+            <Pressable accessibilityRole="button" onPress={() => router.push("/(student)/attendance/progress")} className="mt-4 min-h-12 flex-row items-center justify-center rounded-full bg-brand-50"><Text className="font-bold text-brand-800">View full progress</Text><Ionicons name="arrow-forward" size={16} color="#0f766e" style={{ marginLeft: 8 }} /></Pressable>
           </View>
 
           <View className="flex-row gap-3">

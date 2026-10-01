@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { FlashList } from "@shopify/flash-list";
-import { RefreshControl, Text, TextInput, View } from "react-native";
+import { Pressable, RefreshControl, Text, TextInput, View } from "react-native";
+import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import type { NotificationRecord } from "@attendance/types";
 import { EmptyState, LoadingState } from "../../../src/components/ScreenState";
@@ -21,10 +22,12 @@ async function fetchNotifications() {
 }
 
 export default function NotificationsScreen() {
+  const queryClient = useQueryClient();
   const [filter, setFilter] = useState<NotificationFilter>("all");
   const [search, setSearch] = useState("");
   const query = useQuery({ queryKey: ["notifications"], queryFn: fetchNotifications });
   const notifications = query.data ?? [];
+  const unreadCount = notifications.filter((notification) => !notification.read_at).length;
   const contentStyle = { width: "100%", maxWidth: 620, alignSelf: "center" } as const;
   const filtered = useMemo(() => {
     const value = search.trim().toLowerCase();
@@ -60,10 +63,32 @@ export default function NotificationsScreen() {
 
   if (query.isLoading) return <LoadingState label="Loading notifications" />;
 
+  async function openNotification(notification: NotificationRecord) {
+    if (!notification.read_at) {
+      const readAt = new Date().toISOString();
+      const { error } = await supabase.from("notifications").update({ read_at: readAt }).eq("id", notification.id);
+      if (!error) queryClient.setQueryData<NotificationRecord[]>(["notifications"], (current) => current?.map((item) => item.id === notification.id ? { ...item, read_at: readAt } : item));
+    }
+    const metadata = notification.metadata ?? {};
+    const eventId = typeof metadata.event_id === "string" ? metadata.event_id : null;
+    const attendanceId = typeof metadata.attendance_local_id === "string" ? metadata.attendance_local_id : null;
+    if (attendanceId) router.push(`/(student)/attendance/${attendanceId}`);
+    else if (eventId) router.push(`/event/${eventId}`);
+  }
+
+  async function markAllRead() {
+    const ids = notifications.filter((notification) => !notification.read_at).map((notification) => notification.id);
+    if (!ids.length) return;
+    const readAt = new Date().toISOString();
+    const { error } = await supabase.from("notifications").update({ read_at: readAt }).in("id", ids);
+    if (!error) queryClient.setQueryData<NotificationRecord[]>(["notifications"], (current) => current?.map((item) => ({ ...item, read_at: item.read_at ?? readAt })));
+  }
+
   return (
     <View className="flex-1 bg-slate-50">
       <View className="gap-4 p-5 pb-3" style={contentStyle}>
-        <SectionHeader title="Notifications" subtitle={`${notifications.length} recent alerts`} />
+        <SectionHeader title="Notifications" subtitle={`${unreadCount} unread · ${notifications.length} recent`} action={unreadCount ? <Pressable accessibilityRole="button" onPress={() => void markAllRead()}><Text className="text-sm font-semibold text-brand-700">Mark all read</Text></Pressable> : undefined} />
+        {query.isError ? <View accessibilityRole="alert" className="rounded-2xl bg-red-50 p-4"><Text className="text-sm text-red-700">Notifications could not be loaded.</Text><Pressable accessibilityRole="button" onPress={() => void query.refetch()}><Text className="mt-2 font-bold text-red-800">Try again</Text></Pressable></View> : null}
         <View className="min-h-12 flex-row items-center rounded-full border border-slate-100 bg-white px-4 shadow-sm">
           <Ionicons name="search-outline" size={20} color="#0f766e" />
           <TextInput
@@ -84,14 +109,14 @@ export default function NotificationsScreen() {
         ItemSeparatorComponent={() => <View className="h-3" />}
         ListEmptyComponent={<EmptyState title="No notifications" body="Event reminders and attendance decisions appear here." />}
         renderItem={({ item }) => (
-          <View className="rounded-3xl border border-slate-100 bg-white p-4 shadow-sm" style={contentStyle}>
+          <Pressable accessibilityRole="button" accessibilityLabel={`${item.read_at ? "Read" : "Unread"} notification: ${item.title}`} onPress={() => void openNotification(item)} className={`rounded-3xl border bg-white p-4 shadow-sm ${item.read_at ? "border-slate-100" : "border-brand-200"}`} style={contentStyle}>
             <View className="flex-row items-start justify-between gap-3">
               <Text className="min-w-0 flex-1 font-semibold text-slate-950">{item.title}</Text>
               <StatusBadge status={item.read_at ? "read" : "unread"} />
             </View>
             <Text className="mt-1 text-sm text-slate-600">{item.body}</Text>
             <Text className="mt-2 text-xs text-slate-400">{formatDateTime(item.created_at)}</Text>
-          </View>
+          </Pressable>
         )}
       />
     </View>

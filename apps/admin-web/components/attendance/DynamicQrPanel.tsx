@@ -107,9 +107,9 @@ export function DynamicQrPanel() {
               <QrCode size={20} />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-900">Dynamic Anti-Spoofing QR Code</h2>
+              <h2 className="text-base font-bold text-slate-900">Event attendance QR</h2>
               <p className="mt-0.5 text-xs text-slate-500">
-                Rotates dynamically every 30 seconds to prevent student photo sharing and proxy check-ins.
+                Show a rotating code for students to scan when they check in.
               </p>
             </div>
           </div>
@@ -133,7 +133,7 @@ export function DynamicQrPanel() {
             <div className="flex-1 space-y-4">
               <div>
                 <label htmlFor="qr-event" className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
-                  Select Event for QR Attendance
+                  Event
                 </label>
                 <select
                   id="qr-event"
@@ -160,7 +160,7 @@ export function DynamicQrPanel() {
                   className="h-10 rounded-xl bg-brand-700 hover:bg-brand-800 px-5 text-xs font-semibold text-white shadow-xs"
                 >
                   <RefreshCw size={14} className={generating ? "animate-spin" : ""} />
-                  <span>{token ? "Refresh QR Now" : "Launch Dynamic QR"}</span>
+                  <span>{token ? "Refresh QR" : "Show event QR"}</span>
                 </Button>
 
                 {token ? (
@@ -183,10 +183,10 @@ export function DynamicQrPanel() {
               ) : null}
 
               <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-4 text-xs text-slate-600 space-y-1">
-                <p className="font-semibold text-slate-900">How students verify with QR:</p>
-                <p>1. Students open the CSU Campus Attendance mobile app.</p>
-                <p>2. Tap "Time In" and point their camera at this rotating code.</p>
-                <p>3. The mobile app automatically verifies GPS geofence + cryptographic QR token in one step.</p>
+                <p className="font-semibold text-slate-900">Student instructions</p>
+                <p>1. Open the CSU Attendance app and tap Time In.</p>
+                <p>2. Scan the code shown here.</p>
+                <p>3. Wait for the check-in confirmation.</p>
               </div>
             </div>
 

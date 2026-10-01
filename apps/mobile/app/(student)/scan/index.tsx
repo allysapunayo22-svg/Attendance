@@ -1,21 +1,16 @@
 import { useMemo, useState } from "react";
-import { Alert, ScrollView, Text, View } from "react-native";
+import { Linking, ScrollView, Text, View } from "react-native";
 import { CameraView, type BarcodeScanningResult, useCameraPermissions } from "expo-camera";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { Event } from "@attendance/types";
-import { createIdempotencyKey, createLocalId, formatDistance } from "@attendance/shared-utils";
 import { EmptyState, LoadingState } from "../../../src/components/ScreenState";
 import { PrimaryButton } from "../../../src/components/PrimaryButton";
 import { StatusBadge } from "../../../src/components/StatusBadge";
 import { useEvents } from "../../../src/hooks/useEvents";
-import { useOnlineStatus } from "../../../src/hooks/useOnlineStatus";
-import { getLatestAttendanceForEvent, saveLocalAttendance } from "../../../src/repositories/attendanceRepository";
+import { getLatestAttendanceForEvent } from "../../../src/repositories/attendanceRepository";
 import { getCachedEvent } from "../../../src/repositories/eventsRepository";
-import { evaluateLocationForEvent, requestFreshLocation } from "../../../src/services/location";
-import { syncPendingAttendance } from "../../../src/services/syncQueue";
-import { useAuthStore } from "../../../src/stores/authStore";
 import { formatDateTime } from "../../../src/utils/format";
 import { getEventPhase } from "../../../src/utils/events";
 
@@ -53,9 +48,6 @@ export default function ScanAttendanceScreen() {
   const [message, setMessage] = useState("Scan the event QR code shown by the marshal.");
   const [processing, setProcessing] = useState(false);
   const [lastEvent, setLastEvent] = useState<Event | null>(null);
-  const [distance, setDistance] = useState<number | null>(null);
-  const deviceId = useAuthStore((state) => state.deviceId);
-  const online = useOnlineStatus();
 
   async function resolveEvent(eventId: string) {
     return eventMap.get(eventId) ?? (await getCachedEvent(eventId));
@@ -66,10 +58,7 @@ export default function ScanAttendanceScreen() {
     setProcessing(true);
 
     try {
-      if (!deviceId) throw new Error("Registered device not found. Log in again to register this phone.");
-
-      const token = result.data;
-      const { eventId } = parseQrToken(token);
+      const { eventId } = parseQrToken(result.data);
       const event = await resolveEvent(eventId);
       if (!event) throw new Error("Event is not cached on this phone. Open Events while online, then scan again.");
       setLastEvent(event);
@@ -83,48 +72,8 @@ export default function ScanAttendanceScreen() {
         throw new Error("You already have a time-in record for this event.");
       }
 
-      const location = await requestFreshLocation();
-      const locationResult = evaluateLocationForEvent(event, location);
-      setDistance(locationResult.distanceMeters);
-
-      if (!locationResult.accuracyOk) throw new Error(locationResult.reason);
-      if (!locationResult.inside) throw new Error(locationResult.reason);
-
-      const localId = createLocalId("scan_in");
-      const now = new Date().toISOString();
-      const idempotencyKey = createIdempotencyKey([event.id, deviceId, "time_in", localId]);
-
-      await saveLocalAttendance({
-        local_id: localId,
-        event_id: event.id,
-        mode: "time_in",
-        status: "time_in_recorded",
-        sync_status: "pending_upload",
-        device_timestamp: now,
-        latitude: location.latitude,
-        longitude: location.longitude,
-        accuracy_meters: location.accuracy,
-        distance_meters: locationResult.distanceMeters,
-        qr_token: token,
-        device_id: deviceId,
-        idempotency_key: idempotencyKey,
-        is_offline_submission: !online,
-        retry_count: 0,
-        created_at: now,
-        updated_at: now
-      });
-
-      if (online) {
-        await syncPendingAttendance();
-        setMessage(event.photo_required ? "Scan check-in recorded. This event usually requires photo evidence, so it may still be reviewed." : "Scan check-in recorded.");
-      } else {
-        setMessage("Scan check-in saved on this phone and will upload when internet is available.");
-      }
-
-      Alert.alert("Scan recorded", event.photo_required ? "Saved without a photo. Admin review may be required for this event." : "Your scan check-in has been recorded.", [
-        { text: "View History", onPress: () => router.replace("/(student)/attendance") },
-        { text: "Done", style: "cancel" }
-      ]);
+      setMessage("Event found. Complete verification, then scan a fresh QR code before submitting.");
+      router.replace({ pathname: "/check-in/[eventId]", params: { eventId: event.id } });
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to scan attendance.");
     } finally {
@@ -140,7 +89,7 @@ export default function ScanAttendanceScreen() {
         <View className="flex-1 p-5">
           <EmptyState title="Camera permission needed" body="The scanner uses the camera only to read the event QR code." />
           <View className="mt-5">
-            <PrimaryButton title="Allow Scanner" icon={<Ionicons name="scan-outline" size={18} color="#ffffff" />} onPress={() => void requestPermission()} />
+            <PrimaryButton title={permission && !permission.canAskAgain ? "Open Settings" : "Allow Scanner"} icon={<Ionicons name="scan-outline" size={18} color="#ffffff" />} onPress={() => void (permission && !permission.canAskAgain ? Linking.openSettings() : requestPermission())} />
           </View>
         </View>
       </SafeAreaView>
@@ -153,8 +102,14 @@ export default function ScanAttendanceScreen() {
         <View className="rounded-3xl bg-brand-900 p-5">
           <Text className="text-sm font-semibold text-brand-100">Scan attendance</Text>
           <Text className="mt-2 text-2xl font-bold text-white">Point your camera at the event QR</Text>
-          <Text className="mt-2 text-sm leading-6 text-brand-50">Location is checked after scanning. No attendance photo is captured from this shortcut.</Text>
+          <Text className="mt-2 text-sm leading-6 text-brand-50">This identifies the event. After location and photo checks, you’ll scan a fresh short-lived code before submitting.</Text>
         </View>
+
+        {eventsQuery.isError ? (
+          <View accessibilityRole="alert" className="rounded-2xl bg-amber-50 p-4">
+            <Text className="text-sm text-amber-800">The latest event list could not be refreshed. Cached events can still be scanned.</Text>
+          </View>
+        ) : null}
 
         <View className="overflow-hidden rounded-3xl border border-slate-100 bg-black shadow-sm">
           <CameraView
@@ -174,7 +129,7 @@ export default function ScanAttendanceScreen() {
             <StatusBadge status={processing ? "uploading" : lastEvent ? "time_in_recorded" : "not_started"} />
           </View>
           <Text className="mt-4 rounded-2xl bg-brand-50 p-3 text-sm font-semibold text-brand-900">{message}</Text>
-          <Text className="mt-3 text-sm text-slate-500">Distance: {formatDistance(distance)}</Text>
+          <Text className="mt-3 text-sm text-slate-500">Location verification continues on the next screen.</Text>
         </View>
       </ScrollView>
     </SafeAreaView>

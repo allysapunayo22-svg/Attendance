@@ -10,8 +10,9 @@ export function useEvents() {
         // Refresh before rendering so a deleted or unassigned cached event
         // cannot accept a new attendance capture while the app is online.
         return await refreshEvents();
-      } catch {
-        return cached;
+      } catch (error) {
+        if (cached.length) return cached;
+        throw error;
       }
     },
     staleTime: 30_000

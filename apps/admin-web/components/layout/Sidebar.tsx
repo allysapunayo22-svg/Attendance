@@ -34,7 +34,7 @@ const groups = [
   {
     label: "Attendance",
     items: [
-      { href: "/attendance/live", label: "Live Radar", icon: ClipboardCheck },
+      { href: "/attendance/live", label: "Live Attendance", icon: ClipboardCheck },
       { href: "/attendance/review", label: "Review Queue", icon: Bell, badgeKey: "review" }
     ]
   },

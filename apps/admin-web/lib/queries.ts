@@ -3,12 +3,10 @@
 import { supabase } from "./supabase";
 
 export async function fetchDashboardStats() {
-  const [students, upcoming, ongoing, pending, absence] = await Promise.all([
-    supabase.from("student_profiles").select("id", { count: "exact", head: true }),
+  const [upcoming, ongoing, pending] = await Promise.all([
     supabase.from("events").select("id", { count: "exact", head: true }).eq("status", "published"),
     supabase.from("events").select("id", { count: "exact", head: true }).eq("status", "ongoing"),
-    supabase.from("attendance_sessions").select("id", { count: "exact", head: true }).or("status.eq.pending_verification,sync_status.eq.requires_review"),
-    supabase.from("absence_requests").select("id", { count: "exact", head: true }).in("status", ["submitted", "under_review"])
+    supabase.from("attendance_sessions").select("id", { count: "exact", head: true }).or("status.eq.pending_verification,sync_status.eq.requires_review")
   ]);
 
   const now = new Date();
@@ -21,28 +19,11 @@ export async function fetchDashboardStats() {
     .lt("created_at", startOfTomorrow.toISOString());
 
   if (todayError) throw todayError;
-  const countErrors = [students.error, upcoming.error, ongoing.error, pending.error, absence.error].filter(Boolean);
+  const countErrors = [upcoming.error, ongoing.error, pending.error].filter(Boolean);
   if (countErrors[0]) throw countErrors[0];
   const resolved = todayRows?.filter((row) => ["verified", "completed", "time_in_recorded", "late", "excused"].includes(row.status)).length ?? 0;
-  const attendanceRate = todayRows?.length ? Math.round((resolved / todayRows.length) * 100) : 0;
-  const hourlyTraffic = Array.from({ length: 24 }, (_, hour) => ({
-    time: new Intl.DateTimeFormat(undefined, { hour: "numeric" }).format(new Date(2000, 0, 1, hour)),
-    total: 0,
-    verified: 0,
-    flagged: 0
-  }));
-
-  for (const row of todayRows ?? []) {
-    const hour = new Date(row.time_in_server_timestamp ?? row.updated_at).getHours();
-    const bucket = hourlyTraffic[hour];
-    if (!bucket) continue;
-    bucket.total += 1;
-    if (["verified", "completed", "time_in_recorded", "late", "excused"].includes(row.status)) bucket.verified += 1;
-    if (row.status === "pending_verification" || row.sync_status === "requires_review") bucket.flagged += 1;
-  }
-
+  const resolutionRate = todayRows?.length ? Math.round((resolved / todayRows.length) * 100) : 0;
   return {
-    totalStudents: students.count ?? 0,
     upcomingEvents: upcoming.count ?? 0,
     ongoingEvents: ongoing.count ?? 0,
     attendanceToday: todayRows?.length ?? 0,
@@ -50,9 +31,7 @@ export async function fetchDashboardStats() {
     late: todayRows?.filter((row) => row.status === "late").length ?? 0,
     absent: todayRows?.filter((row) => row.status === "missed").length ?? 0,
     pendingReviews: pending.count ?? 0,
-    pendingAbsenceRequests: absence.count ?? 0,
-    attendanceRate,
-    hourlyTraffic,
+    resolutionRate,
     recentActivity: [...(todayRows ?? [])].sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()).slice(0, 6)
   };
 }
@@ -91,6 +70,25 @@ export async function fetchLiveAttendance() {
 
   if (error) throw error;
   return data ?? [];
+}
+
+export async function fetchAttendanceReport() {
+  const pageSize = 1000;
+  const rows: Awaited<ReturnType<typeof fetchLiveAttendance>> = [];
+
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await supabase
+      .from("attendance_sessions")
+      .select("*, student:student_profiles(full_name,student_id,course:courses(code,name),section:sections(name)), event:events(title)")
+      .order("updated_at", { ascending: false })
+      .range(from, from + pageSize - 1);
+
+    if (error) throw error;
+    rows.push(...((data ?? []) as typeof rows));
+    if (!data || data.length < pageSize) break;
+  }
+
+  return rows;
 }
 
 export async function fetchStudents() {

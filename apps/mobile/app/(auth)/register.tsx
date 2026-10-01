@@ -1,229 +1,143 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link, router } from "expo-router";
-import { Image, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { router } from "expo-router";
+import { Pressable, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { registerSchema, type RegisterInput } from "@attendance/validation";
-import { PrimaryButton } from "../../src/components/PrimaryButton";
+import { AuthField, PasswordGuidance } from "../../src/components/AuthField";
+import { AuthButton, AuthLink, AuthNotice, AuthScreen } from "../../src/components/AuthScreen";
 import { hasSeenWelcome } from "../../src/services/onboarding";
+import { authFeedback } from "../../src/services/authFeedback";
 import { useAuthStore } from "../../src/stores/authStore";
+import { useOnlineStatus } from "../../src/hooks/useOnlineStatus";
 
-function FieldError({ message }: { message: string | undefined }) {
-  if (!message) return null;
-  return <Text className="mt-1 text-sm text-red-600">{message}</Text>;
-}
+const detailFields = ["studentId", "fullName", "schoolEmail"] as const;
 
 export default function RegisterScreen() {
-  const [showPassword, setShowPassword] = useState(false);
-  const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
-  const register = useAuthStore((state) => state.register);
-  const loading = useAuthStore((state) => state.loading);
-  const storeError = useAuthStore((state) => state.error);
+  const [step, setStep] = useState<1 | 2>(1);
+  const online = useOnlineStatus();
+  const pending = useRef(false);
+  const { register, loading, error } = useAuthStore();
   const form = useForm<RegisterInput>({
-    resolver: zodResolver(registerSchema),
-    defaultValues: {
-      studentId: "",
-      fullName: "",
-      schoolEmail: "",
-      password: "",
-      confirmPassword: "",
-      acceptPrivacy: false
-    }
+    resolver: zodResolver(registerSchema), mode: "onBlur", shouldFocusError: false,
+    defaultValues: { studentId: "", fullName: "", schoolEmail: "", password: "", confirmPassword: "", acceptPrivacy: false }
   });
+  useEffect(() => {
+    useAuthStore.setState({ error: null });
+    const subscription = form.watch(() => {
+      if (useAuthStore.getState().error) useAuthStore.setState({ error: null });
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      const fields = step === 1 ? detailFields : ["password", "confirmPassword"] as const;
+      const firstError = fields.find((name) => form.getFieldState(name).invalid);
+      if (firstError) form.setFocus(firstError);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [step, form]);
+  const password = form.watch("password");
+  const confirmation = form.watch("confirmPassword");
+  const feedback = error ? authFeedback(error) : null;
 
+  async function next() {
+    if (await form.trigger([...detailFields], { shouldFocus: true })) setStep(2);
+  }
   const onSubmit = form.handleSubmit(async (values) => {
+    if (!online || loading || pending.current) return;
+    pending.current = true;
     try {
       const result = await register(values);
       if (result === "signed_in") {
         const student = useAuthStore.getState().student;
-        const seenWelcome = student ? await hasSeenWelcome(student.id) : true;
-        router.replace(seenWelcome ? "/(student)" : "/welcome");
-        return;
+        router.replace(student && !(await hasSeenWelcome(student.id)) ? "/welcome" : "/(student)");
+      } else {
+        router.replace({ pathname: "/(auth)/verify-email", params: { email: values.schoolEmail.trim().toLowerCase(), sent: "1" } });
       }
-      setSubmittedEmail(values.schoolEmail.trim().toLowerCase());
-    } catch {
-      // The auth store owns the visible error message.
+    } catch { /* The auth store owns the visible error. */ }
+    finally { pending.current = false; }
+  }, (errors) => {
+    const detailError = detailFields.find((name) => errors[name]);
+    if (detailError) {
+      setStep(1);
+      return;
     }
+    const firstError = errors.password ? "password" : errors.confirmPassword ? "confirmPassword" : null;
+    if (firstError) form.setFocus(firstError);
   });
 
-  if (submittedEmail) {
-    return (
-      <View className="flex-1 justify-center bg-slate-50 px-5">
-        <View className="items-center rounded-3xl bg-brand-900 p-6">
-          <View className="h-16 w-16 items-center justify-center rounded-full bg-white">
-            <Ionicons name="mail-outline" size={34} color="#0f766e" />
-          </View>
-          <Text className="mt-4 text-center text-2xl font-bold text-white">Confirm your school email</Text>
-          <Text className="mt-2 text-center text-sm leading-6 text-brand-50">
-            We found your CBEA roster record. Open the verification email sent to {submittedEmail}, then log in.
-          </Text>
-        </View>
-        <View className="mt-5 gap-3">
-          <PrimaryButton title="Back to Login" variant="secondary" onPress={() => router.replace("/(auth)/login")} />
-          <Text className="text-center text-sm text-slate-500">
-            Registration is only activated after your school email is confirmed.
-          </Text>
-        </View>
-      </View>
-    );
-  }
-
   return (
-    <ScrollView className="flex-1 bg-slate-50" contentContainerClassName="px-5 py-10">
-      <View className="mb-5 items-start">
-        <Image
-          source={require("../../assets/logo.png")}
-          style={{ width: 60, height: 60 }}
-          resizeMode="contain"
-        />
-      </View>
-      <Text className="text-3xl font-bold text-slate-950">Create Account</Text>
-      <Text className="mt-2 text-base leading-6 text-slate-600">
-        Only students on the approved CSU Gonzaga CBEA roster can register.
-      </Text>
-
-      <View className="mt-6 rounded-3xl border border-brand-100 bg-brand-50 p-4">
-        <Text className="font-bold text-brand-900">Verification required</Text>
-        <Text className="mt-1 text-sm leading-5 text-brand-800">
-          Your student ID and school email must match the CBEA approved list. Your school email must be confirmed before the account can be used.
-        </Text>
-      </View>
-
-      <View className="mt-6 gap-4">
-        <View>
-          <Text className="mb-2 text-sm font-semibold text-slate-700">CSU Student ID</Text>
-          <Controller
-            control={form.control}
-            name="studentId"
-            render={({ field }) => (
-              <TextInput
-                value={field.value}
-                onChangeText={field.onChange}
-                autoCapitalize="characters"
-                className="min-h-14 rounded-lg border border-slate-300 bg-white px-4 text-base text-slate-950"
-              />
-            )}
-          />
-          <FieldError message={form.formState.errors.studentId?.message} />
-        </View>
-
-        <View>
-          <Text className="mb-2 text-sm font-semibold text-slate-700">Full name</Text>
-          <Controller
-            control={form.control}
-            name="fullName"
-            render={({ field }) => (
-              <TextInput
-                value={field.value}
-                onChangeText={field.onChange}
-                autoCapitalize="words"
-                className="min-h-14 rounded-lg border border-slate-300 bg-white px-4 text-base text-slate-950"
-              />
-            )}
-          />
-          <FieldError message={form.formState.errors.fullName?.message} />
-        </View>
-
-        <View>
-          <Text className="mb-2 text-sm font-semibold text-slate-700">School email</Text>
-          <Controller
-            control={form.control}
-            name="schoolEmail"
-            render={({ field }) => (
-              <TextInput
-                value={field.value}
-                onChangeText={field.onChange}
-                autoCapitalize="none"
-                keyboardType="email-address"
-                className="min-h-14 rounded-lg border border-slate-300 bg-white px-4 text-base text-slate-950"
-              />
-            )}
-          />
-          <FieldError message={form.formState.errors.schoolEmail?.message} />
-        </View>
-
-        <View>
-          <Text className="mb-2 text-sm font-semibold text-slate-700">Password</Text>
-          <View className="flex-row items-center rounded-lg border border-slate-300 bg-white">
-            <Controller
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <TextInput
-                  value={field.value}
-                  onChangeText={field.onChange}
-                  secureTextEntry={!showPassword}
-                  className="min-h-14 flex-1 px-4 text-base text-slate-950"
-                />
-              )}
-            />
-            <Pressable onPress={() => setShowPassword((value) => !value)} className="h-14 w-14 items-center justify-center">
-              <Ionicons name={showPassword ? "eye-off" : "eye"} size={22} color="#334155" />
-            </Pressable>
+    <AuthScreen title={step === 1 ? "Create your account" : "Secure your account"}
+      description={step === 1 ? "Use the student details registered with the CBEA office." : "Choose a password, then confirm your school email to activate your account."}
+      back={() => { if (loading) return; if (step === 2) setStep(1); else router.replace("/(auth)/login"); }}>
+      <View accessibilityLabel={`Step ${step} of 2: ${step === 1 ? "Student details" : "Account security"}`} className="mb-2 flex-row gap-3 border-b border-slate-100 pb-5">
+        {(["Student details", "Account security"] as const).map((label, index) => (
+          <View key={label} className="flex-1 gap-2">
+            <View className={`h-8 w-8 items-center justify-center rounded-full ${index + 1 <= step ? "bg-brand-700" : "bg-slate-100"}`}>
+              {index + 1 < step ? <Ionicons name="checkmark" size={18} color="#ffffff" />
+                : <Text className={`text-sm font-bold ${index + 1 <= step ? "text-white" : "text-slate-500"}`}>{index + 1}</Text>}
+            </View>
+            <Text className={`text-xs font-semibold ${index + 1 <= step ? "text-brand-900" : "text-slate-500"}`}>{label}</Text>
+            <View className={`h-1 rounded-full ${index + 1 <= step ? "bg-brand-700" : "bg-slate-100"}`} />
           </View>
-          <FieldError message={form.formState.errors.password?.message} />
-        </View>
-
-        <View>
-          <Text className="mb-2 text-sm font-semibold text-slate-700">Confirm password</Text>
-          <Controller
-            control={form.control}
-            name="confirmPassword"
-            render={({ field }) => (
-              <TextInput
-                value={field.value}
-                onChangeText={field.onChange}
-                secureTextEntry={!showPassword}
-                className="min-h-14 rounded-lg border border-slate-300 bg-white px-4 text-base text-slate-950"
-              />
-            )}
-          />
-          <FieldError message={form.formState.errors.confirmPassword?.message} />
-        </View>
-
-        <Controller
-          control={form.control}
-          name="acceptPrivacy"
-          render={({ field }) => (
-            <Pressable onPress={() => field.onChange(!field.value)} className="flex-row items-start gap-3 rounded-2xl bg-white p-4">
-              <View className={`mt-0.5 h-6 w-6 items-center justify-center rounded-full ${field.value ? "bg-brand-700" : "border border-slate-300"}`}>
-                {field.value ? <Ionicons name="checkmark" size={16} color="#ffffff" /> : null}
-              </View>
-              <Text className="flex-1 text-sm leading-5 text-slate-600">
-                I confirm that my information is accurate and I accept the attendance privacy notice.
-              </Text>
-            </Pressable>
-          )}
-        />
-        <FieldError message={form.formState.errors.acceptPrivacy?.message} />
-
-        {storeError ? <Text className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{storeError}</Text> : null}
-
-        <PrimaryButton title="Register" loading={loading} onPress={onSubmit} />
+        ))}
       </View>
-
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => router.replace("/(auth)/login")}
-        className="mt-6 w-full items-center justify-center py-2 active:opacity-70"
-        hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }}
-      >
-        <Text className="text-center text-base font-semibold text-brand-700">
-          Already registered? Log in
-        </Text>
-      </Pressable>
-
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => router.push("/privacy")}
-        className="mt-4 w-full items-center justify-center py-2 active:opacity-70"
-        hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }}
-      >
-        <Text className="text-center text-sm text-slate-500">
-          Privacy notice
-        </Text>
-      </Pressable>
-    </ScrollView>
+      {step === 1 ? <>
+        <Controller control={form.control} name="studentId" render={({ field }) => (
+          <AuthField label="CSU student ID" ref={field.ref} value={field.value} onChangeText={field.onChange} onBlur={field.onBlur}
+            error={form.formState.errors.studentId?.message} hint="Enter it as shown on your school ID."
+            autoCapitalize="characters" returnKeyType="next" onSubmitEditing={() => form.setFocus("fullName")} />
+        )} />
+        <Controller control={form.control} name="fullName" render={({ field }) => (
+          <AuthField label="Full name" ref={field.ref} value={field.value} onChangeText={field.onChange} onBlur={field.onBlur}
+            error={form.formState.errors.fullName?.message} autoCapitalize="words" autoComplete="name" textContentType="name"
+            returnKeyType="next" onSubmitEditing={() => form.setFocus("schoolEmail")} />
+        )} />
+        <Controller control={form.control} name="schoolEmail" render={({ field }) => (
+          <AuthField label="School email" ref={field.ref} value={field.value} onChangeText={field.onChange} onBlur={field.onBlur}
+            error={form.formState.errors.schoolEmail?.message} hint="Must match the email on the approved student roster."
+            autoCapitalize="none" keyboardType="email-address" autoComplete="email" textContentType="emailAddress"
+            returnKeyType="next" onSubmitEditing={() => void next()} />
+        )} />
+        <AuthButton title="Continue" onPress={() => void next()} />
+      </> : <>
+        <View className="rounded-2xl border border-brand-100 bg-brand-50 p-4">
+          <Text className="mb-2 text-xs font-bold tracking-widest text-brand-700">YOUR STUDENT DETAILS</Text>
+          <Text className="font-semibold text-slate-900">{form.getValues("studentId")}</Text>
+          <Text className="mt-1 text-sm text-slate-600">{form.getValues("schoolEmail")}</Text>
+          <AuthLink label="Edit student details" align="left" disabled={loading} onPress={() => setStep(1)} />
+        </View>
+        <Controller control={form.control} name="password" render={({ field }) => (
+          <AuthField label="Password" password ref={field.ref} value={field.value} onChangeText={field.onChange} onBlur={field.onBlur}
+            error={form.formState.errors.password?.message} autoCapitalize="none" autoComplete="new-password" textContentType="newPassword"
+            returnKeyType="next" onSubmitEditing={() => form.setFocus("confirmPassword")} editable={!loading} />
+        )} />
+        <Controller control={form.control} name="confirmPassword" render={({ field }) => (
+          <AuthField label="Confirm password" password ref={field.ref} value={field.value} onChangeText={field.onChange} onBlur={field.onBlur}
+            error={form.formState.errors.confirmPassword?.message} autoCapitalize="none" autoComplete="new-password" textContentType="newPassword"
+            returnKeyType="done" onSubmitEditing={() => void onSubmit()} editable={!loading} />
+        )} />
+        <PasswordGuidance password={password} confirmation={confirmation} />
+        <View>
+          <Controller control={form.control} name="acceptPrivacy" render={({ field }) => (
+            <Pressable accessibilityRole="checkbox" accessibilityLabel="I confirm my information is accurate and accept the attendance privacy notice"
+              accessibilityState={{ checked: field.value, disabled: loading }} disabled={loading}
+              onPress={() => { field.onChange(!field.value); void form.trigger("acceptPrivacy"); }} className="min-h-14 flex-row items-start gap-3 py-3">
+              <View className={`h-6 w-6 items-center justify-center rounded-md border ${field.value ? "border-brand-700 bg-brand-700" : "border-slate-400 bg-white"}`}>
+                {field.value ? <Text className="font-bold text-white">✓</Text> : null}
+              </View>
+              <Text className="flex-1 text-sm leading-5 text-slate-700">I confirm my information is accurate and accept the attendance privacy notice.</Text>
+            </Pressable>
+          )} />
+          <AuthLink label="Read the privacy notice" align="left" onPress={() => router.push("/privacy")} />
+          {form.formState.errors.acceptPrivacy ? <Text accessibilityRole="alert" className="text-sm text-red-700">{form.formState.errors.acceptPrivacy.message}</Text> : null}
+        </View>
+        <AuthButton title="Create account" loading={loading} disabled={!online} onPress={onSubmit} />
+      </>}
+      {feedback ? <AuthNotice title={feedback.title} message={feedback.message} tone="error" /> : null}
+      <AuthLink label="Already registered? Log in" disabled={loading} onPress={() => router.replace("/(auth)/login")} />
+    </AuthScreen>
   );
 }

@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Image, ScrollView, Text, View } from "react-native";
+import { Image, Linking, ScrollView, Text, View } from "react-native";
 import { CameraView, useCameraPermissions, type BarcodeScanningResult } from "expo-camera";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import type { AttendanceStatus, Event } from "@attendance/types";
 import { createIdempotencyKey, createLocalId, formatDistance, formatDurationMinutes } from "@attendance/shared-utils";
-import { EmptyState } from "../../components/ScreenState";
+import { EmptyState, LoadingState } from "../../components/ScreenState";
 import { InfoRow } from "../../components/InfoRow";
 import { PrimaryButton } from "../../components/PrimaryButton";
 import { StatusBadge } from "../../components/StatusBadge";
@@ -15,6 +15,7 @@ import { evaluateLocationForEvent, requestFreshLocation } from "../../services/l
 import { compressAttendancePhoto } from "../../services/photo";
 import { syncPendingAttendance } from "../../services/syncQueue";
 import { useOnlineStatus } from "../../hooks/useOnlineStatus";
+import { useNow } from "../../hooks/useNow";
 import { useAuthStore } from "../../stores/authStore";
 import { formatDateTime, formatTimeRange } from "../../utils/format";
 
@@ -108,6 +109,8 @@ function SubmissionTimeline({ online }: { online: boolean }) {
 
 export function AttendanceCaptureScreen({ eventId, mode }: AttendanceCaptureScreenProps) {
   const [event, setEvent] = useState<Event | null>(null);
+  const [eventLoading, setEventLoading] = useState(true);
+  const [eventLoadError, setEventLoadError] = useState(false);
   const [step, setStep] = useState<CaptureStep>("event");
   const [timeInRecord, setTimeInRecord] = useState<{ device_timestamp: string; status: string; sync_status: string } | null>(null);
   const [location, setLocation] = useState<{ latitude: number; longitude: number; accuracy: number; mocked?: boolean } | null>(null);
@@ -115,18 +118,28 @@ export function AttendanceCaptureScreen({ eventId, mode }: AttendanceCaptureScre
   const [qrToken, setQrToken] = useState<string | null>(null);
   const [photo, setPhoto] = useState<CapturedPhoto | null>(null);
   const [capturingPhoto, setCapturingPhoto] = useState(false);
+  const [checkingLocation, setCheckingLocation] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submissionResult, setSubmissionResult] = useState<SubmissionResult | null>(null);
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
   const online = useOnlineStatus();
   const deviceId = useAuthStore((state) => state.deviceId);
+  const nowMs = useNow(1_000);
 
   useEffect(() => {
-    void getCachedEvent(eventId).then(setEvent);
-    if (mode === "time_out") {
-      void getLatestAttendanceForEvent(eventId, "time_in").then((record) => setTimeInRecord(record ?? null));
-    }
+    setEventLoading(true);
+    setEventLoadError(false);
+    void Promise.all([
+      getCachedEvent(eventId),
+      mode === "time_out" ? getLatestAttendanceForEvent(eventId, "time_in") : Promise.resolve(null)
+    ])
+      .then(([cachedEvent, record]) => {
+        setEvent(cachedEvent);
+        setTimeInRecord(record ?? null);
+      })
+      .catch(() => setEventLoadError(true))
+      .finally(() => setEventLoading(false));
   }, [eventId, mode]);
 
   const locationResult = useMemo(() => {
@@ -134,25 +147,26 @@ export function AttendanceCaptureScreen({ eventId, mode }: AttendanceCaptureScre
     return evaluateLocationForEvent(event, location);
   }, [event, location]);
 
-  const elapsedMinutes = timeInRecord ? Math.max(0, Math.floor((Date.now() - new Date(timeInRecord.device_timestamp).getTime()) / 60000)) : 0;
+  const elapsedMinutes = timeInRecord ? Math.max(0, Math.floor((nowMs - new Date(timeInRecord.device_timestamp).getTime()) / 60000)) : 0;
   const remainingMinimumMinutes = event ? Math.max(0, event.minimum_attendance_minutes - elapsedMinutes) : 0;
-  const remainingEventMinutes = event?.schedule ? Math.max(0, Math.floor((new Date(event.schedule.ends_at).getTime() - Date.now()) / 60000)) : 0;
+  const remainingEventMinutes = event?.schedule ? Math.max(0, Math.floor((new Date(event.schedule.ends_at).getTime() - nowMs) / 60000)) : 0;
   const timeOutDurationOk =
     !event ||
     mode === "time_in" ||
     event.early_time_out_allowed ||
     event.minimum_attendance_minutes <= 0 ||
-    (timeInRecord ? Date.now() - new Date(timeInRecord.device_timestamp).getTime() >= event.minimum_attendance_minutes * 60000 : false);
+    (timeInRecord ? nowMs - new Date(timeInRecord.device_timestamp).getTime() >= event.minimum_attendance_minutes * 60000 : false);
   const photoRequired = event ? (mode === "time_in" ? event.photo_required : event.time_out_photo_required) : true;
   const scheduleOpen = event ? isWindowOpen(event, mode) : false;
-  const eventReady = Boolean(deviceId) && scheduleOpen && timeOutDurationOk;
+  const eventReady = Boolean(deviceId) && scheduleOpen && timeOutDurationOk && (online || !event?.dynamic_qr_required);
   const locationReady = Boolean(locationResult?.accuracyOk && locationResult.inside);
-  const qrReady = !event?.dynamic_qr_required || Boolean(qrToken);
+  const qrExpiresAt = qrToken ? Number(qrToken.split(":")[1]) * 1000 : 0;
+  const qrReady = !event?.dynamic_qr_required || (Boolean(qrToken) && Number.isFinite(qrExpiresAt) && qrExpiresAt >= nowMs);
   const photoReady = !photoRequired || Boolean(photo);
 
   const steps = useMemo<CaptureStep[]>(() => {
     if (!event) return ["event"];
-    return ["event", ...(event.dynamic_qr_required ? (["qr"] as CaptureStep[]) : []), ...(photoRequired ? (["photo"] as CaptureStep[]) : []), "review"];
+    return ["event", ...(photoRequired ? (["photo"] as CaptureStep[]) : []), ...(event.dynamic_qr_required ? (["qr"] as CaptureStep[]) : []), "review"];
   }, [event, photoRequired]);
 
   const stepIndex = Math.max(0, steps.indexOf(step));
@@ -183,16 +197,30 @@ export function AttendanceCaptureScreen({ eventId, mode }: AttendanceCaptureScre
   }
 
   async function prepareAttendance() {
+    setCheckingLocation(true);
     setMessage("Checking your live location…");
-    const ready = await refreshLocation();
-    if (ready) goNext();
+    try {
+      const ready = await refreshLocation();
+      if (ready) goNext();
+    } finally {
+      setCheckingLocation(false);
+    }
   }
 
   function handleBarcodeScanned(result: BarcodeScanningResult) {
-    if (!qrToken && result.data) {
-      setQrToken(result.data);
-      setMessage("Dynamic QR code scanned.");
+    if (qrReady || !result.data || !event) return;
+    const [scannedEventId, expiresAtSeconds] = result.data.split(":");
+    const expiresAt = Number(expiresAtSeconds) * 1000;
+    if (scannedEventId !== event.id || !Number.isFinite(expiresAt)) {
+      setMessage("This QR code is not valid for this event.");
+      return;
     }
+    if (expiresAt < Date.now()) {
+      setMessage("This QR code has expired. Scan the latest code shown by the marshal.");
+      return;
+    }
+    setQrToken(result.data);
+    setMessage("Dynamic QR code scanned. Submit before it expires.");
   }
 
   async function capturePhoto() {
@@ -282,10 +310,16 @@ export function AttendanceCaptureScreen({ eventId, mode }: AttendanceCaptureScre
     }
   }
 
+  if (eventLoading) return <LoadingState label="Loading attendance details" />;
+
   if (!event) {
     return (
       <View className="flex-1 bg-slate-50 p-5">
-        <EmptyState title="Event not found" body="Open the event while online so it can be cached locally." />
+        <EmptyState
+          title={eventLoadError ? "Unable to load event" : "Event not found"}
+          body={eventLoadError ? "Check your connection and open the event again." : "Open the event while online so it can be cached locally."}
+        />
+        <View className="mt-4"><PrimaryButton title="Back to Events" onPress={() => router.replace("/(student)/events")} /></View>
       </View>
     );
   }
@@ -295,6 +329,8 @@ export function AttendanceCaptureScreen({ eventId, mode }: AttendanceCaptureScre
     ? "This phone is not registered for attendance. Log in again to register this device."
     : !scheduleOpen
       ? `${modeLabel} is disabled because the attendance window is not open. Current phone time must be inside ${attendanceWindowLabel(event, mode)}.`
+      : !online && event.dynamic_qr_required
+        ? "Connect to the internet to complete this event's short-lived QR verification."
       : mode === "time_out" && !timeOutDurationOk
         ? `Time out is disabled until the minimum attendance duration is reached. ${formatDurationMinutes(remainingMinimumMinutes)} remaining.`
         : null;
@@ -413,7 +449,8 @@ export function AttendanceCaptureScreen({ eventId, mode }: AttendanceCaptureScre
             <Text className="mt-1 text-sm leading-5 text-brand-900">Continue to capture a fresh GPS reading. It verifies that you are at the event venue.</Text>
           </View>
           {message !== "Start by confirming the event and attendance window." ? <Text accessibilityLiveRegion="polite" className={`rounded-2xl p-3 text-sm font-semibold ${locationReady ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-800"}`}>{message}</Text> : null}
-          <PrimaryButton title={location ? "Retry location" : `Check location & start ${modeLabel}`} disabled={!eventReady} onPress={() => void prepareAttendance()} />
+          {message.includes("Open device settings") ? <PrimaryButton title="Open Location Settings" variant="secondary" onPress={() => void Linking.openSettings()} /> : null}
+          <PrimaryButton title={location ? "Retry location" : `Check location & start ${modeLabel}`} loading={checkingLocation} disabled={!eventReady} onPress={() => void prepareAttendance()} />
         </View>
       ) : null}
 
@@ -421,17 +458,21 @@ export function AttendanceCaptureScreen({ eventId, mode }: AttendanceCaptureScre
         <View className="gap-4">
           <View className="rounded-3xl border border-slate-100 bg-white p-4 shadow-sm">
             <Text className="font-semibold text-slate-950">Dynamic QR</Text>
-            <Text className="mt-2 text-sm text-slate-600">{qrToken ? "QR code scanned. Continue to the next step." : "Point the camera at the QR code shown by the event marshal."}</Text>
+            <Text className="mt-2 text-sm text-slate-600">{qrReady ? "QR code scanned. Submit promptly before it expires." : qrToken ? "That QR code expired. Scan the latest code shown by the marshal." : "Point the camera at the latest QR code shown by the event marshal."}</Text>
           </View>
+
+          {message !== "Start by confirming the event and attendance window." ? (
+            <Text accessibilityLiveRegion="polite" className={`rounded-2xl p-3 text-sm font-semibold ${qrReady ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-800"}`}>{message}</Text>
+          ) : null}
 
           <View className="overflow-hidden rounded-3xl border border-slate-100 bg-black shadow-sm">
             {permission?.granted ? (
-              <CameraView ref={cameraRef} style={{ height: 340 }} facing="back" barcodeScannerSettings={{ barcodeTypes: ["qr"] }} onBarcodeScanned={!qrToken ? handleBarcodeScanned : undefined} />
+              <CameraView ref={cameraRef} style={{ height: 340 }} facing="back" barcodeScannerSettings={{ barcodeTypes: ["qr"] }} onBarcodeScanned={!qrReady ? handleBarcodeScanned : undefined} />
             ) : (
               <View className="h-80 items-center justify-center bg-slate-900 p-5">
                 <Text className="text-center text-white">Camera permission is required to scan the event QR code.</Text>
                 <View className="mt-4 w-full">
-                  <PrimaryButton title="Allow Scanner" onPress={() => void requestPermission()} />
+                  <PrimaryButton title={permission && !permission.canAskAgain ? "Open Settings" : "Allow Scanner"} onPress={() => void (permission && !permission.canAskAgain ? Linking.openSettings() : requestPermission())} />
                 </View>
               </View>
             )}
@@ -442,7 +483,7 @@ export function AttendanceCaptureScreen({ eventId, mode }: AttendanceCaptureScre
               <PrimaryButton title="Back" variant="light" onPress={goBack} />
             </View>
             <View className="flex-1">
-              <PrimaryButton title="Next" disabled={!qrToken} onPress={goNext} />
+              <PrimaryButton title={qrToken && !qrReady ? "Scan Again" : "Next"} disabled={!qrReady && !qrToken} onPress={() => (qrToken && !qrReady ? setQrToken(null) : goNext())} />
             </View>
           </View>
         </View>
@@ -464,7 +505,7 @@ export function AttendanceCaptureScreen({ eventId, mode }: AttendanceCaptureScre
               <View className="h-80 items-center justify-center bg-slate-900 p-5">
                 <Text className="text-center text-white">Camera permission is required for the live attendance photo.</Text>
                 <View className="mt-4 w-full">
-                  <PrimaryButton title="Allow Camera" onPress={() => void requestPermission()} />
+                  <PrimaryButton title={permission && !permission.canAskAgain ? "Open Settings" : "Allow Camera"} onPress={() => void (permission && !permission.canAskAgain ? Linking.openSettings() : requestPermission())} />
                 </View>
               </View>
             )}
@@ -503,6 +544,9 @@ export function AttendanceCaptureScreen({ eventId, mode }: AttendanceCaptureScre
           </View>
 
           {photo ? <Image source={{ uri: photo.uri }} className="h-64 w-full rounded-3xl bg-slate-200" resizeMode="cover" /> : null}
+
+          {eventDisabledReason ? <Text accessibilityRole="alert" className="rounded-2xl bg-amber-50 p-3 text-sm font-semibold text-amber-800">{eventDisabledReason}</Text> : null}
+          {!qrReady && event.dynamic_qr_required ? <Text accessibilityRole="alert" className="rounded-2xl bg-amber-50 p-3 text-sm font-semibold text-amber-800">The QR code expired. Go back and scan the latest code before submitting.</Text> : null}
 
           <View className="flex-row gap-3">
             <View className="flex-1">

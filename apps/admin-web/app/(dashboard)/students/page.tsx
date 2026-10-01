@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Upload } from "lucide-react";
+import { ChevronLeft, ChevronRight, MoreHorizontal, Search, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -69,6 +69,26 @@ export default function StudentsPage() {
   const [notice, setNotice] = useState<{ tone: "success" | "error"; text: string } | null>(null);
   const [pendingAction, setPendingAction] = useState<{ kind: "toggle" | "reset"; studentId: string; active?: boolean } | null>(null);
   const [actionBusy, setActionBusy] = useState(false);
+  const [search, setSearch] = useState("");
+  const [courseFilter, setCourseFilter] = useState("all");
+  const [sectionFilter, setSectionFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [pageIndex, setPageIndex] = useState(0);
+  const pageSize = 10;
+
+  const students = useMemo(() => (query.data ?? []).filter((student) => {
+    const term = search.trim().toLowerCase();
+    return (!term || `${student.full_name} ${student.student_id}`.toLowerCase().includes(term))
+      && (courseFilter === "all" || student.course?.code === courseFilter)
+      && (sectionFilter === "all" || student.section?.name === sectionFilter)
+      && (statusFilter === "all" || (statusFilter === "active" ? student.is_active : !student.is_active));
+  }), [query.data, search, courseFilter, sectionFilter, statusFilter]);
+  const courses = useMemo(() => Array.from(new Set((query.data ?? []).map((student) => student.course?.code).filter((value): value is string => Boolean(value)))).sort(), [query.data]);
+  const sections = useMemo(() => Array.from(new Set((query.data ?? []).map((student) => student.section?.name).filter((value): value is string => Boolean(value)))).sort(), [query.data]);
+  const pageCount = Math.max(1, Math.ceil(students.length / pageSize));
+  const pageRows = students.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize);
+
+  useEffect(() => setPageIndex(0), [search, courseFilter, sectionFilter, statusFilter]);
 
   async function toggle(studentId: string, active: boolean) {
     setActionBusy(true);
@@ -136,8 +156,14 @@ export default function StudentsPage() {
         </CardContent>
       </Card>
 
-      <Card className="rounded-2xl border-slate-200/80 shadow-xs overflow-hidden">
+      <Card className="rounded-2xl border-slate-200/80 shadow-xs">
         <CardContent className="p-0">
+          <div className="grid gap-3 border-b border-slate-100 p-4 md:grid-cols-[minmax(220px,1fr)_180px_180px_150px]">
+            <div className="relative"><Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} /><Input className="pl-9" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search name or student ID" /></div>
+            <FilterSelect label="course" value={courseFilter} onChange={setCourseFilter} values={courses} />
+            <FilterSelect label="section" value={sectionFilter} onChange={setSectionFilter} values={sections} />
+            <select aria-label="Filter by status" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm"><option value="all">All statuses</option><option value="active">Active</option><option value="inactive">Inactive</option></select>
+          </div>
           {query.isError ? <div role="alert" className="m-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">Student records could not be loaded. <button className="font-bold underline" onClick={() => void query.refetch()}>Try again</button></div> : null}
           {query.isLoading ? <div role="status" className="p-12 text-center text-sm text-slate-500">Loading student records…</div> : null}
           <div className="hidden overflow-x-auto md:block">
@@ -153,7 +179,7 @@ export default function StudentsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {(query.data ?? []).map((student) => (
+              {pageRows.map((student) => (
                 <tr key={student.id} className="transition hover:bg-blue-50/25">
                   <td className="px-5 py-3.5">
                     <div className="font-semibold text-slate-900 text-sm">{student.full_name}</div>
@@ -164,21 +190,30 @@ export default function StudentsPage() {
                   <td className="px-5 py-3.5 text-xs text-slate-700 font-medium">{student.year_level ?? "-"}</td>
                   <td className="px-5 py-3.5"><Badge tone={student.is_active ? "verified" : "rejected"}>{student.is_active ? "Active" : "Inactive"}</Badge></td>
                   <td className="px-5 py-3.5">
-                    <div className="flex flex-wrap gap-1.5">
-                      <Button variant="outline" className="h-8 rounded-lg px-2.5 text-xs font-semibold" onClick={() => setPendingAction({ kind: "toggle", studentId: student.id, active: student.is_active })}>{student.is_active ? "Deactivate" : "Activate"}</Button>
-                      <Button variant="outline" className="h-8 rounded-lg px-2.5 text-xs font-semibold" onClick={() => setPendingAction({ kind: "reset", studentId: student.id })}>Reset Device</Button>
-                    </div>
+                    <StudentActions student={student} onAction={setPendingAction} />
                   </td>
                 </tr>
               ))}
-              {!query.isLoading && !query.isError && !query.data?.length ? <tr><td colSpan={6} className="px-5 py-12 text-center"><p className="font-semibold text-slate-900">No students found</p><p className="mt-1 text-sm text-slate-500">Registered student accounts will appear here.</p></td></tr> : null}
+              {!query.isLoading && !query.isError && !pageRows.length ? <tr><td colSpan={6} className="px-5 py-12 text-center"><p className="font-semibold text-slate-900">No students found</p><p className="mt-1 text-sm text-slate-500">Try changing the search or filters.</p></td></tr> : null}
             </tbody>
           </table>
           </div>
-          {!query.isLoading && !query.isError ? <div className="divide-y divide-slate-100 md:hidden">{(query.data ?? []).map((student) => <article key={student.id} className="space-y-3 p-4"><div className="flex items-start justify-between gap-3"><div><h3 className="font-bold text-slate-900">{student.full_name}</h3><p className="text-xs text-slate-500">{student.student_id}</p></div><Badge tone={student.is_active ? "verified" : "rejected"}>{student.is_active ? "Active" : "Inactive"}</Badge></div><dl className="grid grid-cols-3 gap-2 text-xs"><div><dt className="text-slate-500">Course</dt><dd className="font-semibold">{student.course?.code ?? "—"}</dd></div><div><dt className="text-slate-500">Section</dt><dd className="font-semibold">{student.section?.name ?? "—"}</dd></div><div><dt className="text-slate-500">Year</dt><dd className="font-semibold">{student.year_level ?? "—"}</dd></div></dl><div className="flex gap-2"><Button variant="outline" className="flex-1 text-xs" onClick={() => setPendingAction({ kind: "toggle", studentId: student.id, active: student.is_active })}>{student.is_active ? "Deactivate" : "Activate"}</Button><Button variant="outline" className="flex-1 text-xs" onClick={() => setPendingAction({ kind: "reset", studentId: student.id })}>Reset Device</Button></div></article>)}{!query.data?.length ? <div className="p-10 text-center text-sm text-slate-500">No registered student accounts found.</div> : null}</div> : null}
+          {!query.isLoading && !query.isError ? <div className="divide-y divide-slate-100 md:hidden">{pageRows.map((student) => <article key={student.id} className="space-y-3 p-4"><div className="flex items-start justify-between gap-3"><div><h3 className="font-bold text-slate-900">{student.full_name}</h3><p className="text-xs text-slate-500">{student.student_id}</p></div><Badge tone={student.is_active ? "verified" : "rejected"}>{student.is_active ? "Active" : "Inactive"}</Badge></div><dl className="grid grid-cols-3 gap-2 text-xs"><div><dt className="text-slate-500">Course</dt><dd className="font-semibold">{student.course?.code ?? "—"}</dd></div><div><dt className="text-slate-500">Section</dt><dd className="font-semibold">{student.section?.name ?? "—"}</dd></div><div><dt className="text-slate-500">Year</dt><dd className="font-semibold">{student.year_level ?? "—"}</dd></div></dl><StudentActions student={student} onAction={setPendingAction} /></article>)}{!pageRows.length ? <div className="p-10 text-center text-sm text-slate-500">No students match these filters.</div> : null}</div> : null}
+          {!query.isLoading && !query.isError && students.length > 0 ? <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3 text-xs text-slate-600"><span>{students.length} student{students.length === 1 ? "" : "s"} · Page {pageIndex + 1} of {pageCount}</span><div className="flex gap-2"><Button variant="outline" className="h-8 w-8 p-0" disabled={pageIndex === 0} onClick={() => setPageIndex((page) => page - 1)} aria-label="Previous page"><ChevronLeft size={15} /></Button><Button variant="outline" className="h-8 w-8 p-0" disabled={pageIndex >= pageCount - 1} onClick={() => setPageIndex((page) => page + 1)} aria-label="Next page"><ChevronRight size={15} /></Button></div></div> : null}
         </CardContent>
       </Card>
       <ConfirmDialog open={Boolean(pendingAction)} title={pendingAction?.kind === "reset" ? "Reset registered devices?" : pendingAction?.active ? "Deactivate student account?" : "Activate student account?"} description={pendingAction?.kind === "reset" ? "The student will need to sign in and register this phone again before recording attendance." : pendingAction?.active ? "The student will not be able to use attendance features until the account is activated again." : "The student will regain access to attendance features."} confirmLabel={pendingAction?.kind === "reset" ? "Reset devices" : pendingAction?.active ? "Deactivate" : "Activate"} destructive={pendingAction?.kind === "reset" || Boolean(pendingAction?.active)} busy={actionBusy} onCancel={() => setPendingAction(null)} onConfirm={() => { if (!pendingAction) return; const action = pendingAction; void (action.kind === "reset" ? resetDevices(action.studentId) : toggle(action.studentId, Boolean(action.active))).finally(() => setPendingAction(null)); }} />
     </div>
   );
+}
+
+type Student = Awaited<ReturnType<typeof fetchStudents>>[number];
+type PendingAction = { kind: "toggle" | "reset"; studentId: string; active?: boolean };
+
+function FilterSelect({ label, value, onChange, values }: { label: string; value: string; onChange: (value: string) => void; values: string[] }) {
+  return <select aria-label={`Filter by ${label}`} value={value} onChange={(event) => onChange(event.target.value)} className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm"><option value="all">All {label}s</option>{values.map((item) => <option key={item} value={item}>{item}</option>)}</select>;
+}
+
+function StudentActions({ student, onAction }: { student: Student; onAction: (action: PendingAction) => void }) {
+  return <details className="relative inline-block"><summary className="flex h-8 cursor-pointer list-none items-center gap-1 rounded-lg border border-slate-200 px-2.5 text-xs font-semibold text-slate-700"><MoreHorizontal size={15} /> Actions</summary><div className="absolute right-0 z-20 mt-1 w-40 rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg"><button className="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold hover:bg-slate-50" onClick={() => onAction({ kind: "toggle", studentId: student.id, active: student.is_active })}>{student.is_active ? "Deactivate account" : "Activate account"}</button><button className="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-red-700 hover:bg-red-50" onClick={() => onAction({ kind: "reset", studentId: student.id })}>Reset device</button></div></details>;
 }

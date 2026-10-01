@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { Controller, type SubmitHandler, type UseFormReturn } from "react-hook-form";
 import {
@@ -92,6 +92,15 @@ type WizardStep = {
   description: string;
   icon: LucideIcon;
   fields: EventFormField[];
+};
+
+type SavedVenue = {
+  name: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  radiusMeters: number;
+  requiredGpsAccuracyMeters: number;
 };
 
 const wizardSteps: WizardStep[] = [
@@ -227,6 +236,15 @@ export function EventWizardForm({
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
   const [reviewErrorStepIndexes, setReviewErrorStepIndexes] = useState<number[]>([]);
   const [showAdvancedLocation, setShowAdvancedLocation] = useState(false);
+  const [savedVenues, setSavedVenues] = useState<SavedVenue[]>([]);
+
+  useEffect(() => {
+    try {
+      setSavedVenues(JSON.parse(window.localStorage.getItem("admin-saved-venues") ?? "[]") as SavedVenue[]);
+    } catch {
+      setSavedVenues([]);
+    }
+  }, []);
 
   const currentStep = wizardSteps[stepIndex] ?? wizardSteps[0]!;
   const isFinalStep = stepIndex === wizardSteps.length - 1;
@@ -245,6 +263,34 @@ export function EventWizardForm({
         ? { minimumAttendanceMinutes: 60, photoRequired: true, timeOutPhotoRequired: true, dynamicQrRequired: true, radiusMeters: 75 }
         : { minimumAttendanceMinutes: 60, photoRequired: true, timeOutPhotoRequired: true, dynamicQrRequired: false, radiusMeters: 100 };
     Object.entries(presetValues).forEach(([field, value]) => form.setValue(field as EventFormField, value as never, { shouldDirty: true }));
+  }
+
+  function saveCurrentVenue() {
+    const name = form.getValues("venueName").trim();
+    if (!name) {
+      form.setError("venueName", { message: "Enter a venue name before saving it." });
+      return;
+    }
+    const venue: SavedVenue = {
+      name,
+      address: form.getValues("address") ?? "",
+      latitude: Number(form.getValues("latitude")),
+      longitude: Number(form.getValues("longitude")),
+      radiusMeters: Number(form.getValues("radiusMeters")),
+      requiredGpsAccuracyMeters: Number(form.getValues("requiredGpsAccuracyMeters"))
+    };
+    const next = [venue, ...savedVenues.filter((item) => item.name.toLowerCase() !== name.toLowerCase())].slice(0, 8);
+    setSavedVenues(next);
+    window.localStorage.setItem("admin-saved-venues", JSON.stringify(next));
+  }
+
+  function applyVenue(venue: SavedVenue) {
+    form.setValue("venueName", venue.name, { shouldDirty: true, shouldValidate: true });
+    form.setValue("address", venue.address, { shouldDirty: true });
+    form.setValue("latitude", venue.latitude, { shouldDirty: true });
+    form.setValue("longitude", venue.longitude, { shouldDirty: true });
+    form.setValue("radiusMeters", venue.radiusMeters, { shouldDirty: true });
+    form.setValue("requiredGpsAccuracyMeters", venue.requiredGpsAccuracyMeters, { shouldDirty: true });
   }
 
   const goNext = async () => {
@@ -434,6 +480,12 @@ export function EventWizardForm({
             <h2 className="text-lg font-bold">Location and Attendance Zone</h2>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2">
+            <div className="md:col-span-2 flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <span className="mr-1 text-xs font-semibold text-slate-600">Saved venues</span>
+              {savedVenues.map((venue) => <button key={venue.name} type="button" onClick={() => applyVenue(venue)} className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-brand-300 hover:text-brand-700">{venue.name}</button>)}
+              {!savedVenues.length ? <span className="text-xs text-slate-500">Save a venue to reuse its map and attendance settings.</span> : null}
+              <button type="button" onClick={saveCurrentVenue} className="ml-auto text-xs font-bold text-brand-700">Save current venue</button>
+            </div>
             <label>
               <span className="mb-2 block text-sm font-semibold">Venue name</span>
               <Input aria-invalid={Boolean(form.formState.errors.venueName)} {...form.register("venueName")} />

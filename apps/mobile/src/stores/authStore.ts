@@ -5,6 +5,7 @@ import { supabase } from "../services/supabase";
 import { initDatabase } from "../database/client";
 import { registerDevice } from "../services/device";
 import { registerPushToken } from "../services/notifications";
+import { authRedirectUrl } from "../services/authRedirect";
 
 interface AuthState {
   loading: boolean;
@@ -185,6 +186,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         email,
         password: values.password,
         options: {
+          emailRedirectTo: authRedirectUrl(),
           data: {
             student_id: studentId,
             full_name: fullName,

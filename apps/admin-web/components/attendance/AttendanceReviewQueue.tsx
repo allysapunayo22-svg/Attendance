@@ -74,7 +74,7 @@ export function AttendanceReviewQueue() {
         </p>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
           <Button asChild className="rounded-xl bg-blue-600 px-5 font-bold hover:bg-blue-700 shadow-sm">
-            <Link href="/attendance/live">View Live Radar Stream →</Link>
+            <Link href="/attendance/live">View live attendance →</Link>
           </Button>
           <Button asChild variant="outline" className="rounded-xl border-slate-200 font-bold">
             <Link href="/">Back to Dashboard</Link>

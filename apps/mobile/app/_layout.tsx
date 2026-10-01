@@ -45,6 +45,7 @@ export default function RootLayout() {
           <Stack.Screen name="index" />
           <Stack.Screen name="welcome" />
           <Stack.Screen name="(auth)" />
+          <Stack.Screen name="auth-callback" />
           <Stack.Screen name="(student)" />
           <Stack.Screen name="event/[id]/index" options={{ headerShown: true, title: "Event Details" }} />
           <Stack.Screen name="check-in/[eventId]/index" options={{ headerShown: true, title: "Time In" }} />

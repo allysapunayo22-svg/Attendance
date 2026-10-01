@@ -22,10 +22,12 @@ export function PrimaryButton({ title, loading, disabled, variant = "primary", c
 
   return (
     <Pressable
+      {...props}
       accessibilityRole="button"
+      accessibilityLabel={props.accessibilityLabel ?? title}
+      accessibilityState={{ ...props.accessibilityState, disabled: Boolean(disabled || loading), busy: Boolean(loading) }}
       disabled={disabled || loading}
       className={`min-h-14 items-center justify-center rounded-full px-5 active:opacity-80 ${disabled || loading ? "bg-slate-300" : palette} ${className}`}
-      {...props}
     >
       {loading ? (
         <ActivityIndicator color={variant === "light" ? "#020617" : "#ffffff"} />

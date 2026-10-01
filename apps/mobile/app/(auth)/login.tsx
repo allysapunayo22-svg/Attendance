@@ -1,155 +1,65 @@
-import { useState } from "react";
+import { useEffect, useRef } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { router } from "expo-router";
-import { Alert, Image, Pressable, Text, TextInput, View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Text, View } from "react-native";
 import { loginSchema, type LoginInput } from "@attendance/validation";
-import { PrimaryButton } from "../../src/components/PrimaryButton";
+import { AuthField } from "../../src/components/AuthField";
+import { AuthButton, AuthLink, AuthNotice, AuthScreen } from "../../src/components/AuthScreen";
 import { hasSeenWelcome } from "../../src/services/onboarding";
-import { supabase } from "../../src/services/supabase";
+import { authFeedback } from "../../src/services/authFeedback";
 import { useAuthStore } from "../../src/stores/authStore";
-
-function normalizeStudentId(value: string) {
-  return value.trim().replace(/\s+/g, "").toUpperCase();
-}
+import { useOnlineStatus } from "../../src/hooks/useOnlineStatus";
 
 export default function LoginScreen() {
-  const [showPassword, setShowPassword] = useState(false);
-  const login = useAuthStore((state) => state.login);
-  const loading = useAuthStore((state) => state.loading);
-  const storeError = useAuthStore((state) => state.error);
+  const online = useOnlineStatus();
+  const pending = useRef(false);
+  const { login, loading, error } = useAuthStore();
   const form = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
-    defaultValues: {
-      identifier: "",
-      password: ""
-    }
+    defaultValues: { identifier: "", password: "" },
+    mode: "onBlur"
   });
-
+  useEffect(() => { useAuthStore.setState({ error: null }); }, []);
+  const feedback = error ? authFeedback(error) : null;
   const onSubmit = form.handleSubmit(async (values) => {
+    if (!online || loading || pending.current) return;
+    pending.current = true;
     try {
       await login(values.identifier.trim(), values.password);
       const student = useAuthStore.getState().student;
       const seenWelcome = student ? await hasSeenWelcome(student.id) : true;
       router.replace(seenWelcome ? "/(student)" : "/welcome");
-    } catch {
-      // The auth store owns the visible error message.
-    }
+    } catch { /* The auth store owns the visible error. */ }
+    finally { pending.current = false; }
   });
 
-  async function resetPassword() {
-    const identifier = form.getValues("identifier").trim();
-    if (!identifier) {
-      form.setError("identifier", { message: "Enter your student ID or email first." });
-      return;
-    }
-
-    let email = identifier.toLowerCase();
-    if (!identifier.includes("@")) {
-      const { data, error } = await supabase.functions.invoke<{ email?: string; error?: string }>("resolve-student-login", {
-        body: { identifier: normalizeStudentId(identifier) }
-      });
-      if (error || !data?.email) {
-        Alert.alert("Unable to send reset", data?.error ?? error?.message ?? "No active account was found for this student ID.");
-        return;
-      }
-      email = data.email;
-    }
-
-    const { error } = await supabase.auth.resetPasswordForEmail(email);
-    if (error) {
-      Alert.alert("Unable to send reset", error.message);
-      return;
-    }
-    Alert.alert("Password reset sent", "Check your school email for the reset link.");
-  }
-
   return (
-    <View className="flex-1 justify-center bg-slate-50 px-5">
-      <View className="mb-6 items-start">
-        <Image
-          source={require("../../assets/logo.png")}
-          style={{ width: 68, height: 68 }}
-          resizeMode="contain"
-        />
+    <AuthScreen title="Welcome back." description="Your campus events and attendance, all in one place. Sign in to get started.">
+      <Controller control={form.control} name="identifier" render={({ field }) => (
+        <AuthField label="Student ID or school email" ref={field.ref} value={field.value}
+          onChangeText={(value) => { field.onChange(value); if (error) useAuthStore.setState({ error: null }); }} onBlur={field.onBlur}
+          error={form.formState.errors.identifier?.message} autoCapitalize="none" autoComplete="username"
+          textContentType="username" returnKeyType="next" onSubmitEditing={() => form.setFocus("password")} editable={!loading} />
+      )} />
+      <View>
+        <Controller control={form.control} name="password" render={({ field }) => (
+          <AuthField label="Password" password ref={field.ref} value={field.value}
+            onChangeText={(value) => { field.onChange(value); if (error) useAuthStore.setState({ error: null }); }} onBlur={field.onBlur}
+            error={form.formState.errors.password?.message} autoCapitalize="none" autoComplete="current-password"
+            textContentType="password" returnKeyType="done" onSubmitEditing={() => void onSubmit()} editable={!loading} />
+        )} />
+        <AuthLink label="Forgot password?" align="right" disabled={loading}
+          onPress={() => router.push({ pathname: "/(auth)/forgot-password", params: { email: form.getValues("identifier").includes("@") ? form.getValues("identifier").trim() : "" } })} />
       </View>
-      <Text className="text-3xl font-bold text-slate-950">Campus Attendance</Text>
-      <Text className="mt-2 text-base text-slate-600">Sign in with your CSU student ID or verified school email.</Text>
-
-      <View className="mt-8 gap-4">
-        <View>
-          <Text className="mb-2 text-sm font-semibold text-slate-700">Student ID or email</Text>
-          <Controller
-            control={form.control}
-            name="identifier"
-            render={({ field }) => (
-              <TextInput
-                value={field.value}
-                onChangeText={field.onChange}
-                autoCapitalize="none"
-                keyboardType="email-address"
-                className="min-h-14 rounded-lg border border-slate-300 bg-white px-4 text-base text-slate-950"
-              />
-            )}
-          />
-          {form.formState.errors.identifier ? <Text className="mt-1 text-sm text-red-600">{form.formState.errors.identifier.message}</Text> : null}
-        </View>
-
-        <View>
-          <Text className="mb-2 text-sm font-semibold text-slate-700">Password</Text>
-          <View className="flex-row items-center rounded-lg border border-slate-300 bg-white">
-            <Controller
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <TextInput
-                  value={field.value}
-                  onChangeText={field.onChange}
-                  secureTextEntry={!showPassword}
-                  className="min-h-14 flex-1 px-4 text-base text-slate-950"
-                />
-              )}
-            />
-            <Pressable onPress={() => setShowPassword((value) => !value)} className="h-14 w-14 items-center justify-center">
-              <Ionicons name={showPassword ? "eye-off" : "eye"} size={22} color="#334155" />
-            </Pressable>
-          </View>
-          {form.formState.errors.password ? <Text className="mt-1 text-sm text-red-600">{form.formState.errors.password.message}</Text> : null}
-        </View>
-
-        {storeError ? <Text className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{storeError}</Text> : null}
-
-        <PrimaryButton title="Log In" loading={loading} onPress={onSubmit} />
-        <Pressable className="items-center py-3" onPress={() => void resetPassword()}>
-          <Text className="text-sm font-semibold text-brand-700">Forgot password</Text>
-        </Pressable>
+      {feedback ? <AuthNotice title={feedback.title} message={feedback.message} tone="error" /> : null}
+      <AuthButton title="Log in" loading={loading} disabled={!online} onPress={onSubmit} />
+      <AuthLink label={feedback?.verification ? "Resend my confirmation email" : "Email not verified? Resend confirmation"}
+        disabled={loading} onPress={() => router.push({ pathname: "/(auth)/verify-email", params: { email: form.getValues("identifier").includes("@") ? form.getValues("identifier").trim() : "" } })} />
+      <View className="mt-1 rounded-2xl border border-brand-100 bg-brand-50 px-4 pb-1 pt-4">
+        <Text className="text-center text-sm text-slate-600">First time here?</Text>
+        <AuthLink label="Create your student account" icon="person-add-outline" disabled={loading} onPress={() => router.push("/(auth)/register")} />
       </View>
-
-      <View className="mt-6 items-center rounded-3xl border border-brand-100 bg-white p-4">
-        <Text className="text-center text-sm text-slate-600">New CBEA student?</Text>
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => router.push("/(auth)/register")}
-          className="mt-2 w-full items-center justify-center py-2 active:opacity-70"
-          hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }}
-        >
-          <Text className="text-center text-base font-bold text-brand-700">
-            Create verified student account
-          </Text>
-        </Pressable>
-      </View>
-
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => router.push("/privacy")}
-        className="mt-8 w-full items-center justify-center py-3 active:opacity-70"
-        hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }}
-      >
-        <Text className="text-center text-sm text-slate-500">
-          Privacy notice
-        </Text>
-      </Pressable>
-    </View>
+    </AuthScreen>
   );
 }

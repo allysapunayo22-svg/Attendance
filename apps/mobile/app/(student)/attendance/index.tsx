@@ -15,7 +15,7 @@ import { getAttendanceHistory } from "../../../src/repositories/attendanceReposi
 import { formatDateTime } from "../../../src/utils/format";
 import { makeEventMap, needsAttention } from "../../../src/utils/events";
 
-const filters = ["all", "verified", "late", "missed", "rejected", "excused", "review"] as const;
+const filters = ["all", "sync", "verified", "late", "missed", "rejected", "excused", "review"] as const;
 type AttendanceFilter = (typeof filters)[number];
 
 function getReason(serverPayload?: string | null, fallback?: string | null) {
@@ -45,7 +45,7 @@ export default function AttendanceHistoryScreen() {
       const event = eventMap.get(row.event_id);
       const statusMatch =
         filter === "all" ||
-        (filter === "review" ? needsAttention(row.sync_status) || needsAttention(row.status) : row.status === filter);
+        (filter === "review" ? needsAttention(row.sync_status) || needsAttention(row.status) : filter === "sync" ? ["pending_upload", "uploading", "failed"].includes(row.sync_status) : row.status === filter);
 
       if (!statusMatch) return false;
       if (!searchValue) return true;
@@ -64,11 +64,12 @@ export default function AttendanceHistoryScreen() {
       count:
         item === "all"
           ? rows.length
-          : rows.filter((row) => (item === "review" ? needsAttention(row.sync_status) || needsAttention(row.status) : row.status === item)).length
+          : rows.filter((row) => (item === "review" ? needsAttention(row.sync_status) || needsAttention(row.status) : item === "sync" ? ["pending_upload", "uploading", "failed"].includes(row.sync_status) : row.status === item)).length
     }));
   }, [query.data]);
 
   if (query.isLoading) return <LoadingState label="Loading attendance history" />;
+  if (query.isError) return <View className="flex-1 justify-center bg-slate-50 p-5"><EmptyState title="Attendance history unavailable" body="Your saved records could not be opened." /><Pressable accessibilityRole="button" onPress={() => void query.refetch()} className="mt-4 min-h-12 items-center justify-center rounded-full bg-brand-700"><Text className="font-bold text-white">Try Again</Text></Pressable></View>;
 
   return (
     <View className="flex-1 bg-slate-50">
@@ -90,7 +91,7 @@ export default function AttendanceHistoryScreen() {
               className="min-h-12 flex-1 px-3 text-sm text-slate-950"
             />
             {search.length > 0 ? (
-              <Pressable onPress={() => setSearch("")} className="p-1">
+              <Pressable accessibilityRole="button" accessibilityLabel="Clear attendance search" onPress={() => setSearch("")} className="p-1">
                 <Ionicons name="close-circle" size={18} color="#94a3b8" />
               </Pressable>
             ) : null}
@@ -105,12 +106,12 @@ export default function AttendanceHistoryScreen() {
         contentContainerStyle={{
           paddingHorizontal: 20,
           paddingTop: 16,
-          paddingBottom: Math.max(220, insets.bottom + 140)
+          paddingBottom: Math.max(150, insets.bottom + 110)
         }}
         ItemSeparatorComponent={() => <View className="h-3" />}
         ListEmptyComponent={<EmptyState title="No attendance records" body="Records appear here after time-in or time-out." />}
         renderItem={({ item }) => (
-          <Pressable onPress={() => router.push(`/(student)/attendance/${item.local_id}`)} className="rounded-3xl border border-slate-100 bg-white p-4 shadow-sm" style={contentStyle}>
+          <Pressable accessibilityRole="button" accessibilityLabel={`Open ${eventMap.get(item.event_id)?.title ?? "event"} attendance record`} onPress={() => router.push(`/(student)/attendance/${item.local_id}`)} className="rounded-3xl border border-slate-100 bg-white p-4 shadow-sm" style={contentStyle}>
             <View className="flex-row items-center justify-between gap-3">
               <View className="flex-1">
                 <Text className="font-semibold text-slate-950">{eventMap.get(item.event_id)?.title ?? "Event"}</Text>

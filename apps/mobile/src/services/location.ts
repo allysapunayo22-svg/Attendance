@@ -5,7 +5,7 @@ import { haversineDistanceMeters, isPointInPolygon } from "@attendance/shared-ut
 export async function requestFreshLocation() {
   const permission = await Location.requestForegroundPermissionsAsync();
   if (permission.status !== "granted") {
-    throw new Error("Location permission is required for attendance.");
+    throw new Error(permission.canAskAgain ? "Location permission is required for attendance. Allow it and try again." : "Location permission is blocked. Open device settings to allow location access.");
   }
 
   const location = await Location.getCurrentPositionAsync({

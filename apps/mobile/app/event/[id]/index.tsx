@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Image, ScrollView, Text, View } from "react-native";
+import { Image, Linking, ScrollView, Text, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { EventMapView } from "../../../src/components/EventMapView";
@@ -15,6 +15,8 @@ import { getLatestAttendanceForEvent } from "../../../src/repositories/attendanc
 import { evaluateLocationForEvent, requestFreshLocation } from "../../../src/services/location";
 import { formatDate, formatTime, formatTimeRange } from "../../../src/utils/format";
 import { getEventPhase, getEventAttendanceStatus } from "../../../src/utils/events";
+import { EmptyState, LoadingState } from "../../../src/components/ScreenState";
+import { useNow } from "../../../src/hooks/useNow";
 
 export default function EventDetailsScreen() {
   const insets = useSafeAreaInsets();
@@ -24,36 +26,53 @@ export default function EventDetailsScreen() {
   const [timeOutRecord, setTimeOutRecord] = useState<any | null>(null);
   const [distance, setDistance] = useState<number | null>(null);
   const [locationMessage, setLocationMessage] = useState("Location not checked.");
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
+  const [locationLoading, setLocationLoading] = useState(false);
+  const now = useNow();
 
   useEffect(() => {
     if (id) {
-      void getCachedEvent(id).then(setEvent);
-      void getLatestAttendanceForEvent(id, "time_in").then((record) => setTimeInRecord(record ?? null));
-      void getLatestAttendanceForEvent(id, "time_out").then((record) => setTimeOutRecord(record ?? null));
+      setLoading(true);
+      setLoadError(false);
+      void Promise.all([getCachedEvent(id), getLatestAttendanceForEvent(id, "time_in"), getLatestAttendanceForEvent(id, "time_out")])
+        .then(([cachedEvent, timeIn, timeOut]) => { setEvent(cachedEvent); setTimeInRecord(timeIn ?? null); setTimeOutRecord(timeOut ?? null); })
+        .catch(() => { setEvent(null); setLoadError(true); })
+        .finally(() => setLoading(false));
     }
-  }, [id]);
+  }, [id, loadAttempt]);
 
   async function refreshDistance() {
     if (!event) return;
-    const location = await requestFreshLocation();
-    const result = evaluateLocationForEvent(event, {
-      latitude: location.latitude,
-      longitude: location.longitude,
-      accuracy: location.accuracy
-    });
-    setDistance(result.distanceMeters);
-    setLocationMessage(result.reason);
+    setLocationLoading(true);
+    setLocationMessage("Checking your current location…");
+    try {
+      const location = await requestFreshLocation();
+      const result = evaluateLocationForEvent(event, location);
+      setDistance(result.distanceMeters);
+      setLocationMessage(result.reason);
+    } catch (error) {
+      setLocationMessage(error instanceof Error ? error.message : "Location could not be checked.");
+    } finally {
+      setLocationLoading(false);
+    }
   }
 
+  if (loading) return <LoadingState label="Loading event details" />;
   if (!event) {
     return (
       <View className="flex-1 items-center justify-center bg-slate-50 p-5">
-        <Text className="text-slate-600">Event not found in local cache.</Text>
+        <EmptyState title={loadError ? "Unable to load event" : "Event unavailable"} body={loadError ? "Check your connection and try again." : "Refresh Events while online, then try opening this event again."} />
+        <View className="mt-4 w-full gap-3">
+          {loadError ? <PrimaryButton title="Try Again" onPress={() => setLoadAttempt((attempt) => attempt + 1)} /> : null}
+          <PrimaryButton title="Back to Events" variant={loadError ? "light" : "primary"} onPress={() => router.replace("/(student)/events")} />
+        </View>
       </View>
     );
   }
 
-  const phase = getEventPhase(event);
+  const phase = getEventPhase(event, now);
   const isCompleted = phase === "completed";
   const isOngoing = phase === "ongoing";
   const attendanceStatus = getEventAttendanceStatus(event);
@@ -79,10 +98,7 @@ export default function EventDetailsScreen() {
     >
       {/* Event Banner & Overview */}
       <View className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
-        <Image
-          source={{ uri: event.banner_path || "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1000" }}
-          className="h-48 w-full bg-slate-200"
-        />
+        {event.banner_path ? <Image source={{ uri: event.banner_path }} className="h-48 w-full bg-slate-200" /> : <View className="h-40 items-center justify-center bg-brand-900"><Ionicons name="calendar-outline" size={48} color="#99f6e4" /><Text className="mt-2 text-sm font-semibold text-brand-100">Campus Event</Text></View>}
         <View className="p-5">
           <View className="flex-row items-start justify-between gap-3">
             <View className="min-w-0 flex-1">
@@ -210,6 +226,7 @@ export default function EventDetailsScreen() {
             <InfoRow label="Registration" value="Assigned to your account" />
           </View>
           <Text className="mt-3 rounded-2xl bg-brand-50 p-3 text-sm font-medium text-brand-900">{locationMessage}</Text>
+          {locationMessage.includes("Open device settings") ? <View className="mt-3"><PrimaryButton title="Open Location Settings" variant="secondary" onPress={() => void Linking.openSettings()} /></View> : null}
         </View>
       ) : null}
 
@@ -266,6 +283,7 @@ export default function EventDetailsScreen() {
         <View className="gap-3 pt-2">
           <PrimaryButton
             title="Refresh Live Location"
+            loading={locationLoading}
             variant="secondary"
             icon={<Ionicons name="navigate-outline" size={18} color="#ffffff" />}
             onPress={refreshDistance}
@@ -294,6 +312,7 @@ export default function EventDetailsScreen() {
         <View className="gap-3 pt-2">
           <PrimaryButton
             title="Check Venue Location"
+            loading={locationLoading}
             variant="secondary"
             icon={<Ionicons name="navigate-outline" size={18} color="#ffffff" />}
             onPress={refreshDistance}

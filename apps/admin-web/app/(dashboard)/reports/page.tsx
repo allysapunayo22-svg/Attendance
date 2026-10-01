@@ -2,87 +2,116 @@
 
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Download } from "lucide-react";
+import { ChevronDown, Download, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { fetchLiveAttendance } from "@/lib/queries";
+import { fetchAttendanceReport } from "@/lib/queries";
 import { downloadCsv, downloadExcel, downloadPdf } from "@/lib/export";
 
-function localDateKey(value: string) {
+function localDateKey(value?: string | null) {
+  if (!value) return "";
   const date = new Date(value);
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
+function displayDate(value?: string | null) {
+  return value ? new Date(value).toLocaleString([], { dateStyle: "medium", timeStyle: "short" }) : "—";
+}
+
 export default function ReportsPage() {
-  const query = useQuery({ queryKey: ["reports-attendance"], queryFn: fetchLiveAttendance });
+  const query = useQuery({ queryKey: ["reports-attendance"], queryFn: fetchAttendanceReport });
   const [eventFilter, setEventFilter] = useState("all");
-  const [dateFilter, setDateFilter] = useState("");
-  const eventNames = useMemo(() => Array.from(new Set((query.data ?? []).map((row) => row.event?.title).filter((title): title is string => Boolean(title)))).sort(), [query.data]);
-  const sourceRows = (query.data ?? []).filter((row) => {
-    const matchesEvent = eventFilter === "all" || row.event?.title === eventFilter;
-    const matchesDate = !dateFilter || (row.time_in_server_timestamp ? localDateKey(row.time_in_server_timestamp) === dateFilter : false);
-    return matchesEvent && matchesDate;
-  });
+  const [courseFilter, setCourseFilter] = useState("all");
+  const [sectionFilter, setSectionFilter] = useState("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+
+  const options = useMemo(() => {
+    const data = query.data ?? [];
+    return {
+      events: Array.from(new Set(data.map((row) => row.event?.title).filter((value): value is string => Boolean(value)))).sort(),
+      courses: Array.from(new Set(data.map((row) => row.student?.course?.code).filter((value): value is string => Boolean(value)))).sort(),
+      sections: Array.from(new Set(data.map((row) => row.student?.section?.name).filter((value): value is string => Boolean(value)))).sort()
+    };
+  }, [query.data]);
+
+  const sourceRows = useMemo(() => (query.data ?? []).filter((row) => {
+    const rowDate = localDateKey(row.time_in_server_timestamp);
+    return (eventFilter === "all" || row.event?.title === eventFilter)
+      && (courseFilter === "all" || row.student?.course?.code === courseFilter)
+      && (sectionFilter === "all" || row.student?.section?.name === sectionFilter)
+      && (!dateFrom || rowDate >= dateFrom)
+      && (!dateTo || rowDate <= dateTo);
+  }), [query.data, eventFilter, courseFilter, sectionFilter, dateFrom, dateTo]);
+
   const rows = sourceRows.map((row) => ({
     event: row.event?.title ?? "",
     student: row.student?.full_name ?? "",
     student_id: row.student?.student_id ?? "",
-    time_in: row.time_in_server_timestamp ?? "",
-    time_out: row.time_out_server_timestamp ?? "",
+    course: row.student?.course?.code ?? "",
+    section: row.student?.section?.name ?? "",
+    time_in: displayDate(row.time_in_server_timestamp),
+    time_out: displayDate(row.time_out_server_timestamp),
     distance_meters: row.time_in_distance ?? "",
-    gps_accuracy: row.time_in_accuracy ?? "",
     status: row.status,
-    flags: row.suspicious_flags?.join(";") ?? ""
+    flags: row.suspicious_flags?.join("; ") ?? ""
   }));
+
+  const hasFilters = eventFilter !== "all" || courseFilter !== "all" || sectionFilter !== "all" || dateFrom || dateTo;
+  const disabled = query.isLoading || query.isError || rows.length === 0;
+  const resetFilters = () => {
+    setEventFilter("all"); setCourseFilter("all"); setSectionFilter("all"); setDateFrom(""); setDateTo("");
+  };
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Reports & Analytics</h1>
-        <p className="mt-1 text-sm text-slate-500">Filter, review, and export the latest attendance records and verification telemetry.</p>
-      </div>
       <Card className="rounded-2xl border-slate-200/80 shadow-xs">
-        <CardHeader className="p-5 border-b border-slate-100"><h2 className="text-base font-bold text-slate-900">Export Attendance Register</h2></CardHeader>
-        <CardContent className="p-5">
-          <div className="mb-4 grid gap-3 sm:grid-cols-2">
-            <label><span className="mb-1 block text-xs font-semibold text-slate-600">Event</span><select value={eventFilter} onChange={(event) => setEventFilter(event.target.value)} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm"><option value="all">All events</option>{eventNames.map((name) => <option key={name} value={name}>{name}</option>)}</select></label>
-            <label><span className="mb-1 block text-xs font-semibold text-slate-600">Attendance date</span><Input type="date" value={dateFilter} onChange={(event) => setDateFilter(event.target.value)} /></label>
+        <CardHeader className="flex flex-row items-center justify-between gap-4 border-b border-slate-100 p-5">
+          <div>
+            <h1 className="text-lg font-bold text-slate-900">Attendance reports</h1>
+            <p className="mt-1 text-sm text-slate-500">Filter the complete attendance register, then export the current result.</p>
           </div>
-          <p className="mb-3 text-xs text-slate-500">{query.isLoading ? "Loading records…" : `${rows.length} record${rows.length === 1 ? "" : "s"} selected`}</p>
-          <div className="flex flex-wrap gap-2.5">
-            <Button disabled={query.isLoading || query.isError || !rows.length} className="h-10 rounded-xl bg-brand-700 hover:bg-brand-800 text-xs font-semibold text-white shadow-xs" onClick={() => downloadCsv("attendance-report.csv", rows)}><Download size={15} /><span>Export CSV</span></Button>
-            <Button disabled={query.isLoading || query.isError || !rows.length} variant="outline" className="h-10 rounded-xl border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50" onClick={() => downloadExcel("attendance-report.xlsx", rows)}><Download size={15} /><span>Export Excel</span></Button>
-            <Button disabled={query.isLoading || query.isError || !rows.length} variant="outline" className="h-10 rounded-xl border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50" onClick={() => downloadPdf("attendance-report.pdf", "Attendance Report", rows)}><Download size={15} /><span>Export PDF</span></Button>
+          <details className="relative">
+            <summary className={`flex h-10 cursor-pointer list-none items-center gap-2 rounded-xl bg-brand-700 px-4 text-xs font-semibold text-white ${disabled ? "pointer-events-none opacity-50" : ""}`}>
+              <Download size={15} /> Export <ChevronDown size={14} />
+            </summary>
+            <div className="absolute right-0 z-20 mt-2 w-44 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl">
+              <button className="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-slate-50" onClick={() => downloadCsv("attendance-report.csv", rows)}>CSV file</button>
+              <button className="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-slate-50" onClick={() => downloadExcel("attendance-report.xlsx", rows)}>Excel workbook</button>
+              <button className="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-slate-50" onClick={() => downloadPdf("attendance-report.pdf", "Attendance Report", rows)}>PDF document</button>
+            </div>
+          </details>
+        </CardHeader>
+        <CardContent className="p-5">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+            <FilterSelect label="Event" value={eventFilter} onChange={setEventFilter} values={options.events} />
+            <FilterSelect label="Course" value={courseFilter} onChange={setCourseFilter} values={options.courses} />
+            <FilterSelect label="Section" value={sectionFilter} onChange={setSectionFilter} values={options.sections} />
+            <label><span className="mb-1 block text-xs font-semibold text-slate-600">From</span><Input type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} /></label>
+            <label><span className="mb-1 block text-xs font-semibold text-slate-600">To</span><Input type="date" min={dateFrom} value={dateTo} onChange={(event) => setDateTo(event.target.value)} /></label>
+          </div>
+          <div className="mt-4 flex items-center justify-between gap-3 text-sm">
+            <p className="font-medium text-slate-700">{query.isLoading ? "Loading records…" : `${rows.length} of ${query.data?.length ?? 0} records selected`}</p>
+            {hasFilters ? <Button variant="outline" className="h-8 text-xs" onClick={resetFilters}><X size={13} /> Clear filters</Button> : null}
           </div>
         </CardContent>
       </Card>
-      <Card className="rounded-2xl border-slate-200/80 shadow-xs overflow-hidden">
+
+      <Card className="overflow-hidden rounded-2xl border-slate-200/80 shadow-xs">
         <CardContent className="p-0">
           {query.isError ? <div role="alert" className="m-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">Attendance records could not be loaded. <button className="font-bold underline" onClick={() => void query.refetch()}>Try again</button></div> : null}
-          {query.isLoading ? <div role="status" className="p-12 text-center text-sm text-slate-500">Loading attendance records…</div> : null}
-          <div className="hidden overflow-x-auto md:block"><table className="w-full text-left text-sm">
-            <thead className="border-b border-slate-100 bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-              <tr>
-                {Object.keys(rows[0] ?? { event: "", student: "", status: "" }).map((key) => <th key={key} className="px-5 py-3.5">{key.replace(/_/g, " ")}</th>)}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {rows.map((row, index) => (
-                <tr key={`${row.student_id}-${index}`} className="transition hover:bg-blue-50/20">
-                  {Object.values(row).map((value, cellIndex) => <td key={cellIndex} className="px-5 py-3.5 text-xs text-slate-700 font-medium">{value || "—"}</td>)}
-                </tr>
-              ))}
-              {!query.isLoading && !query.isError && !rows.length ? (
-                <tr>
-                  <td colSpan={9} className="px-5 py-12 text-center text-sm text-slate-500">No attendance data to export.</td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table></div>
-          {!query.isLoading && !query.isError ? <div className="divide-y divide-slate-100 md:hidden">{rows.map((row, index) => <article key={`${row.student_id}-${index}`} className="space-y-2 p-4"><div className="flex items-start justify-between gap-3"><div><h3 className="font-bold text-slate-900">{row.student || "Unknown student"}</h3><p className="text-xs text-slate-500">{row.student_id || "No student ID"}</p></div><span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold">{row.status}</span></div><p className="text-sm text-slate-700">{row.event || "Unknown event"}</p><dl className="grid grid-cols-2 gap-2 text-xs"><div><dt className="text-slate-500">Time in</dt><dd className="break-words font-medium">{row.time_in || "—"}</dd></div><div><dt className="text-slate-500">Time out</dt><dd className="break-words font-medium">{row.time_out || "—"}</dd></div></dl></article>)}{!rows.length ? <div className="p-10 text-center text-sm text-slate-500">No attendance records match these filters.</div> : null}</div> : null}
+          {query.isLoading ? <div role="status" className="p-12 text-center text-sm text-slate-500">Loading the attendance register…</div> : null}
+          {!query.isLoading && !query.isError ? <div className="overflow-x-auto"><table className="w-full text-left text-sm">
+            <thead className="border-b border-slate-100 bg-slate-50 text-xs font-semibold text-slate-600"><tr><th className="px-5 py-3">Student</th><th className="px-5 py-3">Event</th><th className="px-5 py-3">Course / section</th><th className="px-5 py-3">Time in</th><th className="px-5 py-3">Time out</th><th className="px-5 py-3">Status</th></tr></thead>
+            <tbody className="divide-y divide-slate-100">{rows.map((row, index) => <tr key={`${row.student_id}-${row.event}-${index}`} className="hover:bg-slate-50"><td className="px-5 py-3"><p className="font-semibold text-slate-900">{row.student || "Unknown student"}</p><p className="text-xs text-slate-500">{row.student_id || "—"}</p></td><td className="px-5 py-3 text-slate-700">{row.event || "—"}</td><td className="px-5 py-3 text-slate-700">{[row.course, row.section].filter(Boolean).join(" / ") || "—"}</td><td className="whitespace-nowrap px-5 py-3 text-xs text-slate-600">{row.time_in}</td><td className="whitespace-nowrap px-5 py-3 text-xs text-slate-600">{row.time_out}</td><td className="px-5 py-3 capitalize text-slate-700">{row.status.replace(/_/g, " ")}</td></tr>)}</tbody>
+          </table>{rows.length === 0 ? <div className="p-12 text-center text-sm text-slate-500">No attendance records match these filters.</div> : null}</div> : null}
         </CardContent>
       </Card>
     </div>
   );
+}
+
+function FilterSelect({ label, value, onChange, values }: { label: string; value: string; onChange: (value: string) => void; values: string[] }) {
+  return <label><span className="mb-1 block text-xs font-semibold text-slate-600">{label}</span><select value={value} onChange={(event) => onChange(event.target.value)} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm"><option value="all">All {label.toLowerCase()}s</option>{values.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>;
 }

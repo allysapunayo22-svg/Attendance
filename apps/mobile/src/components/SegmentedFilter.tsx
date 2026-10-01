@@ -22,7 +22,7 @@ export function SegmentedFilter<T extends string>({
         return (
           <Pressable
             key={item.value}
-            accessibilityRole="button"
+            accessibilityRole="tab"
             accessibilityState={{ selected: active }}
             onPress={() => onChange(item.value)}
             className={`min-h-11 flex-row items-center rounded-full border px-5 shadow-sm ${active ? "border-brand-700 bg-brand-700" : "border-slate-100 bg-white"}`}

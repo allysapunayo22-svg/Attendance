@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Alert, Image, Platform, Pressable, ScrollView, Switch, Text, View } from "react-native";
+import { Alert, Image, Linking, Platform, Pressable, ScrollView, Text, View } from "react-native";
+import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
@@ -10,28 +10,7 @@ import { SectionHeader } from "../../../src/components/SectionHeader";
 import { StatusBadge } from "../../../src/components/StatusBadge";
 import { useOnlineStatus } from "../../../src/hooks/useOnlineStatus";
 import { useAuthStore } from "../../../src/stores/authStore";
-
-const COURSE_MAP: Record<string, string> = {
-  "00000000-0000-0000-0000-000000000201": "BS in Information Technology (BSIT)",
-  "00000000-0000-0000-0000-000000000202": "BS in Business Administration (BSBA)",
-  "bsit": "BS in Information Technology (BSIT)",
-  "bsba": "BS in Business Administration (BSBA)"
-};
-
-const SECTION_MAP: Record<string, string> = {
-  "00000000-0000-0000-0000-000000000301": "IT-3A",
-  "00000000-0000-0000-0000-000000000302": "BA-2A"
-};
-
-function formatCourse(courseId?: string | null) {
-  if (!courseId) return "Not assigned";
-  return COURSE_MAP[courseId] || (courseId.length > 20 ? "BS Information Technology (BSIT)" : courseId);
-}
-
-function formatSection(sectionId?: string | null) {
-  if (!sectionId) return "Not assigned";
-  return SECTION_MAP[sectionId] || (sectionId.length > 20 ? "IT-3A" : sectionId);
-}
+import { supabase } from "../../../src/services/supabase";
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -39,9 +18,19 @@ export default function ProfileScreen() {
   const deviceId = useAuthStore((state) => state.deviceId);
   const logout = useAuthStore((state) => state.logout);
   const online = useOnlineStatus();
-  const [eventReminders, setEventReminders] = useState(true);
-  const [attendanceAlerts, setAttendanceAlerts] = useState(true);
-  const [appealUpdates, setAppealUpdates] = useState(true);
+  const academicQuery = useQuery({
+    queryKey: ["academic-profile", student?.course_id, student?.section_id],
+    enabled: Boolean(student),
+    queryFn: async () => {
+      const [courseResult, sectionResult] = await Promise.all([
+        student?.course_id ? supabase.from("courses").select("code,name").eq("id", student.course_id).maybeSingle() : Promise.resolve({ data: null, error: null }),
+        student?.section_id ? supabase.from("sections").select("name").eq("id", student.section_id).maybeSingle() : Promise.resolve({ data: null, error: null })
+      ]);
+      if (courseResult.error) throw courseResult.error;
+      if (sectionResult.error) throw sectionResult.error;
+      return { course: courseResult.data, section: sectionResult.data };
+    }
+  });
   const contentStyle = { width: "100%", maxWidth: 620, alignSelf: "center" } as const;
 
   const studentInitials = student?.full_name
@@ -136,12 +125,12 @@ export default function ProfileScreen() {
           <View className="mt-2">
             <InfoRow
               label="Course & Program"
-              value={formatCourse(student?.course_id)}
+              value={academicQuery.isLoading ? "Loading…" : academicQuery.data?.course ? `${academicQuery.data.course.name} (${academicQuery.data.course.code})` : student?.course_id ? "Course name unavailable" : "Not assigned"}
               icon={<Ionicons name="school-outline" size={16} color="#0f766e" />}
             />
             <InfoRow
               label="Section"
-              value={formatSection(student?.section_id)}
+              value={academicQuery.isLoading ? "Loading…" : academicQuery.data?.section?.name ?? (student?.section_id ? "Section name unavailable" : "Not assigned")}
               icon={<Ionicons name="people-outline" size={16} color="#0f766e" />}
             />
             <InfoRow
@@ -189,26 +178,8 @@ export default function ProfileScreen() {
         {/* Notification Settings */}
         <View className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm" style={contentStyle}>
           <SectionHeader title="Notification Preferences" />
-          <View className="mt-3 gap-3.5">
-            {[
-              ["Event Reminders", eventReminders, setEventReminders, "Alert me before check-in windows open"],
-              ["Attendance Alerts", attendanceAlerts, setAttendanceAlerts, "Notify when verification is approved"],
-              ["Appeal Status", appealUpdates, setAppealUpdates, "Updates on submitted excuse letters"]
-            ].map(([label, value, setter, hint]) => (
-              <View key={label as string} className="flex-row items-center justify-between gap-3">
-                <View className="flex-1">
-                  <Text className="text-sm font-semibold text-slate-800">{label as string}</Text>
-                  <Text className="text-xs text-slate-400">{hint as string}</Text>
-                </View>
-                <Switch
-                  value={value as boolean}
-                  onValueChange={setter as (value: boolean) => void}
-                  trackColor={{ true: "#99f6e4", false: "#cbd5e1" }}
-                  thumbColor={(value as boolean) ? "#0f766e" : "#f8fafc"}
-                />
-              </View>
-            ))}
-          </View>
+          <Text className="mt-2 text-sm leading-5 text-slate-600">Event, attendance, and appeal notifications follow this device’s system notification settings.</Text>
+          <Pressable accessibilityRole="button" onPress={() => void Linking.openSettings()} className="mt-4 min-h-12 flex-row items-center justify-center rounded-full bg-brand-50"><Ionicons name="settings-outline" size={18} color="#0f766e" /><Text className="ml-2 font-semibold text-brand-800">Open Device Settings</Text></Pressable>
         </View>
 
         {/* Actions & Logout */}

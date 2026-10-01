@@ -33,12 +33,15 @@ export function EventCard({ event, onPress, compact = false }: { event: Event; o
   const status = getEventAttendanceStatus(event);
 
   return (
-    <Pressable onPress={onPress} className="rounded-3xl border border-slate-100 bg-white p-3 shadow-sm active:bg-slate-50">
+    <Pressable accessibilityRole="button" accessibilityLabel={`Open ${event.title}`} onPress={onPress} className="rounded-3xl border border-slate-100 bg-white p-3 shadow-sm active:bg-slate-50">
       <View className="flex-row items-start gap-3">
-        <Image
-          source={{ uri: event.banner_path || "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=400" }}
-          className={`${compact ? "h-20 w-20" : "h-28 w-24"} rounded-2xl bg-slate-200`}
-        />
+        {event.banner_path ? (
+          <Image source={{ uri: event.banner_path }} className={`${compact ? "h-20 w-20" : "h-28 w-24"} rounded-2xl bg-slate-200`} />
+        ) : (
+          <View className={`${compact ? "h-20 w-20" : "h-28 w-24"} items-center justify-center rounded-2xl bg-brand-900`}>
+            <Ionicons name="calendar-outline" size={28} color="#99f6e4" />
+          </View>
+        )}
         <View className="min-w-0 flex-1">
           <View className="flex-row items-start justify-between gap-3">
             <View className="min-w-0 flex-1">

@@ -16,22 +16,10 @@ const slides = [
     icon: "school-outline"
   },
   {
-    eyebrow: "Live events",
-    title: "See events as soon as they are published",
-    body: "Upcoming and ongoing events refresh from the admin dashboard, so you can open details, venue, schedule, and requirements quickly.",
-    icon: "calendar-outline"
-  },
-  {
-    eyebrow: "Time In and Time Out",
-    title: "Follow guided verification steps",
-    body: "The app checks your location, GPS accuracy, event time window, QR requirement, and live photo evidence before you submit.",
+    eyebrow: "How attendance works",
+    title: "Verify once, then follow your status",
+    body: "For each event, the app guides you through location, QR, and photo checks. If you lose connection, your encrypted record stays queued on this phone until it can sync.",
     icon: "shield-checkmark-outline"
-  },
-  {
-    eyebrow: "Offline ready",
-    title: "Records stay saved on your phone",
-    body: "Attendance can be saved locally first and synced when internet returns. History, progress, appeals, and notifications stay easy to find.",
-    icon: "sync-outline"
   }
 ] as const;
 

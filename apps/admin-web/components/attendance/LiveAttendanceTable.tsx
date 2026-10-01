@@ -156,7 +156,7 @@ export function LiveAttendanceTable() {
                     <div><p className="font-bold text-slate-900">{row.student?.full_name ?? "Student"}</p><p className="text-xs text-slate-500">{row.student?.student_id ?? "—"} · {row.event?.title ?? "Event"}</p></div>
                     <Badge tone={flagged ? "requires_review" : row.status}>{labelize(flagged ? "Requires Review" : row.status)}</Badge>
                   </div>
-                  <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-600"><span>Time in: {row.time_in_server_timestamp ? new Date(row.time_in_server_timestamp).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "—"}</span><span>Distance: {row.time_in_distance != null ? `${Math.round(row.time_in_distance)}m` : "—"}</span></div>
+                  <p className="mt-3 text-xs text-slate-600">Time in: {row.time_in_server_timestamp ? new Date(row.time_in_server_timestamp).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "—"}</p>
                   <span className="mt-3 inline-block text-xs font-bold text-brand-700">Inspect record →</span>
                 </button>
               );
@@ -168,11 +168,10 @@ export function LiveAttendanceTable() {
           <table className="w-full text-left text-sm">
             <thead className="border-b border-slate-100 bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-500">
               <tr>
-                <th className="px-4 py-3.5">Student Profile</th>
-                <th className="px-4 py-3.5">Campus Event</th>
+                <th className="px-4 py-3.5">Student</th>
+                <th className="px-4 py-3.5">Event</th>
                 <th className="px-4 py-3.5">Time In</th>
                 <th className="px-4 py-3.5">Time Out</th>
-                <th className="px-4 py-3.5">GPS Distance</th>
                 <th className="px-4 py-3.5">Status</th>
                 <th className="px-4 py-3.5">Action</th>
               </tr>
@@ -205,17 +204,6 @@ export function LiveAttendanceTable() {
                         : "—"}
                     </td>
                     <td className="px-4 py-3.5">
-                      {row.time_in_distance != null ? (
-                        <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-700">
-                          <MapPin size={13} className="text-brand-700" />
-                          {Math.round(row.time_in_distance)}m away
-                          {row.time_in_accuracy ? <span className="text-slate-400">(±{Math.round(row.time_in_accuracy)}m)</span> : null}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-slate-400">—</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3.5">
                       <Badge tone={isFlagged ? "requires_review" : row.status}>
                         {labelize(isFlagged ? "Requires Review" : row.status)}
                       </Badge>
@@ -229,7 +217,7 @@ export function LiveAttendanceTable() {
                         }}
                         className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-brand-700 hover:bg-brand-50 hover:border-brand-200 shadow-xs transition"
                       >
-                        Inspect
+                        Details
                       </button>
                     </td>
                   </tr>
@@ -238,7 +226,7 @@ export function LiveAttendanceTable() {
 
               {!query.isLoading && !query.isError && filteredRows.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-sm text-slate-500">
+                  <td colSpan={6} className="p-8 text-center text-sm text-slate-500">
                     No attendance records match your search or filter.
                   </td>
                 </tr>
@@ -246,7 +234,7 @@ export function LiveAttendanceTable() {
 
               {query.isLoading ? (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-sm text-slate-500">
+                  <td colSpan={6} className="p-8 text-center text-sm text-slate-500">
                     Loading live attendance records…
                   </td>
                 </tr>
@@ -305,7 +293,7 @@ export function LiveAttendanceTable() {
               </div>
 
               <div className="rounded-xl bg-slate-50 p-3">
-                <span className="font-semibold text-slate-500">Device Telemetry</span>
+                <span className="font-semibold text-slate-500">Device check</span>
                 <p className="mt-1 font-bold text-slate-900 truncate">
                   {(selectedRecord as any).device_id ? "Verified Mobile Device" : "Standard Mobile Device"}
                 </p>
