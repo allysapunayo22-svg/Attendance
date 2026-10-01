@@ -3,13 +3,15 @@
 import { supabase } from "./supabase";
 
 export async function fetchDashboardStats() {
-  const [upcoming, ongoing, pending] = await Promise.all([
+  const now = new Date();
+  const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const [upcoming, ongoing, pending, todayEvents] = await Promise.all([
     supabase.from("events").select("id", { count: "exact", head: true }).eq("status", "published"),
     supabase.from("events").select("id", { count: "exact", head: true }).eq("status", "ongoing"),
-    supabase.from("attendance_sessions").select("id", { count: "exact", head: true }).or("status.eq.pending_verification,sync_status.eq.requires_review")
+    supabase.from("attendance_sessions").select("id", { count: "exact", head: true }).or("status.eq.pending_verification,sync_status.eq.requires_review"),
+    supabase.from("event_schedules").select("id,event_date,starts_at,ends_at,event:events(id,title,status)").eq("event_date", todayKey).order("starts_at", { ascending: true })
   ]);
 
-  const now = new Date();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const startOfTomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
   const { data: todayRows, error: todayError } = await supabase
@@ -19,7 +21,7 @@ export async function fetchDashboardStats() {
     .lt("created_at", startOfTomorrow.toISOString());
 
   if (todayError) throw todayError;
-  const countErrors = [upcoming.error, ongoing.error, pending.error].filter(Boolean);
+  const countErrors = [upcoming.error, ongoing.error, pending.error, todayEvents.error].filter(Boolean);
   if (countErrors[0]) throw countErrors[0];
   const resolved = todayRows?.filter((row) => ["verified", "completed", "time_in_recorded", "late", "excused"].includes(row.status)).length ?? 0;
   const resolutionRate = todayRows?.length ? Math.round((resolved / todayRows.length) * 100) : 0;
@@ -32,6 +34,7 @@ export async function fetchDashboardStats() {
     absent: todayRows?.filter((row) => row.status === "missed").length ?? 0,
     pendingReviews: pending.count ?? 0,
     resolutionRate,
+    todayEvents: todayEvents.data ?? [],
     recentActivity: [...(todayRows ?? [])].sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()).slice(0, 6)
   };
 }
