@@ -7,7 +7,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import type { EventStatus } from "@attendance/types";
 import { eventFormSchema, type EventFormInput } from "@attendance/validation";
 import { supabase } from "@/lib/supabase";
-import { defaultEventFormValues, EventWizardForm, toEventTimestamp } from "./EventWizardForm";
+import { defaultEventFormValues, EventWizardForm } from "./EventWizardForm";
+import { eventSaveErrorMessage, toEventTimestamp } from "@/lib/event-form";
 
 const statusOptions: EventStatus[] = ["draft", "published", "ongoing", "completed", "cancelled"];
 
@@ -158,7 +159,7 @@ export function EventEditForm({ eventId }: { eventId: string }) {
       })
       .eq("event_id", eventId);
 
-    if (scheduleError) throw scheduleError;
+    if (scheduleError) throw new Error(`Unable to save the event schedule: ${eventSaveErrorMessage(scheduleError)}`);
 
     const { error: locationError } = await supabase
       .from("event_locations")

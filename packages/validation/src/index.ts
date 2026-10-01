@@ -24,20 +24,23 @@ export const registerSchema = z
     message: "Passwords do not match."
   });
 
+const eventTimeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Enter a valid time (HH:MM).");
+const optionalEventTimeSchema = z.union([eventTimeSchema, z.literal("")]).optional().nullable();
+
 export const eventFormSchema = z
   .object({
     title: z.string().trim().min(3, "Enter an event title with at least 3 characters."),
     description: z.string().trim().min(10, "Enter a description with at least 10 characters."),
     type: z.string().trim().min(1, "Enter an event type."),
     requirement: z.enum(["required", "optional"]),
-    eventDate: z.string().min(1, "Choose an event date."),
-    startsAt: z.string().min(1, "Choose a start time."),
-    endsAt: z.string().min(1, "Choose an end time."),
-    checkInOpensAt: z.string().min(1, "Choose when check-in opens."),
-    checkInClosesAt: z.string().min(1, "Choose when check-in closes."),
-    lateEndsAt: z.string().optional().nullable(),
-    checkOutOpensAt: z.string().optional().nullable(),
-    checkOutClosesAt: z.string().optional().nullable(),
+    eventDate: z.string().date("Choose a valid event date."),
+    startsAt: eventTimeSchema,
+    endsAt: eventTimeSchema,
+    checkInOpensAt: eventTimeSchema,
+    checkInClosesAt: eventTimeSchema,
+    lateEndsAt: optionalEventTimeSchema,
+    checkOutOpensAt: optionalEventTimeSchema,
+    checkOutClosesAt: optionalEventTimeSchema,
     venueName: z.string().trim().min(2, "Enter a venue name."),
     address: z.string().optional().nullable(),
     latitude: z.coerce.number().min(-90).max(90),
@@ -84,6 +87,10 @@ export const eventFormSchema = z
   .refine((data) => data.startsAt < data.endsAt, {
     path: ["endsAt"],
     message: "Event end time must be after start time."
+  })
+  .refine((data) => !data.checkOutOpensAt || !data.checkOutClosesAt || data.checkOutOpensAt <= data.checkOutClosesAt, {
+    path: ["checkOutClosesAt"],
+    message: "Check-out closing time must be at or after opening time on the event date."
   });
 
 export const attendanceSubmissionSchema = z.object({

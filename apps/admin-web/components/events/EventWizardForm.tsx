@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input, Textarea } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { eventSaveErrorMessage } from "@/lib/event-form";
 
 const LocationPicker = dynamic(() => import("./LocationPicker").then((module) => module.LocationPicker), { ssr: false });
 
@@ -199,10 +200,6 @@ const reviewCards: Array<{
   }
 ];
 
-export function toEventTimestamp(date: string, time: string) {
-  return new Date(`${date}T${time}:00`).toISOString();
-}
-
 function stepIndexFor(stepKey: WizardStepKey) {
   const index = wizardSteps.findIndex((step) => step.key === stepKey);
   return index >= 0 ? index : 0;
@@ -316,7 +313,7 @@ export function EventWizardForm({
         await onValidSubmit(submitValues);
         setSubmitSuccess(successMessage ?? null);
       } catch (error) {
-        setSubmitError(error instanceof Error ? error.message : "Unable to save this event. Please try again.");
+        setSubmitError(eventSaveErrorMessage(error));
       }
     },
     (errors) => {
@@ -457,6 +454,7 @@ export function EventWizardForm({
             <h2 className="text-lg font-bold">Schedule</h2>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-4">
+            <p className="text-sm text-slate-600 md:col-span-4">All times use the selected event date. Check-out closing time must be at or after its opening time; midnight (00:00) is the start of that date.</p>
             <div className="rounded-xl bg-brand-50 p-4 text-sm text-brand-900 md:col-span-4"><strong>Summary:</strong> {values.eventDate} · event {values.startsAt || "—"}–{values.endsAt || "—"} · Time In {values.checkInOpensAt || "—"}–{values.checkInClosesAt || "—"} · Time Out {values.checkOutOpensAt || "—"}–{values.checkOutClosesAt || "—"}</div>
             <label>
               <span className="mb-2 block text-sm font-semibold">Date</span>

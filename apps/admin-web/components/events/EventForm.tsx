@@ -5,7 +5,8 @@ import { useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { eventFormSchema, type EventFormInput } from "@attendance/validation";
 import { supabase } from "@/lib/supabase";
-import { defaultEventFormValues, EventWizardForm, toEventTimestamp } from "./EventWizardForm";
+import { defaultEventFormValues, EventWizardForm } from "./EventWizardForm";
+import { completeEventCreation, eventSaveErrorMessage, toEventTimestamp } from "@/lib/event-form";
 
 export function EventForm() {
   const router = useRouter();
@@ -41,79 +42,84 @@ export function EventForm() {
     if (eventError) throw eventError;
 
     const eventId = event.id as string;
-    const [schedule, location] = await Promise.all([
-      supabase.from("event_schedules").insert({
-        event_id: eventId,
-        event_date: values.eventDate,
-        starts_at: toEventTimestamp(values.eventDate, values.startsAt),
-        ends_at: toEventTimestamp(values.eventDate, values.endsAt),
-        check_in_opens_at: toEventTimestamp(values.eventDate, values.checkInOpensAt),
-        check_in_closes_at: toEventTimestamp(values.eventDate, values.checkInClosesAt),
-        late_ends_at: values.lateEndsAt ? toEventTimestamp(values.eventDate, values.lateEndsAt) : null,
-        check_out_opens_at: values.checkOutOpensAt ? toEventTimestamp(values.eventDate, values.checkOutOpensAt) : null,
-        check_out_closes_at: values.checkOutClosesAt ? toEventTimestamp(values.eventDate, values.checkOutClosesAt) : null
-      }),
-      supabase.from("event_locations").insert({
-        event_id: eventId,
-        venue_name: values.venueName,
-        address: values.address,
-        latitude: values.latitude,
-        longitude: values.longitude,
-        radius_meters: values.radiusMeters,
-        required_gps_accuracy_meters: values.requiredGpsAccuracyMeters
-      })
-    ]);
-
-    if (schedule.error) throw schedule.error;
-    if (location.error) throw location.error;
-
-    const polygonZone = values.zones[0];
-    if (values.zoneMode === "polygon" && polygonZone && polygonZone.coordinates.length >= 3) {
-      const { error } = await supabase.rpc("create_polygon_event_zone", {
-        p_event_id: eventId,
-        p_name: polygonZone.name,
-        p_coordinates: polygonZone.coordinates
-      });
-
-      if (error) throw error;
-    } else {
-      const { error } = await supabase.from("event_zones").insert({
-        event_id: eventId,
-        name: "Main radius",
-        zone_type: "circle",
-        center_latitude: values.latitude,
-        center_longitude: values.longitude,
-        radius_meters: values.radiusMeters,
-        geojson: {
-          type: "circle",
-          center: [values.longitude, values.latitude],
-          radiusMeters: values.radiusMeters
-        }
-      });
-
-      if (error) throw error;
-    }
-
-    if (values.assignedYearLevels.length > 0) {
-      const { error } = await supabase.from("event_participants").insert(
-        values.assignedYearLevels.map((yearLevel) => ({
+    await completeEventCreation(async () => {
+      const [schedule, location] = await Promise.all([
+        supabase.from("event_schedules").insert({
           event_id: eventId,
-          target_type: "year_level",
-          year_level: yearLevel
-        }))
-      );
+          event_date: values.eventDate,
+          starts_at: toEventTimestamp(values.eventDate, values.startsAt),
+          ends_at: toEventTimestamp(values.eventDate, values.endsAt),
+          check_in_opens_at: toEventTimestamp(values.eventDate, values.checkInOpensAt),
+          check_in_closes_at: toEventTimestamp(values.eventDate, values.checkInClosesAt),
+          late_ends_at: values.lateEndsAt ? toEventTimestamp(values.eventDate, values.lateEndsAt) : null,
+          check_out_opens_at: values.checkOutOpensAt ? toEventTimestamp(values.eventDate, values.checkOutOpensAt) : null,
+          check_out_closes_at: values.checkOutClosesAt ? toEventTimestamp(values.eventDate, values.checkOutClosesAt) : null
+        }),
+        supabase.from("event_locations").insert({
+          event_id: eventId,
+          venue_name: values.venueName,
+          address: values.address,
+          latitude: values.latitude,
+          longitude: values.longitude,
+          radius_meters: values.radiusMeters,
+          required_gps_accuracy_meters: values.requiredGpsAccuracyMeters
+        })
+      ]);
 
-      if (error) throw error;
-    }
+      if (schedule.error) throw new Error(`Unable to save the event schedule: ${eventSaveErrorMessage(schedule.error)}`);
+      if (location.error) throw location.error;
 
-    const { error: auditError } = await supabase.rpc("log_audit", {
-      p_action: "event.created",
-      p_entity_type: "event",
-      p_entity_id: eventId,
-      p_metadata: { title: values.title }
+      const polygonZone = values.zones[0];
+      if (values.zoneMode === "polygon" && polygonZone && polygonZone.coordinates.length >= 3) {
+        const { error } = await supabase.rpc("create_polygon_event_zone", {
+          p_event_id: eventId,
+          p_name: polygonZone.name,
+          p_coordinates: polygonZone.coordinates
+        });
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("event_zones").insert({
+          event_id: eventId,
+          name: "Main radius",
+          zone_type: "circle",
+          center_latitude: values.latitude,
+          center_longitude: values.longitude,
+          radius_meters: values.radiusMeters,
+          geojson: {
+            type: "circle",
+            center: [values.longitude, values.latitude],
+            radiusMeters: values.radiusMeters
+          }
+        });
+
+        if (error) throw error;
+      }
+
+      if (values.assignedYearLevels.length > 0) {
+        const { error } = await supabase.from("event_participants").insert(
+          values.assignedYearLevels.map((yearLevel) => ({
+            event_id: eventId,
+            target_type: "year_level",
+            year_level: yearLevel
+          }))
+        );
+
+        if (error) throw error;
+      }
+
+      const { error: auditError } = await supabase.rpc("log_audit", {
+        p_action: "event.created",
+        p_entity_type: "event",
+        p_entity_id: eventId,
+        p_metadata: { title: values.title }
+      });
+
+      if (auditError) throw auditError;
+    }, async () => {
+      const { data: removed, error } = await supabase.from("events").delete().eq("id", eventId).eq("status", "draft").select("id");
+      if (error || !removed?.length) throw error ?? new Error("Draft cleanup failed.");
     });
-
-    if (auditError) throw auditError;
 
     router.push("/events?saved=created");
   };
