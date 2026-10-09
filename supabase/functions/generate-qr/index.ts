@@ -1,5 +1,6 @@
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
-import { getAuthenticatedUser, requireAdmin } from "../_shared/supabase.ts";
+import { createAuthenticatedClient, getAuthenticatedUser, requireAdmin } from "../_shared/supabase.ts";
+import { validateGenerateQrPayload } from "./validation.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -7,43 +8,36 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { user, client } = await getAuthenticatedUser(req);
-    await requireAdmin(user.id, client);
-    const body = await req.json();
-    const eventId = String(body.eventId);
-    const ttlSeconds = Math.min(Math.max(Number(body.ttlSeconds ?? 30), 10), 300);
-    const expiresAtSeconds = Math.floor((Date.now() + ttlSeconds * 1000) / 1000);
-    const nonce = crypto.randomUUID();
+    const { user, client: serviceClient } = await getAuthenticatedUser(req);
+    await requireAdmin(user.id, serviceClient);
 
-    const token = `${eventId}:${expiresAtSeconds}:${nonce}`;
-    const hashBuffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token));
-    const tokenHash = Array.from(new Uint8Array(hashBuffer))
-      .map((byte) => byte.toString(16).padStart(2, "0"))
-      .join("");
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return jsonResponse({ error: "A valid JSON QR request is required." }, 400);
+    }
 
-    const { data: admin } = await client
-      .from("admin_profiles")
-      .select("id")
-      .eq("user_id", user.id)
-      .single();
+    const payload = validateGenerateQrPayload(body);
+    if (payload instanceof Response) return payload;
 
-    await client.from("event_qr_tokens").insert({
-      event_id: eventId,
-      token_hash: tokenHash,
-      expires_at: new Date(expiresAtSeconds * 1000).toISOString(),
-      created_by: admin?.id
-    });
-    await client.rpc("log_audit", {
-      p_action: "event.qr.generated",
-      p_entity_type: "event",
-      p_entity_id: eventId,
-      p_metadata: { expiresAtSeconds, ttlSeconds }
+    const authenticatedClient = createAuthenticatedClient(req);
+    const { data, error } = await authenticatedClient.rpc("generate_event_qr_token", {
+      p_event_id: payload.eventId,
+      p_ttl_seconds: payload.ttlSeconds
     });
 
-    return jsonResponse({
-      token,
-      expiresAt: new Date(expiresAtSeconds * 1000).toISOString()
-    });
+    if (error) {
+      return jsonResponse({ error: "Unable to create the QR token atomically." }, 503);
+    }
+
+    const result = data as { ok?: boolean; token?: string; expires_at?: string; error?: string; code?: string } | null;
+    if (!result?.ok || !result.token || !result.expires_at) {
+      const status = result?.code === "administrator_access_required" ? 403 : result?.code === "event_not_found" ? 404 : 409;
+      return jsonResponse({ error: result?.error ?? "QR generation was rejected.", code: result?.code }, status);
+    }
+
+    return jsonResponse({ token: result.token, expiresAt: result.expires_at });
   } catch (error) {
     if (error instanceof Response) return error;
     return jsonResponse({ error: error instanceof Error ? error.message : "Unexpected error." }, 500);

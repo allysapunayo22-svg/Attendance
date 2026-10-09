@@ -76,7 +76,7 @@ export default function AuthCallbackScreen() {
 
   return (
     <AuthScreen title={status === "recovery" ? "Set a new password" : status === "updated" ? "Password updated" : status === "confirmed" ? "Email confirmed" : "Verify your email link"}
-      description={status === "recovery" ? "Choose a new password for your Campus Attendance account." : status === "updated" ? "You can now sign in using your new password." : status === "confirmed" ? "Your school email is confirmed. Sign in to continue; your school’s roster checks still apply." : "We’ll check your link before you continue."}>
+      description={status === "recovery" ? "Choose a new password for your ClickIn account." : status === "updated" ? "You can now sign in using your new password." : status === "confirmed" ? "Your school email is confirmed. Sign in to continue; your school’s roster checks still apply." : "We’ll check your link before you continue."}>
       {status === "checking" && url ? <ActivityIndicator accessibilityLabel="Verifying email link" color="#0f766e" /> : null}
       {!url ? <Text className="text-sm leading-6 text-slate-600">Open the latest confirmation or password reset link from your school email on this phone.</Text> : null}
       {error ? <AuthNotice title="Unable to continue" message={error} tone="error" /> : null}

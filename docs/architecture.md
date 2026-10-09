@@ -18,18 +18,28 @@ State and persistence:
 - Expo SQLite stores profile-adjacent cached data, events, announcements, attendance history, and pending sync records.
 - Expo SecureStore stores Supabase auth tokens through the Supabase client storage adapter.
 
-## Admin Dashboard
+## Unified Web Application
 
-The Next.js app uses App Router route groups:
+The Next.js app uses App Router with server-protected role areas:
 
-- `/` dashboard overview
-- `/events` event management table
-- `/events/new` event creation form with Leaflet zone picker
-- `/attendance/live` realtime monitoring and dynamic QR generation
-- `/attendance/review` attendance review queue
-- `/students` account and device management
-- `/announcements` announcement publishing
-- `/reports` CSV, Excel, and PDF export
+- `/` authenticated role resolver
+- `/login` shared administrator and student authentication
+- `/admin` role-protected administration dashboard
+- `/admin/events` event management table
+- `/admin/events/new` event creation form with Leaflet zone picker
+- `/admin/live-attendance` realtime monitoring and dynamic QR generation
+- `/admin/review-queue` attendance review queue
+- `/admin/students` account and device management
+- `/admin/announcements` announcement publishing
+- `/admin/reports` CSV, Excel, and PDF export
+- `/student` student home with assigned events, attendance summaries, and notices
+- `/student/events` and `/student/events/[id]` RLS-scoped event discovery and details
+- `/student/attendance` and `/student/attendance/[id]` server-backed attendance history
+- `/student/announcements` targeted and global student announcements
+- `/student/notifications` server-backed in-app notification inbox
+- `/student/profile` roster-protected student profile information
+
+The student web area has its own mobile-first shell and does not reuse the admin dashboard shell. All student reads use the authenticated Supabase session and database RLS; browser-local mobile attendance records are not used as web history. Browser attendance capture, offline synchronization, PWA installation, and Web Push remain outside Phase 2A.
 
 ## Supabase
 

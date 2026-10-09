@@ -1,0 +1,102 @@
+{
+  "browser": "Chrome/151.0.7922.173",
+  "physical_device": false,
+  "results": [
+    {
+      "check": "student_a browser login",
+      "pass": true
+    },
+    {
+      "check": "render /student",
+      "pass": true
+    },
+    {
+      "check": "render /student/events",
+      "pass": true
+    },
+    {
+      "check": "render /student/announcements",
+      "pass": true
+    },
+    {
+      "check": "render /student/notifications",
+      "pass": true
+    },
+    {
+      "check": "render /student/profile",
+      "pass": true
+    },
+    {
+      "check": "render /student/attendance",
+      "pass": true
+    },
+    {
+      "check": "render /student/events/a1000000-0000-4000-8000-000000000001",
+      "pass": true
+    },
+    {
+      "check": "SW only generic shell and static asset cache entries",
+      "pass": true,
+      "caches": [
+        {
+          "name": "clickin-student-shell-v2",
+          "count": 33
+        }
+      ]
+    },
+    {
+      "check": "true offline navigation renders saved event shell",
+      "pass": false,
+      "qualification": "Inconclusive initial emulation/case-sensitive assertion; actual origin-down shell retest passed. See readiness report."
+    },
+    {
+      "check": "student browser logout",
+      "pass": true
+    },
+    {
+      "check": "active_admin browser login",
+      "pass": true
+    },
+    {
+      "check": "render /admin",
+      "pass": true
+    },
+    {
+      "check": "render /admin/events",
+      "pass": true
+    },
+    {
+      "check": "render /admin/events/new",
+      "pass": true
+    },
+    {
+      "check": "render /admin/live-attendance",
+      "pass": true
+    },
+    {
+      "check": "render /admin/review-queue",
+      "pass": true
+    },
+    {
+      "check": "render /admin/students",
+      "pass": true
+    },
+    {
+      "check": "render /admin/announcements",
+      "pass": true
+    },
+    {
+      "check": "render /admin/reports",
+      "pass": true
+    },
+    {
+      "check": "render /admin/profile",
+      "pass": true
+    }
+  ],
+  "followup": {
+    "admin_dropdown_logout": "PASS",
+    "actual_origin_down_cached_event_shell": "PASS",
+    "physical_device_acceptance": "NOT TESTED"
+  }
+}

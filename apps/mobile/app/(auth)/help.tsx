@@ -18,7 +18,7 @@ export default function AccountHelpScreen() {
       </View>
       {email ? <AuthButton title="Email the CBEA office" onPress={() => {
         setError(false);
-        void Linking.openURL(`mailto:${email}?subject=${encodeURIComponent("Campus Attendance account help")}`).catch(() => setError(true));
+        void Linking.openURL(`mailto:${email}?subject=${encodeURIComponent("ClickIn account help")}`).catch(() => setError(true));
       }} /> : null}
       {error ? <AuthNotice title="Couldn’t open your email app" message="Copy the email address above into your email app, or visit the CBEA office." tone="error" /> : null}
       <AuthLink label="Reset my password" onPress={() => router.push("/(auth)/forgot-password")} />

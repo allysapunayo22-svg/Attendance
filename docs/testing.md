@@ -42,10 +42,22 @@ Then test:
 1. Log in as an admin.
 2. Create an event with a radius and dynamic QR enabled.
 3. Publish the event.
-4. Generate a QR code on `/attendance/live`.
+4. Generate a QR code on `/admin/live-attendance`.
 5. Watch the live table update when a student submits attendance.
-6. Review the submitted record on `/attendance/review`.
-7. Export reports from `/reports` as CSV, Excel, and PDF.
+6. Review the submitted record on `/admin/review-queue`.
+7. Export reports from `/admin/reports` as CSV, Excel, and PDF.
+
+## Student Web Manual Test
+
+1. Log in with an active student account and confirm the role redirect opens `/student`.
+2. Open events, event details, attendance history, attendance details, announcements, notifications, and profile. Refresh each direct URL and confirm the session persists.
+3. Confirm attendance history comes from `public.attendance_sessions` and remains available in another browser with the same account.
+4. Change an event or attendance record identifier in the URL to one owned by another student or hidden by event targeting. The page must show an unavailable state rather than data.
+5. Confirm targeted announcements are visible only to intended students and global announcements remain visible to active students.
+6. Mark one notification and all notifications as read, refresh, and confirm the server-backed state persists.
+7. Verify web event details explain that attendance capture remains available through the mobile app; no web check-in or check-out succeeds in Phase 2A.
+8. Test at representative 375 px, 412 px, 768 px, and 1440 px widths. Check safe-area spacing, bottom navigation, keyboard focus, and horizontal overflow.
+9. Confirm logout returns to `/login`, anonymous requests redirect there, students cannot open `/admin`, and admins cannot open `/student`.
 
 ## Mobile authentication
 

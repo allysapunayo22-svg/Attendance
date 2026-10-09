@@ -19,12 +19,14 @@ async function fetchReviewQueue() {
   return data ?? [];
 }
 
-type QueueRow = Awaited<ReturnType<typeof fetchReviewQueue>>[number];
 type Decision = "approve" | "reject" | "late" | "excuse";
 
 function EvidenceImage({ path }: { path: string | null }) {
-  const [url, setUrl] = useState<string | null>(null);
-  useEffect(() => { setUrl(null); if (path) void supabase.storage.from("attendance-evidence").createSignedUrl(path, 300).then(({ data }) => setUrl(data?.signedUrl ?? null)); }, [path]);
+  const [signedImage, setSignedImage] = useState<{ path: string; url: string | null } | null>(null);
+  useEffect(() => {
+    if (path) void supabase.storage.from("attendance-evidence").createSignedUrl(path, 120).then(({ data }) => setSignedImage({ path, url: data?.signedUrl ?? null }));
+  }, [path]);
+  const url = signedImage?.path === path ? signedImage.url : null;
   if (!path) return <div className="flex aspect-[4/3] items-center justify-center rounded-2xl bg-slate-100 text-sm text-slate-500">No photo evidence</div>;
   if (!url) return <div className="aspect-[4/3] animate-pulse rounded-2xl bg-slate-100" aria-label="Loading evidence photo" />;
   return <Image src={url} alt="Student attendance evidence" width={720} height={540} className="aspect-[4/3] w-full rounded-2xl object-cover" />;
@@ -43,10 +45,9 @@ export function AttendanceReviewQueue() {
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [notice, setNotice] = useState<{ tone: "success" | "error"; text: string } | null>(null);
-  const rows = query.data ?? [];
+  const rows = useMemo(() => query.data ?? [], [query.data]);
   const filtered = useMemo(() => { const term = filter.trim().toLowerCase(); return term ? rows.filter((row) => `${row.student?.full_name} ${row.student?.student_id} ${row.event?.title} ${row.verification_reason}`.toLowerCase().includes(term)) : rows; }, [filter, rows]);
   const selected = rows.find((row) => row.id === selectedId) ?? filtered[0] ?? null;
-  useEffect(() => { if (!selectedId && rows[0]) setSelectedId(rows[0].id); }, [rows, selectedId]);
 
   async function submitDecision() {
     if (!selected || !decision || (decision === "reject" && !notes.trim())) return;
@@ -74,10 +75,10 @@ export function AttendanceReviewQueue() {
         </p>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
           <Button asChild className="rounded-xl bg-blue-600 px-5 font-bold hover:bg-blue-700 shadow-sm">
-            <Link href="/attendance/live">View live attendance →</Link>
+            <Link href="/admin/live-attendance">View live attendance →</Link>
           </Button>
           <Button asChild variant="outline" className="rounded-xl border-slate-200 font-bold">
-            <Link href="/">Back to Dashboard</Link>
+            <Link href="/admin">Back to Dashboard</Link>
           </Button>
         </div>
       </CardContent>

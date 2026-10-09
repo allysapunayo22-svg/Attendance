@@ -3,26 +3,28 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { Bell, ChevronDown, LogOut, Menu, Search, UserRound } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase";
 
 const destinations = [
-  { label: "Overview", description: "Today’s attendance summary", href: "/" },
-  { label: "Create New Event", description: "Set up an event", href: "/events/new" },
-  { label: "Events", description: "Browse and edit campus events", href: "/events" },
-  { label: "Live Attendance", description: "Monitor incoming check-ins", href: "/attendance/live" },
-  { label: "Review Queue", description: "Resolve flagged attendance records", href: "/attendance/review" },
-  { label: "Students", description: "Student accounts and IDs", href: "/students" },
-  { label: "Announcements", description: "Broadcast updates", href: "/announcements" },
-  { label: "Reports", description: "Filter and export attendance", href: "/reports" },
-  { label: "Profile", description: "View administrator account", href: "/profile" }
+  { label: "Overview", description: "Today’s attendance summary", href: "/admin" },
+  { label: "Create New Event", description: "Set up an event", href: "/admin/events/new" },
+  { label: "Events", description: "Browse and edit campus events", href: "/admin/events" },
+  { label: "Live Attendance", description: "Monitor incoming check-ins", href: "/admin/live-attendance" },
+  { label: "Review Queue", description: "Resolve flagged attendance records", href: "/admin/review-queue" },
+  { label: "Students", description: "Student accounts and IDs", href: "/admin/students" },
+  { label: "Announcements", description: "Broadcast updates", href: "/admin/announcements" },
+  { label: "Reports", description: "Filter and export attendance", href: "/admin/reports" },
+  { label: "Profile", description: "View administrator account", href: "/admin/profile" }
 ];
 
 type AdminProfile = { full_name: string; email: string };
 
 export function TopNav({ onOpenSidebar }: { onOpenSidebar: () => void }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const profileContainerRef = useRef<HTMLDivElement>(null);
@@ -38,8 +40,6 @@ export function TopNav({ onOpenSidebar }: { onOpenSidebar: () => void }) {
   }, [search]);
 
   const initials = profile.full_name.split(/\s+/).map((part) => part[0]).filter(Boolean).slice(0, 2).join("").toUpperCase() || "AD";
-
-  useEffect(() => { setActiveResult(0); }, [search]);
 
   useEffect(() => {
     void supabase.auth.getUser().then(async ({ data }) => {
@@ -75,7 +75,9 @@ export function TopNav({ onOpenSidebar }: { onOpenSidebar: () => void }) {
 
   async function logout() {
     await supabase.auth.signOut();
+    queryClient.clear();
     router.replace("/login");
+    router.refresh();
   }
 
   return (
@@ -90,7 +92,7 @@ export function TopNav({ onOpenSidebar }: { onOpenSidebar: () => void }) {
             ref={searchInputRef}
             className="h-11 rounded-xl border-0 bg-slate-100/90 pl-11 pr-16 text-sm text-slate-700 shadow-none ring-1 ring-slate-200/40 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-brand-100"
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={(event) => { setSearch(event.target.value); setActiveResult(0); }}
             onKeyDown={(event) => {
               if (event.key === "ArrowDown") { event.preventDefault(); setActiveResult((index) => Math.min(index + 1, Math.max(matches.length - 1, 0))); }
               if (event.key === "ArrowUp") { event.preventDefault(); setActiveResult((index) => Math.max(index - 1, 0)); }
@@ -107,14 +109,14 @@ export function TopNav({ onOpenSidebar }: { onOpenSidebar: () => void }) {
         </div>
 
         <div className="flex items-center justify-end gap-2 sm:gap-4">
-          <Link href="/attendance/review" aria-label="Open review queue" className="relative flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-950"><Bell size={19} /><span className="absolute right-2 top-1.5 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-white" /></Link>
+          <Link href="/admin/review-queue" aria-label="Open review queue" className="relative flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-950"><Bell size={19} /><span className="absolute right-2 top-1.5 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-white" /></Link>
           <div ref={profileContainerRef} className="relative">
             <button type="button" aria-haspopup="menu" aria-expanded={profileOpen} onClick={() => setProfileOpen((open) => !open)} className="flex items-center gap-2 rounded-xl p-1.5 pr-2 text-left hover:bg-slate-100">
               <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-brand-800 text-xs font-bold text-white shadow-sm">{initials}</span>
               <span className="hidden min-w-0 lg:block"><span className="block max-w-32 truncate text-sm font-semibold text-slate-900">{profile.full_name}</span><span className="block text-[11px] text-slate-500">Administrator</span></span>
               <ChevronDown size={14} className={`hidden text-slate-500 transition sm:block ${profileOpen ? "rotate-180" : ""}`} />
             </button>
-            {profileOpen ? <div role="menu" className="absolute right-0 top-[calc(100%+8px)] w-64 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl"><div className="border-b border-slate-100 px-3 py-3"><p className="truncate text-sm font-semibold text-slate-900">{profile.full_name}</p><p className="mt-0.5 truncate text-xs text-slate-500">{profile.email}</p></div><div className="py-1"><Link role="menuitem" href="/profile" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-950"><UserRound size={17} /> View profile</Link><button role="menuitem" type="button" onClick={() => void logout()} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-rose-700 hover:bg-rose-50"><LogOut size={17} /> Logout</button></div></div> : null}
+            {profileOpen ? <div role="menu" className="absolute right-0 top-[calc(100%+8px)] w-64 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl"><div className="border-b border-slate-100 px-3 py-3"><p className="truncate text-sm font-semibold text-slate-900">{profile.full_name}</p><p className="mt-0.5 truncate text-xs text-slate-500">{profile.email}</p></div><div className="py-1"><Link role="menuitem" href="/admin/profile" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-950"><UserRound size={17} /> View profile</Link><button role="menuitem" type="button" onClick={() => void logout()} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-rose-700 hover:bg-rose-50"><LogOut size={17} /> Logout</button></div></div> : null}
           </div>
         </div>
       </div>

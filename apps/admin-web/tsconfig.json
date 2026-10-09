@@ -22,6 +22,9 @@
       ],
       "@attendance/shared-utils": [
         "../../packages/shared-utils/src/index.ts"
+      ],
+      "@attendance/api-client": [
+        "../../packages/api-client/src/index.ts"
       ]
     },
     "noEmit": true

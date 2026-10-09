@@ -220,16 +220,7 @@ export function EventEditForm({ eventId }: { eventId: string }) {
       if (error) throw error;
     }
 
-    const { error: auditError } = await supabase.rpc("log_audit", {
-      p_action: "event.updated",
-      p_entity_type: "event",
-      p_entity_id: eventId,
-      p_metadata: { title: values.title, status: eventStatus }
-    });
-
-    if (auditError) throw auditError;
-
-    router.push("/events?saved=updated");
+    router.push("/admin/events?saved=updated");
   };
 
   const statusControl = (

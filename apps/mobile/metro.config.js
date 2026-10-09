@@ -4,6 +4,8 @@ const { withNativeWind } = require("nativewind/metro");
 
 const projectRoot = __dirname;
 const workspaceRoot = path.resolve(projectRoot, "../..");
+const resolvePackageRoot = (packageName) =>
+  path.dirname(require.resolve(`${packageName}/package.json`, { paths: [projectRoot] }));
 
 const config = getDefaultConfig(projectRoot);
 
@@ -17,10 +19,10 @@ config.resolver = {
   ],
   extraNodeModules: {
     ...(config.resolver?.extraNodeModules ?? {}),
-    react: path.resolve(projectRoot, "node_modules/react"),
-    "react-native": path.resolve(projectRoot, "node_modules/react-native"),
-    "react-native-reanimated": path.resolve(projectRoot, "node_modules/react-native-reanimated"),
-    "react-native-worklets": path.resolve(projectRoot, "node_modules/react-native-worklets")
+    react: resolvePackageRoot("react"),
+    "react-native": resolvePackageRoot("react-native"),
+    "react-native-reanimated": resolvePackageRoot("react-native-reanimated"),
+    "react-native-worklets": resolvePackageRoot("react-native-worklets")
   }
 };
 

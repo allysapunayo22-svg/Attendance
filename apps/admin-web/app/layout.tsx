@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Providers } from "./providers";
 import "leaflet/dist/leaflet.css";
 import "./globals.css";
@@ -10,7 +10,20 @@ export const metadata: Metadata = {
     icon: "/favicon.png",
     shortcut: "/favicon.png",
     apple: "/logo.png"
+  },
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "ClickIn"
   }
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#0b3b3c"
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

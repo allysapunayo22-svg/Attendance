@@ -8,7 +8,7 @@ Deno.serve(async (req) => {
 
   try {
     const { user, client } = await getAuthenticatedUser(req);
-    await requireAdmin(user.id, client);
+    const admin = await requireAdmin(user.id, client);
 
     const body = await req.json();
     const userIds = Array.isArray(body.userIds) ? body.userIds : [];
@@ -58,12 +58,19 @@ Deno.serve(async (req) => {
       });
     }
 
-    await client.rpc("log_audit", {
-      p_action: "notification.sent",
-      p_entity_type: "notification",
-      p_entity_id: null,
-      p_metadata: { userCount: userIds.length, type }
+    const { error: auditError } = await client.from("audit_logs").insert({
+      actor_user_id: user.id,
+      action: "notification.sent",
+      entity_type: "notification",
+      entity_id: null,
+      metadata: {
+        actor_role: admin.role,
+        admin_profile_id: admin.adminProfileId,
+        user_count: userIds.length,
+        notification_type: type
+      }
     });
+    if (auditError) return jsonResponse({ error: "Notifications were sent, but the trusted audit record could not be created." }, 500);
 
     return jsonResponse({ ok: true, inserted: rows.length, pushed: expoMessages.length });
   } catch (error) {

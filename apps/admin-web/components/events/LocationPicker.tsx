@@ -5,7 +5,7 @@ import type { LatLngExpression } from "leaflet";
 import L from "leaflet";
 
 if (typeof window !== "undefined") {
-  delete (L.Icon.Default.prototype as any)._getIconUrl;
+  delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })._getIconUrl;
   L.Icon.Default.mergeOptions({
     iconRetinaUrl: "/marker-icon-2x.png",
     iconUrl: "/marker-icon.png",

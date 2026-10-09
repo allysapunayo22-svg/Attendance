@@ -73,13 +73,15 @@ npm run dev:mobile
 
 Use Expo Go for simple testing or a development build when testing camera, maps, notifications, and native configuration.
 
-## Run Admin
+## Run Unified Web
 
 ```bash
 npm run dev:admin
 ```
 
 Open `http://localhost:3000`.
+
+After login, database roles route administrators to `/admin` and students to `/student`. Student web routes use the same Supabase project and RLS policies as the Expo application.
 
 ## Auth Accounts
 
@@ -88,7 +90,7 @@ Admins still create their own Supabase Auth users and matching rows in:
 - `public.users`
 - `public.admin_profiles` for admins
 
-Students register from the mobile app. Before registration, import the approved CSU Gonzaga CBEA roster from the admin `/students` page or directly into `public.approved_student_roster`.
+Students register from the mobile app. Before registration, import the approved CSU Gonzaga CBEA roster from the admin `/admin/students` page or directly into `public.approved_student_roster`.
 
 Required roster CSV columns:
 

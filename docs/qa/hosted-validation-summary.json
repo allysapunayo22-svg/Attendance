@@ -1,0 +1,929 @@
+{
+  "project_ref": "tosfspsjervmgrpncnsw",
+  "generated_at": "2026-10-06T11:37:13.356Z",
+  "totals": {
+    "passed": 128,
+    "failed": 4,
+    "total": 132,
+    "phase_2b_blocking_failures": 4
+  },
+  "categories": {
+    "Auth/RBAC": {
+      "passed": 12,
+      "failed": 0
+    },
+    "PostgREST grants": {
+      "passed": 9,
+      "failed": 0
+    },
+    "Legacy lockdown": {
+      "passed": 15,
+      "failed": 0
+    },
+    "Audit security": {
+      "passed": 3,
+      "failed": 0
+    },
+    "Restricted attendance": {
+      "passed": 4,
+      "failed": 0
+    },
+    "Inactive account": {
+      "passed": 1,
+      "failed": 0
+    },
+    "Attendance event state": {
+      "passed": 0,
+      "failed": 2
+    },
+    "Device ownership": {
+      "passed": 2,
+      "failed": 0
+    },
+    "Request validation": {
+      "passed": 3,
+      "failed": 0
+    },
+    "Freshness": {
+      "passed": 7,
+      "failed": 1
+    },
+    "GPS/geofence": {
+      "passed": 7,
+      "failed": 0
+    },
+    "State machine": {
+      "passed": 7,
+      "failed": 0
+    },
+    "Idempotency": {
+      "passed": 5,
+      "failed": 0
+    },
+    "QR": {
+      "passed": 16,
+      "failed": 0
+    },
+    "Storage/evidence": {
+      "passed": 14,
+      "failed": 0
+    },
+    "Admin review": {
+      "passed": 10,
+      "failed": 1
+    },
+    "Student RLS": {
+      "passed": 8,
+      "failed": 0
+    },
+    "Admin regression": {
+      "passed": 3,
+      "failed": 0
+    },
+    "Historical diagnostics": {
+      "passed": 1,
+      "failed": 0
+    },
+    "Edge runtime": {
+      "passed": 1,
+      "failed": 0
+    }
+  },
+  "tests": [
+    {
+      "category": "Auth/RBAC",
+      "name": "student_a login",
+      "pass": true,
+      "expected": "Hosted login succeeds for prepared synthetic identity"
+    },
+    {
+      "category": "Auth/RBAC",
+      "name": "student_b login",
+      "pass": true,
+      "expected": "Hosted login succeeds for prepared synthetic identity"
+    },
+    {
+      "category": "Auth/RBAC",
+      "name": "inactive_student login",
+      "pass": true,
+      "expected": "Hosted login succeeds for prepared synthetic identity"
+    },
+    {
+      "category": "Auth/RBAC",
+      "name": "active_admin login",
+      "pass": true,
+      "expected": "Hosted login succeeds for prepared synthetic identity"
+    },
+    {
+      "category": "Auth/RBAC",
+      "name": "inactive_admin login",
+      "pass": true,
+      "expected": "Hosted login succeeds for prepared synthetic identity"
+    },
+    {
+      "category": "Auth/RBAC",
+      "name": "active_super_admin login",
+      "pass": true,
+      "expected": "Hosted login succeeds for prepared synthetic identity"
+    },
+    {
+      "category": "Auth/RBAC",
+      "name": "student_a trusted database role",
+      "pass": true,
+      "expected": "student, active=true"
+    },
+    {
+      "category": "Auth/RBAC",
+      "name": "student_b trusted database role",
+      "pass": true,
+      "expected": "student, active=true"
+    },
+    {
+      "category": "Auth/RBAC",
+      "name": "inactive_student trusted database role",
+      "pass": true,
+      "expected": "student, active=false"
+    },
+    {
+      "category": "Auth/RBAC",
+      "name": "active_admin trusted database role",
+      "pass": true,
+      "expected": "admin, active=true"
+    },
+    {
+      "category": "Auth/RBAC",
+      "name": "inactive_admin trusted database role",
+      "pass": true,
+      "expected": "admin, active=false"
+    },
+    {
+      "category": "Auth/RBAC",
+      "name": "active_super_admin trusted database role",
+      "pass": true,
+      "expected": "super_admin, active=true"
+    },
+    {
+      "category": "PostgREST grants",
+      "name": "anonymous submit RPC denied",
+      "pass": true,
+      "expected": "Execution denied"
+    },
+    {
+      "category": "PostgREST grants",
+      "name": "authenticated student submit RPC allowed",
+      "pass": true,
+      "expected": "RPC executes, then draft-event rule rejects"
+    },
+    {
+      "category": "PostgREST grants",
+      "name": "anonymous review RPC denied",
+      "pass": true,
+      "expected": "Execution denied"
+    },
+    {
+      "category": "PostgREST grants",
+      "name": "student review RPC authorization",
+      "pass": true,
+      "expected": "Controlled administrator_access_required"
+    },
+    {
+      "category": "PostgREST grants",
+      "name": "active admin review RPC allowed",
+      "pass": true,
+      "expected": "Controlled attendance_session_not_found proves execution"
+    },
+    {
+      "category": "PostgREST grants",
+      "name": "anonymous QR RPC behavior",
+      "pass": true,
+      "expected": "Execution denied"
+    },
+    {
+      "category": "PostgREST grants",
+      "name": "student QR RPC behavior",
+      "pass": true,
+      "expected": "Controlled administrator_access_required"
+    },
+    {
+      "category": "PostgREST grants",
+      "name": "inactive admin QR RPC behavior",
+      "pass": true,
+      "expected": "Controlled administrator_access_required"
+    },
+    {
+      "category": "PostgREST grants",
+      "name": "active admin QR RPC behavior",
+      "pass": true,
+      "expected": "Controlled event_not_qr_eligible"
+    },
+    {
+      "category": "Legacy lockdown",
+      "name": "verify_attendance_submission denied to anonymous",
+      "pass": true,
+      "expected": "Execution denied"
+    },
+    {
+      "category": "Legacy lockdown",
+      "name": "verify_attendance_submission denied to authenticated student",
+      "pass": true,
+      "expected": "Execution denied"
+    },
+    {
+      "category": "Legacy lockdown",
+      "name": "verify_attendance_submission denied to authenticated admin",
+      "pass": true,
+      "expected": "Execution denied"
+    },
+    {
+      "category": "Legacy lockdown",
+      "name": "student_is_assigned_to_event denied to anonymous",
+      "pass": true,
+      "expected": "Execution denied"
+    },
+    {
+      "category": "Legacy lockdown",
+      "name": "student_is_assigned_to_event denied to authenticated student",
+      "pass": true,
+      "expected": "Execution denied"
+    },
+    {
+      "category": "Legacy lockdown",
+      "name": "student_is_assigned_to_event denied to authenticated admin",
+      "pass": true,
+      "expected": "Execution denied"
+    },
+    {
+      "category": "Legacy lockdown",
+      "name": "event_point_is_inside_zone denied to anonymous",
+      "pass": true,
+      "expected": "Execution denied"
+    },
+    {
+      "category": "Legacy lockdown",
+      "name": "event_point_is_inside_zone denied to authenticated student",
+      "pass": true,
+      "expected": "Execution denied"
+    },
+    {
+      "category": "Legacy lockdown",
+      "name": "event_point_is_inside_zone denied to authenticated admin",
+      "pass": true,
+      "expected": "Execution denied"
+    },
+    {
+      "category": "Legacy lockdown",
+      "name": "validate_qr_token denied to anonymous",
+      "pass": true,
+      "expected": "Execution denied"
+    },
+    {
+      "category": "Legacy lockdown",
+      "name": "validate_qr_token denied to authenticated student",
+      "pass": true,
+      "expected": "Execution denied"
+    },
+    {
+      "category": "Legacy lockdown",
+      "name": "validate_qr_token denied to authenticated admin",
+      "pass": true,
+      "expected": "Execution denied"
+    },
+    {
+      "category": "Legacy lockdown",
+      "name": "log_audit denied to anonymous",
+      "pass": true,
+      "expected": "Execution denied"
+    },
+    {
+      "category": "Legacy lockdown",
+      "name": "log_audit denied to authenticated student",
+      "pass": true,
+      "expected": "Execution denied"
+    },
+    {
+      "category": "Legacy lockdown",
+      "name": "log_audit denied to authenticated admin",
+      "pass": true,
+      "expected": "Execution denied"
+    },
+    {
+      "category": "Audit security",
+      "name": "student direct audit insert denied",
+      "pass": true,
+      "expected": "RLS or permission denial"
+    },
+    {
+      "category": "Restricted attendance",
+      "name": "assigned restricted Student A",
+      "pass": true,
+      "expected": "HTTP 200, accepted=true, reason contains accepted"
+    },
+    {
+      "category": "Restricted attendance",
+      "name": "unassigned restricted Student B",
+      "pass": true,
+      "expected": "HTTP 200, accepted=false, reason contains not assigned"
+    },
+    {
+      "category": "Restricted attendance",
+      "name": "unrestricted Student A",
+      "pass": true,
+      "expected": "HTTP 200, accepted=true, reason contains accepted"
+    },
+    {
+      "category": "Restricted attendance",
+      "name": "unrestricted Student B",
+      "pass": true,
+      "expected": "HTTP 200, accepted=true, reason contains accepted"
+    },
+    {
+      "category": "Inactive account",
+      "name": "inactive student",
+      "pass": true,
+      "expected": "HTTP 200, accepted=false, reason contains active student"
+    },
+    {
+      "category": "Attendance event state",
+      "name": "draft event",
+      "pass": false,
+      "expected": "HTTP 200, accepted=false, reason contains not currently eligible"
+    },
+    {
+      "category": "Attendance event state",
+      "name": "deleted event",
+      "pass": false,
+      "expected": "HTTP 200, accepted=false, reason contains Event not found"
+    },
+    {
+      "category": "Device ownership",
+      "name": "wrong-owner device",
+      "pass": true,
+      "expected": "HTTP 200, accepted=false, reason contains not active and registered"
+    },
+    {
+      "category": "Device ownership",
+      "name": "inactive device",
+      "pass": true,
+      "expected": "HTTP 200, accepted=false, reason contains not active and registered"
+    },
+    {
+      "category": "Request validation",
+      "name": "missing JWT",
+      "pass": true,
+      "expected": "401"
+    },
+    {
+      "category": "Request validation",
+      "name": "invalid JWT",
+      "pass": true,
+      "expected": "401"
+    },
+    {
+      "category": "Request validation",
+      "name": "invalid attendance mode",
+      "pass": true,
+      "expected": "Controlled 400"
+    },
+    {
+      "category": "Freshness",
+      "name": "now online",
+      "pass": true,
+      "expected": "accepted=true; offline flag does not bypass bounds"
+    },
+    {
+      "category": "Freshness",
+      "name": "now offline",
+      "pass": true,
+      "expected": "accepted=true; offline flag does not bypass bounds"
+    },
+    {
+      "category": "Freshness",
+      "name": "30 minutes online",
+      "pass": true,
+      "expected": "accepted=true; offline flag does not bypass bounds"
+    },
+    {
+      "category": "Freshness",
+      "name": "30 minutes offline",
+      "pass": true,
+      "expected": "accepted=true; offline flag does not bypass bounds"
+    },
+    {
+      "category": "Freshness",
+      "name": "2 hours + 1 second online",
+      "pass": true,
+      "expected": "accepted=false; offline flag does not bypass bounds"
+    },
+    {
+      "category": "Freshness",
+      "name": "2 hours + 1 second offline",
+      "pass": true,
+      "expected": "accepted=false; offline flag does not bypass bounds"
+    },
+    {
+      "category": "Freshness",
+      "name": "5 minutes + 1 second future online",
+      "pass": false,
+      "expected": "accepted=false; offline flag does not bypass bounds"
+    },
+    {
+      "category": "Freshness",
+      "name": "5 minutes + 1 second future offline",
+      "pass": true,
+      "expected": "accepted=false; offline flag does not bypass bounds"
+    },
+    {
+      "category": "GPS/geofence",
+      "name": "out of zone",
+      "pass": true,
+      "expected": "HTTP 200, result contains outside"
+    },
+    {
+      "category": "GPS/geofence",
+      "name": "invalid latitude",
+      "pass": true,
+      "expected": "HTTP 400, result contains Invalid latitude"
+    },
+    {
+      "category": "GPS/geofence",
+      "name": "invalid longitude",
+      "pass": true,
+      "expected": "HTTP 400, result contains Invalid longitude"
+    },
+    {
+      "category": "GPS/geofence",
+      "name": "null accuracy",
+      "pass": true,
+      "expected": "HTTP 400, result contains Missing accuracy"
+    },
+    {
+      "category": "GPS/geofence",
+      "name": "negative accuracy",
+      "pass": true,
+      "expected": "HTTP 400, result contains Invalid GPS accuracy"
+    },
+    {
+      "category": "GPS/geofence",
+      "name": "excessive accuracy",
+      "pass": true,
+      "expected": "HTTP 200, result contains GPS accuracy is below"
+    },
+    {
+      "category": "GPS/geofence",
+      "name": "client distance ignored",
+      "pass": true,
+      "expected": "Accepted using server-computed distance"
+    },
+    {
+      "category": "State machine",
+      "name": "checkout without accepted time-in",
+      "pass": true,
+      "expected": "Rejected"
+    },
+    {
+      "category": "State machine",
+      "name": "first valid time-in",
+      "pass": true,
+      "expected": "One canonical time_in_recorded row"
+    },
+    {
+      "category": "State machine",
+      "name": "duplicate time-in",
+      "pass": true,
+      "expected": "Rejected with one canonical row"
+    },
+    {
+      "category": "State machine",
+      "name": "valid checkout after time-in",
+      "pass": true,
+      "expected": "Accepted completed canonical row"
+    },
+    {
+      "category": "State machine",
+      "name": "repeated checkout",
+      "pass": true,
+      "expected": "Rejected duplicate checkout"
+    },
+    {
+      "category": "State machine",
+      "name": "completed attendance cannot regress",
+      "pass": true,
+      "expected": "Rejected and remains completed"
+    },
+    {
+      "category": "State machine",
+      "name": "rejected time-in cannot support checkout",
+      "pass": true,
+      "expected": "Both rejected and no canonical session"
+    },
+    {
+      "category": "Idempotency",
+      "name": "same key and same payload",
+      "pass": true,
+      "expected": "Same result, one session, one hashed sync row"
+    },
+    {
+      "category": "Idempotency",
+      "name": "same key with different event",
+      "pass": true,
+      "expected": "Rejected key rebinding"
+    },
+    {
+      "category": "Idempotency",
+      "name": "same key with different mode",
+      "pass": true,
+      "expected": "Rejected key rebinding"
+    },
+    {
+      "category": "Idempotency",
+      "name": "same key with different logical payload",
+      "pass": true,
+      "expected": "Rejected key rebinding"
+    },
+    {
+      "category": "Idempotency",
+      "name": "concurrent different keys",
+      "pass": true,
+      "expected": "One accepted mutation and one canonical session"
+    },
+    {
+      "category": "QR",
+      "name": "invalid QR rejected",
+      "pass": true,
+      "expected": "Controlled rejection"
+    },
+    {
+      "category": "QR",
+      "name": "active admin eligible generation",
+      "pass": true,
+      "expected": "HTTP 200 with token"
+    },
+    {
+      "category": "QR",
+      "name": "generated QR stored as hash",
+      "pass": true,
+      "expected": "64-character hash and authenticated creator"
+    },
+    {
+      "category": "QR",
+      "name": "QR cannot bypass assignment",
+      "pass": true,
+      "expected": "Assignment rejection"
+    },
+    {
+      "category": "QR",
+      "name": "QR cannot bypass geofence",
+      "pass": true,
+      "expected": "Geofence rejection"
+    },
+    {
+      "category": "QR",
+      "name": "QR cannot bypass schedule",
+      "pass": true,
+      "expected": "Schedule rejection"
+    },
+    {
+      "category": "QR",
+      "name": "valid QR attendance",
+      "pass": true,
+      "expected": "Accepted when all rules pass"
+    },
+    {
+      "category": "QR",
+      "name": "canonical QR evidence hashed",
+      "pass": true,
+      "expected": "sha256-prefixed non-plaintext value"
+    },
+    {
+      "category": "QR",
+      "name": "QR cannot bypass inactive identity",
+      "pass": true,
+      "expected": "Inactive student rejection"
+    },
+    {
+      "category": "QR",
+      "name": "QR cannot bypass required evidence",
+      "pass": true,
+      "expected": "Evidence rejection"
+    },
+    {
+      "category": "QR",
+      "name": "draft event QR generation denied",
+      "pass": true,
+      "expected": "HTTP 409"
+    },
+    {
+      "category": "QR",
+      "name": "deleted event QR generation denied",
+      "pass": true,
+      "expected": "HTTP 409"
+    },
+    {
+      "category": "QR",
+      "name": "inactive admin QR generation denied",
+      "pass": true,
+      "expected": "HTTP 403"
+    },
+    {
+      "category": "QR",
+      "name": "student QR generation denied",
+      "pass": true,
+      "expected": "HTTP 403"
+    },
+    {
+      "category": "QR",
+      "name": "anonymous QR generation denied",
+      "pass": true,
+      "expected": "HTTP 401"
+    },
+    {
+      "category": "QR",
+      "name": "expired QR rejected",
+      "pass": true,
+      "expected": "Controlled expiration rejection"
+    },
+    {
+      "category": "Storage/evidence",
+      "name": "nonexistent object",
+      "pass": true,
+      "expected": "Rejected: not found"
+    },
+    {
+      "category": "Storage/evidence",
+      "name": "another student's object",
+      "pass": true,
+      "expected": "Rejected: does not belong"
+    },
+    {
+      "category": "Storage/evidence",
+      "name": "wrong event path",
+      "pass": true,
+      "expected": "Rejected: does not belong"
+    },
+    {
+      "category": "Storage/evidence",
+      "name": "wrong local ID filename",
+      "pass": true,
+      "expected": "Rejected: does not belong"
+    },
+    {
+      "category": "Storage/evidence",
+      "name": "invalid MIME ingress",
+      "pass": true,
+      "expected": "Bucket rejects unsupported MIME"
+    },
+    {
+      "category": "Storage/evidence",
+      "name": "invalid size ingress",
+      "pass": true,
+      "expected": "Bucket rejects object larger than 5 MB"
+    },
+    {
+      "category": "Storage/evidence",
+      "name": "valid own object accepted",
+      "pass": true,
+      "expected": "Accepted"
+    },
+    {
+      "category": "Storage/evidence",
+      "name": "idempotent photo has no duplicate evidence",
+      "pass": true,
+      "expected": "Same result and one evidence row"
+    },
+    {
+      "category": "Storage/evidence",
+      "name": "bucket private",
+      "pass": true,
+      "expected": "private=false exposure"
+    },
+    {
+      "category": "Storage/evidence",
+      "name": "Student A reads own evidence",
+      "pass": true,
+      "expected": "Download succeeds"
+    },
+    {
+      "category": "Storage/evidence",
+      "name": "Student A cannot read Student B evidence",
+      "pass": true,
+      "expected": "Access denied"
+    },
+    {
+      "category": "Storage/evidence",
+      "name": "active admin signed URL",
+      "pass": true,
+      "expected": "Signed URL created"
+    },
+    {
+      "category": "Storage/evidence",
+      "name": "inactive admin evidence access",
+      "pass": true,
+      "expected": "Access denied"
+    },
+    {
+      "category": "Storage/evidence",
+      "name": "signed URL approximately 120 seconds",
+      "pass": true,
+      "expected": "110-125 seconds remaining"
+    },
+    {
+      "category": "Admin review",
+      "name": "approve",
+      "pass": true,
+      "expected": "HTTP 200, status verified, one trusted review and audit"
+    },
+    {
+      "category": "Admin review",
+      "name": "reject",
+      "pass": false,
+      "expected": "HTTP 200, status rejected, one trusted review and audit"
+    },
+    {
+      "category": "Admin review",
+      "name": "late",
+      "pass": true,
+      "expected": "HTTP 200, status late, one trusted review and audit"
+    },
+    {
+      "category": "Admin review",
+      "name": "excuse",
+      "pass": true,
+      "expected": "HTTP 200, status excused, one trusted review and audit"
+    },
+    {
+      "category": "Admin review",
+      "name": "repeated identical review",
+      "pass": true,
+      "expected": "Idempotent response with no duplicate side effects"
+    },
+    {
+      "category": "Admin review",
+      "name": "super-admin supported correction",
+      "pass": true,
+      "expected": "Super admin changes reviewable reject to excused"
+    },
+    {
+      "category": "Admin review",
+      "name": "invalid state",
+      "pass": true,
+      "expected": "HTTP 409 attendance_not_reviewable"
+    },
+    {
+      "category": "Admin review",
+      "name": "missing target",
+      "pass": true,
+      "expected": "HTTP 404 attendance_session_not_found"
+    },
+    {
+      "category": "Admin review",
+      "name": "inactive admin",
+      "pass": true,
+      "expected": "HTTP 403"
+    },
+    {
+      "category": "Admin review",
+      "name": "student",
+      "pass": true,
+      "expected": "HTTP 403"
+    },
+    {
+      "category": "Admin review",
+      "name": "anonymous",
+      "pass": true,
+      "expected": "HTTP 401"
+    },
+    {
+      "category": "Audit security",
+      "name": "trusted event mutation audit",
+      "pass": true,
+      "expected": "Authenticated admin actor recorded"
+    },
+    {
+      "category": "Audit security",
+      "name": "trusted QR generation audits",
+      "pass": true,
+      "expected": "Authenticated admin actor on every generated QR audit"
+    },
+    {
+      "category": "Student RLS",
+      "name": "Student A event targeting",
+      "pass": true,
+      "expected": "A/B visible, draft/deleted hidden"
+    },
+    {
+      "category": "Student RLS",
+      "name": "Student B event targeting",
+      "pass": true,
+      "expected": "Restricted A hidden, unrestricted B visible"
+    },
+    {
+      "category": "Student RLS",
+      "name": "attendance owner scoped",
+      "pass": true,
+      "expected": "Each student sees only own rows"
+    },
+    {
+      "category": "Student RLS",
+      "name": "announcement targeting",
+      "pass": true,
+      "expected": "Global plus own targeted announcement"
+    },
+    {
+      "category": "Student RLS",
+      "name": "notification owner scoped",
+      "pass": true,
+      "expected": "One own notification each"
+    },
+    {
+      "category": "Student RLS",
+      "name": "profile owner scoped",
+      "pass": true,
+      "expected": "Own profile visible; other profile hidden"
+    },
+    {
+      "category": "Student RLS",
+      "name": "Student B cannot read Student A evidence",
+      "pass": true,
+      "expected": "Zero rows"
+    },
+    {
+      "category": "Student RLS",
+      "name": "inactive student protected reads",
+      "pass": true,
+      "expected": "Zero event rows"
+    },
+    {
+      "category": "Admin regression",
+      "name": "active admin sensitive reads",
+      "pass": true,
+      "expected": "Attendance, evidence, and review rows visible"
+    },
+    {
+      "category": "Admin regression",
+      "name": "inactive admin sensitive reads",
+      "pass": true,
+      "expected": "Zero attendance rows"
+    },
+    {
+      "category": "Admin regression",
+      "name": "super admin sensitive reads",
+      "pass": true,
+      "expected": "Attendance visible"
+    },
+    {
+      "category": "Historical diagnostics",
+      "name": "migration 010 shape counts",
+      "pass": true,
+      "expected": "All diagnostic counts zero"
+    },
+    {
+      "category": "Edge runtime",
+      "name": "no unexpected hosted 5xx",
+      "pass": true,
+      "expected": "Zero unexpected 5xx responses"
+    }
+  ],
+  "historical_diagnostics": {
+    "timeout_before_timein": 0,
+    "completed_missing_coherence": 0,
+    "exact_duplicate_evidence_patterns": 0,
+    "historical_plaintext_qr_values": 0,
+    "duplicate_idempotency_rows": 0,
+    "rows_incompatible_with_migration_010_assumptions": 0
+  },
+  "edge_runtime": {
+    "submit_attendance": {
+      "successes": 49,
+      "controlled_failures": 7,
+      "unexpected_5xx": 0,
+      "statuses": [
+        200,
+        400,
+        401
+      ]
+    },
+    "review_attendance": {
+      "successes": 6,
+      "controlled_failures": 5,
+      "unexpected_5xx": 0,
+      "statuses": [
+        200,
+        401,
+        403,
+        404,
+        409
+      ]
+    },
+    "generate_qr": {
+      "successes": 3,
+      "controlled_failures": 5,
+      "unexpected_5xx": 0,
+      "statuses": [
+        200,
+        401,
+        403,
+        409
+      ]
+    }
+  }
+}

@@ -58,7 +58,7 @@ export default function WelcomeScreen() {
       <View className="flex-1 justify-between px-5 py-5" style={contentStyle}>
         <View>
           <View className="flex-row items-center justify-between">
-            <Text className="text-sm font-semibold uppercase tracking-wide text-brand-100">Campus Attendance</Text>
+            <Text className="text-sm font-semibold uppercase tracking-wide text-brand-100">ClickIn</Text>
             <Pressable onPress={() => void finish()} className="rounded-full bg-white/10 px-4 py-2 active:opacity-80">
               <Text className="text-sm font-semibold text-white">Skip</Text>
             </Pressable>

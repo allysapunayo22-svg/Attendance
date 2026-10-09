@@ -4,21 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import Image from "next/image";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  AlertTriangle,
-  CheckCircle2,
-  Clock,
-  ExternalLink,
-  Filter,
-  MapPin,
-  Radio,
-  Search,
-  Smartphone,
-  User,
-  X
-} from "lucide-react";
+import { Search, X } from "lucide-react";
 import { Badge, labelize } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { fetchLiveAttendance } from "@/lib/queries";
 import { supabase } from "@/lib/supabase";
@@ -36,9 +23,7 @@ export function LiveAttendanceTable() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "verified" | "late" | "requires_review">("all");
   const [selectedRecord, setSelectedRecord] = useState<AttendanceRow | null>(null);
-  const [evidenceUrl, setEvidenceUrl] = useState<string | null>(null);
-  const [evidenceLoading, setEvidenceLoading] = useState(false);
-  const [evidenceError, setEvidenceError] = useState(false);
+  const [evidence, setEvidence] = useState<{ recordId: string; url: string | null; error: boolean } | null>(null);
 
   // Realtime Supabase change listener
   useEffect(() => {
@@ -56,19 +41,21 @@ export function LiveAttendanceTable() {
 
   // Load photo signed URL when a record is selected
   useEffect(() => {
-    setEvidenceUrl(null);
-    setEvidenceError(false);
-    setEvidenceLoading(Boolean(selectedRecord?.time_in_photo_path));
     if (selectedRecord?.time_in_photo_path) {
+      const recordId = selectedRecord.id;
       void supabase.storage
         .from("attendance-evidence")
-        .createSignedUrl(selectedRecord.time_in_photo_path, 300)
-        .then(({ data, error }) => { setEvidenceUrl(data?.signedUrl ?? null); setEvidenceError(Boolean(error) || !data?.signedUrl); })
-        .finally(() => setEvidenceLoading(false));
+        .createSignedUrl(selectedRecord.time_in_photo_path, 120)
+        .then(({ data, error }) => setEvidence({ recordId, url: data?.signedUrl ?? null, error: Boolean(error) || !data?.signedUrl }));
     }
   }, [selectedRecord]);
 
-  const rawRows = query.data ?? [];
+  const selectedEvidence = evidence?.recordId === selectedRecord?.id ? evidence : null;
+  const evidenceLoading = Boolean(selectedRecord?.time_in_photo_path) && !selectedEvidence;
+  const evidenceUrl = selectedEvidence?.url ?? null;
+  const evidenceError = selectedEvidence?.error ?? false;
+
+  const rawRows = useMemo(() => query.data ?? [], [query.data]);
 
   const filteredRows = useMemo(() => {
     return rawRows.filter((row) => {
@@ -295,7 +282,7 @@ export function LiveAttendanceTable() {
               <div className="rounded-xl bg-slate-50 p-3">
                 <span className="font-semibold text-slate-500">Device check</span>
                 <p className="mt-1 font-bold text-slate-900 truncate">
-                  {(selectedRecord as any).device_id ? "Verified Mobile Device" : "Standard Mobile Device"}
+                  {selectedRecord.device_id ? "Verified Mobile Device" : "Standard Mobile Device"}
                 </p>
               </div>
             </div>

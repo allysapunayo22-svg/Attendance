@@ -16,21 +16,32 @@ export function createAttendanceSupabaseClient(url: string, anonKey: string) {
   });
 }
 
+const assignedEventSelect = `
+  *,
+  schedule:event_schedules(*),
+  location:event_locations(*),
+  zones:event_zones(*)
+`;
+
 export async function fetchAssignedEvents(client: SupabaseClient) {
   const { data, error } = await client
     .from("events")
-    .select(
-      `
-      *,
-      schedule:event_schedules(*),
-      location:event_locations(*),
-      zones:event_zones(*)
-    `
-    )
+    .select(assignedEventSelect)
     .order("created_at", { ascending: false });
 
   if (error) throw error;
   return (data ?? []).map(normalizeEventRow);
+}
+
+export async function fetchAssignedEvent(client: SupabaseClient, eventId: string) {
+  const { data, error } = await client
+    .from("events")
+    .select(assignedEventSelect)
+    .eq("id", eventId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data ? normalizeEventRow(data) : null;
 }
 
 function firstOrValue<T>(value: T | T[] | null | undefined) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -47,11 +47,7 @@ export function EventsTable() {
   const [notice, setNotice] = useState<{ tone: "success" | "error"; message: string } | null>(null);
   const [deleteEventId, setDeleteEventId] = useState<string | null>(null);
   const query = useQuery({ queryKey: ["events"], queryFn: fetchEvents });
-  const rows = query.data ?? [];
-
-  useEffect(() => {
-    setPageIndex(0);
-  }, [search, statusFilter, dateFilter, sortKey, sortDirection]);
+  const rows = useMemo(() => query.data ?? [], [query.data]);
 
   async function runAction(actionKey: string, action: () => Promise<void>, successMessage: string) {
     setBusyAction(actionKey);
@@ -171,6 +167,7 @@ export function EventsTable() {
   const hasFilters = Boolean(search.trim()) || statusFilter !== "all" || Boolean(dateFilter);
 
   function toggleSort(nextKey: SortKey) {
+    setPageIndex(0);
     if (sortKey === nextKey) {
       setSortDirection((direction) => (direction === "asc" ? "desc" : "asc"));
       return;
@@ -181,6 +178,7 @@ export function EventsTable() {
   }
 
   function clearFilters() {
+    setPageIndex(0);
     setSearch("");
     setStatusFilter("all");
     setDateFilter("");
@@ -238,13 +236,13 @@ export function EventsTable() {
                 className="h-11 rounded-xl border-slate-200 bg-slate-50 pl-10 focus:bg-white"
                 placeholder="Search event title, venue, or status"
                 value={search}
-                onChange={(event) => setSearch(event.target.value)}
+                onChange={(event) => { setSearch(event.target.value); setPageIndex(0); }}
               />
             </label>
             <select
               className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-700 outline-none transition focus:border-brand-700 focus:bg-white focus:ring-2 focus:ring-brand-100"
               value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value as (typeof statusFilters)[number])}
+              onChange={(event) => { setStatusFilter(event.target.value as (typeof statusFilters)[number]); setPageIndex(0); }}
             >
               {statusFilters.map((status) => (
                 <option key={status} value={status}>
@@ -256,7 +254,7 @@ export function EventsTable() {
               className="h-11 rounded-xl border-slate-200 bg-slate-50 focus:bg-white"
               type="date"
               value={dateFilter}
-              onChange={(event) => setDateFilter(event.target.value)}
+              onChange={(event) => { setDateFilter(event.target.value); setPageIndex(0); }}
             />
             <Button variant="outline" className="h-11 rounded-xl border-slate-200" onClick={clearFilters} disabled={!hasFilters}>
               Reset
@@ -277,8 +275,8 @@ export function EventsTable() {
                     </div>
                     <div className="grid grid-cols-3 gap-2 rounded-xl bg-slate-50 p-3 text-center text-xs"><div><p className="text-slate-500">Present</p><p className="font-black text-slate-900">{stats.present}</p></div><div><p className="text-slate-500">Late</p><p className="font-black text-slate-900">{stats.late}</p></div><div><p className="text-slate-500">Absent</p><p className="font-black text-slate-900">{stats.absent}</p></div></div>
                     <div className="flex flex-wrap gap-2">
-                      <ActionLink href={`/attendance/live?event=${row.id}`} label="View live attendance" icon={Eye} />
-                      <ActionLink href={`/events/${row.id}/edit`} label="Edit event" icon={Pencil} />
+                      <ActionLink href={`/admin/live-attendance?event=${row.id}`} label="View live attendance" icon={Eye} />
+                      <ActionLink href={`/admin/events/${row.id}/edit`} label="Edit event" icon={Pencil} />
                       <ActionButton label="Publish event" icon={Send} disabled={row.status === "published" || Boolean(busyAction)} onClick={() => void updateStatus(row.id, "published")} />
                       <ActionButton label="Duplicate event" icon={Copy} disabled={Boolean(busyAction)} onClick={() => void duplicate(row)} />
                       <ActionButton label="Export CSV" icon={FileDown} disabled={Boolean(busyAction)} onClick={() => exportEvent(row)} />
@@ -323,7 +321,7 @@ export function EventsTable() {
                         <td className="px-5 py-4 align-middle font-semibold text-slate-900">{stats.absent}</td>
                         <td className="px-5 py-4 align-middle">
                           <div className="flex flex-wrap gap-2">
-                            <ActionLink href={`/attendance/live?event=${row.id}`} label="View live attendance" icon={Eye} />
+                            <ActionLink href={`/admin/live-attendance?event=${row.id}`} label="View live attendance" icon={Eye} />
                             <ActionButton
                               label="Publish event"
                               icon={Send}
@@ -336,7 +334,7 @@ export function EventsTable() {
                               disabled={Boolean(busyAction)}
                               onClick={() => void duplicate(row)}
                             />
-                            <ActionLink href={`/events/${row.id}/edit`} label="Edit event" icon={Pencil} />
+                            <ActionLink href={`/admin/events/${row.id}/edit`} label="Edit event" icon={Pencil} />
                             <ActionButton label="Export CSV" icon={FileDown} onClick={() => exportEvent(row)} />
                             <ActionButton
                               label="Cancel event"
@@ -506,7 +504,7 @@ function EmptyState({ hasFilters, onClearFilters }: { hasFilters: boolean; onCle
           </Button>
         ) : null}
         <Button asChild className="rounded-xl">
-          <Link href="/events/new">Create Event</Link>
+          <Link href="/admin/events/new">Create Event</Link>
         </Button>
       </div>
     </div>

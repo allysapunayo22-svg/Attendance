@@ -30,7 +30,7 @@ export function AuthScreen({ title, description, children, back, footer = true }
                     <Image source={require("../../assets/logo.png")} style={{ width: 40, height: 40 }} resizeMode="contain" accessibilityLabel="School logo" />
                   </View>}
                   <View className="flex-1">
-                    <Text className="text-sm font-bold text-white">Campus Attendance</Text>
+                    <Text className="text-sm font-bold text-white">ClickIn</Text>
                     <Text className="mt-1 text-xs text-brand-100">CSU Gonzaga · CBEA</Text>
                   </View>
                 </View>

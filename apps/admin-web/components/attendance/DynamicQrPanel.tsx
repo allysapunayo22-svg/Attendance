@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useQuery } from "@tanstack/react-query";
 import { QRCodeCanvas } from "qrcode.react";
-import { Clock, ExternalLink, Maximize2, Minimize2, QrCode, RefreshCw, Sparkles, X } from "lucide-react";
+import { Clock, Maximize2, QrCode, RefreshCw, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { supabase } from "@/lib/supabase";
@@ -30,26 +30,19 @@ export function DynamicQrPanel() {
         .order("created_at", { ascending: false })
         .limit(20);
       if (error) throw error;
-      return (data ?? []).map((row: any) => ({
-        id: row.id as string,
-        title: row.title as string,
-        status: row.status as string,
-        location_name: (Array.isArray(row.location) ? row.location[0]?.venue_name : row.location?.venue_name) as string | undefined
+      return (data ?? []).map((row) => ({
+        id: row.id,
+        title: row.title,
+        status: row.status,
+        location_name: Array.isArray(row.location) ? row.location[0]?.venue_name : undefined
       }));
     }
   });
 
   const events = eventsQuery.data ?? [];
-
-  // Default selection to the first ongoing or published event
-  useEffect(() => {
-    if (!selectedEventId && events.length > 0) {
-      const ongoing = events.find((e) => e.status === "ongoing");
-      setSelectedEventId(ongoing ? ongoing.id : (events[0]?.id ?? ""));
-    }
-  }, [events, selectedEventId]);
-
-  const selectedEvent = events.find((e) => e.id === selectedEventId);
+  const defaultEventId = events.find((event) => event.status === "ongoing")?.id ?? events[0]?.id ?? "";
+  const activeEventId = selectedEventId || defaultEventId;
+  const selectedEvent = events.find((event) => event.id === activeEventId);
 
   function changeEvent(eventId: string) {
     setSelectedEventId(eventId);
@@ -60,13 +53,13 @@ export function DynamicQrPanel() {
     setIsProjectorOpen(false);
   }
 
-  async function generateQR() {
-    if (!selectedEventId) return;
+  const generateQR = useCallback(async () => {
+    if (!activeEventId) return;
     setGenerating(true);
     setErrorMessage(null);
     try {
       const { data, error } = await supabase.functions.invoke("generate-qr", {
-        body: { eventId: selectedEventId, ttlSeconds: 30 }
+        body: { eventId: activeEventId, ttlSeconds: 30 }
       });
       if (error) {
         setErrorMessage(error.message);
@@ -75,12 +68,12 @@ export function DynamicQrPanel() {
       setToken(data.token);
       setExpiresAt(data.expiresAt);
       setSecondsLeft(30);
-    } catch (err: any) {
-      setErrorMessage(err.message ?? "Failed to generate dynamic QR token");
+    } catch (error: unknown) {
+      setErrorMessage(error instanceof Error ? error.message : "Failed to generate dynamic QR token");
     } finally {
       setGenerating(false);
     }
-  }
+  }, [activeEventId]);
 
   // Auto-countdown timer
   useEffect(() => {
@@ -96,7 +89,7 @@ export function DynamicQrPanel() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [token, expiresAt, autoRotate, selectedEventId, generating]);
+  }, [token, expiresAt, autoRotate, generating, generateQR]);
 
   return (
     <>
@@ -137,7 +130,7 @@ export function DynamicQrPanel() {
                 </label>
                 <select
                   id="qr-event"
-                  value={selectedEventId}
+                  value={activeEventId}
                   onChange={(e) => changeEvent(e.target.value)}
                   disabled={eventsQuery.isLoading || eventsQuery.isError}
                   className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-100 disabled:bg-slate-100"
@@ -156,7 +149,7 @@ export function DynamicQrPanel() {
               <div className="flex flex-wrap items-center gap-3">
                 <Button
                   onClick={generateQR}
-                  disabled={!selectedEventId || generating}
+                  disabled={!activeEventId || generating}
                   className="h-10 rounded-xl bg-brand-700 hover:bg-brand-800 px-5 text-xs font-semibold text-white shadow-xs"
                 >
                   <RefreshCw size={14} className={generating ? "animate-spin" : ""} />

@@ -108,20 +108,12 @@ export function EventForm() {
         if (error) throw error;
       }
 
-      const { error: auditError } = await supabase.rpc("log_audit", {
-        p_action: "event.created",
-        p_entity_type: "event",
-        p_entity_id: eventId,
-        p_metadata: { title: values.title }
-      });
-
-      if (auditError) throw auditError;
     }, async () => {
       const { data: removed, error } = await supabase.from("events").delete().eq("id", eventId).eq("status", "draft").select("id");
       if (error || !removed?.length) throw error ?? new Error("Draft cleanup failed.");
     });
 
-    router.push("/events?saved=created");
+    router.push("/admin/events?saved=created");
   };
 
   return (

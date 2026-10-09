@@ -1,0 +1,69 @@
+{
+  "project_ref": "tosfspsjervmgrpncnsw",
+  "totals": {
+    "passed": 10,
+    "failed": 0
+  },
+  "tests": [
+    {
+      "category": "Auth/RBAC",
+      "name": "student_a login",
+      "pass": true,
+      "expected": "Hosted login succeeds for prepared synthetic identity"
+    },
+    {
+      "category": "Auth/RBAC",
+      "name": "active_admin login",
+      "pass": true,
+      "expected": "Hosted login succeeds for prepared synthetic identity"
+    },
+    {
+      "category": "Retest event state",
+      "name": "draft",
+      "pass": true,
+      "expected": "controlled event rejection with a fresh idempotency key"
+    },
+    {
+      "category": "Retest event state",
+      "name": "deleted",
+      "pass": true,
+      "expected": "controlled event rejection with a fresh idempotency key"
+    },
+    {
+      "category": "Retest freshness",
+      "name": "stale with 30s margin; offline=false",
+      "pass": true,
+      "expected": "controlled freshness rejection; exact boundary covered by transaction-clock SQL tests"
+    },
+    {
+      "category": "Retest freshness",
+      "name": "future with 30s margin; offline=false",
+      "pass": true,
+      "expected": "controlled freshness rejection; exact boundary covered by transaction-clock SQL tests"
+    },
+    {
+      "category": "Retest freshness",
+      "name": "stale with 30s margin; offline=true",
+      "pass": true,
+      "expected": "controlled freshness rejection; exact boundary covered by transaction-clock SQL tests"
+    },
+    {
+      "category": "Retest freshness",
+      "name": "future with 30s margin; offline=true",
+      "pass": true,
+      "expected": "controlled freshness rejection; exact boundary covered by transaction-clock SQL tests"
+    },
+    {
+      "category": "Retest admin review",
+      "name": "one new review and audit",
+      "pass": true,
+      "expected": "trusted state and count deltas +1"
+    },
+    {
+      "category": "Retest admin review",
+      "name": "identical replay has zero side effects",
+      "pass": true,
+      "expected": "idempotent"
+    }
+  ]
+}

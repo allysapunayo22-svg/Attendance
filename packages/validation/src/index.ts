@@ -5,6 +5,20 @@ export const loginSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters.")
 });
 
+export const forgotPasswordSchema = z.object({
+  email: z.string().trim().email("Enter a valid email address.").max(160, "Email address is too long.")
+});
+
+export const resetPasswordSchema = z
+  .object({
+    password: z.string().min(8, "Password must be at least 8 characters."),
+    confirmPassword: z.string().min(8, "Confirm your new password.")
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    path: ["confirmPassword"],
+    message: "Passwords do not match."
+  });
+
 export const registerSchema = z
   .object({
     studentId: z
@@ -130,6 +144,8 @@ export const appealSchema = z.object({
 });
 
 export type LoginInput = z.infer<typeof loginSchema>;
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type EventFormInput = z.infer<typeof eventFormSchema>;
 export type AttendanceSubmissionInput = z.infer<typeof attendanceSubmissionSchema>;

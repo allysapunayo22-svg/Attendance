@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,9 +12,25 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase";
 
+async function resolveLoginEmail(identifier: string) {
+  const normalized = identifier.trim();
+  if (normalized.includes("@")) return normalized.toLowerCase();
+
+  const { data, error } = await supabase.functions.invoke<{ email?: string; error?: string }>("resolve-student-login", {
+    body: { identifier: normalized.replace(/\s+/g, "").toUpperCase() }
+  });
+
+  if (error || !data?.email) {
+    throw new Error(data?.error ?? "No active student account was found for this student ID.");
+  }
+
+  return data.email;
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const form = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
@@ -23,10 +40,34 @@ export default function LoginPage() {
     }
   });
 
+  useEffect(() => {
+    const reason = new URLSearchParams(window.location.search).get("reason");
+    const message = reason === "inactive"
+      ? "Your account is inactive. Contact the system administrator."
+      : reason === "unprovisioned"
+        ? "Your account does not have an active Attendance role. Contact the system administrator."
+        : null;
+    if (reason === "password_reset") {
+      queueMicrotask(() => setNotice("Your password was updated. Sign in with your new password."));
+    }
+    if (message) {
+      void supabase.auth.signOut();
+      queueMicrotask(() => setError(message));
+    }
+  }, []);
+
   const submit = form.handleSubmit(async (values) => {
     setError(null);
+    let email: string;
+    try {
+      email = await resolveLoginEmail(values.identifier);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Unable to resolve this account.");
+      return;
+    }
+
     const { data, error: authError } = await supabase.auth.signInWithPassword({
-      email: values.identifier,
+      email,
       password: values.password
     });
     if (authError || !data.user) {
@@ -34,14 +75,10 @@ export default function LoginPage() {
       return;
     }
 
-    const { data: profile } = await supabase.from("users").select("role").eq("id", data.user.id).single();
-    if (!profile || !["admin", "super_admin"].includes(profile.role)) {
-      await supabase.auth.signOut();
-      setError("Access denied: Administrator privileges required.");
-      return;
-    }
-
+    // The root server route reads the trusted database role and sends the
+    // account to its authorized interface.
     router.replace("/");
+    router.refresh();
   });
 
   return (
@@ -56,7 +93,7 @@ export default function LoginPage() {
           <div className="relative mb-3 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-b from-blue-600/25 to-[#0b1633] p-2 shadow-2xl shadow-slate-950/60 ring-1 ring-blue-500/30 backdrop-blur-xl">
             <Image
               src="/logo.png"
-              alt="Campus Attendance Logo"
+              alt="ClickIn logo"
               width={72}
               height={72}
               className="h-full w-full object-contain drop-shadow-md"
@@ -70,38 +107,41 @@ export default function LoginPage() {
           <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1 text-xs font-semibold tracking-wide text-blue-300">
             <Sparkles size={13} className="text-blue-400" /> CSU Attendance System
           </span>
-          <h1 className="mt-3 text-2xl font-bold tracking-tight text-white sm:text-3xl">Admin Operations Portal</h1>
-          <p className="mt-1 text-sm text-slate-400">Sign in to supervise events, geofences, and attendance records.</p>
+          <h1 className="mt-3 text-2xl font-bold tracking-tight text-white sm:text-3xl">Attendance Portal</h1>
+          <p className="mt-1 text-sm text-slate-400">Sign in with your administrator email or student account.</p>
         </div>
 
         {/* Login Card */}
         <div className="overflow-hidden rounded-3xl border border-white/10 bg-slate-900/85 p-6 shadow-2xl backdrop-blur-2xl sm:p-8">
           <form onSubmit={submit} className="space-y-4">
             <div>
-              <label htmlFor="admin-email" className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-300">
-                Administrator Email
+              <label htmlFor="account-identifier" className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-300">
+                Email or Student ID
               </label>
               <div className="relative">
                 <Mail size={17} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <Input
-                  id="admin-email"
-                  type="email"
+                  id="account-identifier"
+                  type="text"
                   autoComplete="username"
                   aria-invalid={Boolean(form.formState.errors.identifier)}
-                  aria-describedby={form.formState.errors.identifier ? "admin-email-error" : undefined}
-                  placeholder="admin@csu.edu.ph"
+                  aria-describedby={form.formState.errors.identifier ? "account-identifier-error" : undefined}
+                  placeholder="admin@csu.edu.ph or 24-20937"
                   className="h-12 rounded-xl border-white/10 bg-white/5 pl-10 text-white placeholder:text-slate-500 focus:border-brand-500 focus:bg-white/10"
                   {...form.register("identifier")}
                 />
               </div>
               {form.formState.errors.identifier ? (
-                <span id="admin-email-error" role="alert" className="mt-1.5 block text-xs font-semibold text-rose-400">{form.formState.errors.identifier.message}</span>
+                <span id="account-identifier-error" role="alert" className="mt-1.5 block text-xs font-semibold text-rose-400">{form.formState.errors.identifier.message}</span>
               ) : null}
             </div>
 
             <div>
               <div className="mb-1.5 flex items-center justify-between">
                 <label htmlFor="admin-password" className="text-xs font-semibold uppercase tracking-wider text-slate-300">Password</label>
+                <Link href="/forgot-password" className="text-xs font-semibold text-blue-300 transition hover:text-blue-200">
+                  Forgot password?
+                </Link>
               </div>
               <div className="relative">
                 <Lock size={17} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -135,6 +175,12 @@ export default function LoginPage() {
               </div>
             ) : null}
 
+            {notice ? (
+              <div role="status" className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs font-semibold text-emerald-200">
+                {notice}
+              </div>
+            ) : null}
+
             <Button
               type="submit"
               disabled={form.formState.isSubmitting}
@@ -146,7 +192,7 @@ export default function LoginPage() {
                   Authenticating…
                 </span>
               ) : (
-                "Sign In to Console"
+                "Sign In"
               )}
             </Button>
           </form>

@@ -62,3 +62,11 @@ body {
   min-height: 360px;
   width: 100%;
 }
+
+.student-safe-top {
+  padding-top: max(0.75rem, env(safe-area-inset-top));
+}
+
+.student-safe-bottom {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+}

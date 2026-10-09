@@ -236,11 +236,13 @@ export function EventWizardForm({
   const [savedVenues, setSavedVenues] = useState<SavedVenue[]>([]);
 
   useEffect(() => {
-    try {
-      setSavedVenues(JSON.parse(window.localStorage.getItem("admin-saved-venues") ?? "[]") as SavedVenue[]);
-    } catch {
-      setSavedVenues([]);
-    }
+    queueMicrotask(() => {
+      try {
+        setSavedVenues(JSON.parse(window.localStorage.getItem("admin-saved-venues") ?? "[]") as SavedVenue[]);
+      } catch {
+        setSavedVenues([]);
+      }
+    });
   }, []);
 
   const currentStep = wizardSteps[stepIndex] ?? wizardSteps[0]!;
