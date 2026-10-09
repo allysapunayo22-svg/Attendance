@@ -1,20 +1,33 @@
 import Link from "next/link";
 import type { Event } from "@attendance/types";
-import { ArrowRight, CalendarDays, Clock3, MapPin } from "lucide-react";
+import { ArrowRight, CalendarDays, Clock3, MapPin, ShieldCheck } from "lucide-react";
 import { formatDate, formatTimeRange, getEventPhase } from "@/lib/student/format";
 import { StudentStatusBadge } from "./StudentStatusBadge";
 
 export function StudentEventCard({ event, compact = false }: { event: Event; compact?: boolean }) {
   const phase = getEventPhase(event);
+  const startsAt = event.schedule?.starts_at ? new Date(event.schedule.starts_at) : null;
+  const day = startsAt ? startsAt.getDate() : "—";
+  const month = startsAt ? new Intl.DateTimeFormat(undefined, { month: "short" }).format(startsAt) : "TBD";
+
   return (
-    <Link href={`/student/events/${event.id}`} className={`group block rounded-3xl border border-slate-200/80 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-teal-200 hover:shadow-md ${compact ? "p-4" : "p-5"}`}>
-      <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="text-xs font-bold uppercase tracking-[0.14em] text-teal-700">{event.requirement === "required" ? "Required event" : "Optional event"}</p><h2 className="mt-1 line-clamp-2 text-lg font-extrabold text-slate-950">{event.title}</h2></div><StudentStatusBadge value={phase} /></div>
-      <div className="mt-4 grid gap-2 text-sm text-slate-600">
-        <p className="flex items-center gap-2"><CalendarDays size={16} className="shrink-0 text-teal-700" /><span>{formatDate(event.schedule?.starts_at, { weekday: "short" })}</span></p>
-        <p className="flex items-center gap-2"><Clock3 size={16} className="shrink-0 text-teal-700" /><span>{formatTimeRange(event.schedule?.starts_at, event.schedule?.ends_at)}</span></p>
-        <p className="flex items-center gap-2"><MapPin size={16} className="shrink-0 text-teal-700" /><span className="truncate">{event.location?.venue_name ?? "Venue pending"}</span></p>
+    <Link href={`/student/events/${event.id}`} className={`group block overflow-hidden rounded-[1.75rem] border border-slate-200/70 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-teal-200 hover:shadow-md ${compact ? "p-3" : "p-4"}`}>
+      <div className="flex gap-4">
+        <div className="relative flex w-[78px] shrink-0 flex-col items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f766e] to-[#103f39] px-2 py-4 text-white">
+          <CalendarDays size={17} className="absolute left-3 top-3 text-teal-100/70" />
+          <span className="mt-4 text-[10px] font-extrabold uppercase tracking-[0.15em] text-teal-100">{month}</span>
+          <span className="text-3xl font-black leading-none">{day}</span>
+          <span className="mt-2 rounded-full bg-white/15 px-2 py-1 text-[9px] font-bold uppercase">{event.type}</span>
+        </div>
+        <div className="min-w-0 flex-1 py-1">
+          <div className="flex flex-wrap items-start justify-between gap-2"><div className="min-w-0 flex-1"><p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#0f766e]">{event.requirement === "required" ? "Required event" : "Optional event"}</p><h2 className="mt-1 line-clamp-2 text-base font-black leading-5 text-slate-950 sm:text-lg">{event.title}</h2></div><StudentStatusBadge value={phase} /></div>
+          <div className="mt-3 space-y-2 text-xs font-medium text-slate-600">
+            <p className="flex items-center gap-2"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-teal-50 text-[#0f766e]"><Clock3 size={14} /></span><span className="truncate">{formatDate(event.schedule?.starts_at, { weekday: "short" })} · {formatTimeRange(event.schedule?.starts_at, event.schedule?.ends_at)}</span></p>
+            <p className="flex items-center gap-2"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-teal-50 text-[#0f766e]"><MapPin size={14} /></span><span className="truncate">{event.location?.venue_name ?? "Venue pending"}</span></p>
+          </div>
+        </div>
       </div>
-      <span className="mt-4 flex items-center justify-end gap-1 text-sm font-bold text-teal-700">View details <ArrowRight size={15} className="transition group-hover:translate-x-0.5" /></span>
+      <div className="mt-3 flex items-center justify-between gap-3 border-t border-slate-100 pt-3"><span className="flex items-center gap-1.5 rounded-full bg-slate-50 px-3 py-1.5 text-[10px] font-bold text-slate-600"><ShieldCheck size={13} className="text-[#0f766e]" /> {event.dynamic_qr_required ? "QR required" : "Standard verification"}</span><span className="flex items-center gap-1 text-xs font-extrabold text-[#0f766e]">Details <ArrowRight size={14} className="transition group-hover:translate-x-0.5" /></span></div>
     </Link>
   );
 }

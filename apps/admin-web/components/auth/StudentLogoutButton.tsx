@@ -9,7 +9,7 @@ import { localSessionOwnerId } from "@/lib/student/offline/session";
 import { cancelOfflineSync } from "@/lib/student/offline/sync";
 import { PENDING_QUEUE_STATES } from "@/lib/student/offline/types";
 
-export function StudentLogoutButton({ compact = false }: { compact?: boolean }) {
+export function StudentLogoutButton({ compact = false, menu = false }: { compact?: boolean; menu?: boolean }) {
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -25,7 +25,7 @@ export function StudentLogoutButton({ compact = false }: { compact?: boolean }) 
   }
 
   return (
-    <button type="button" onClick={() => void logout()} className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-5 text-sm font-bold transition ${compact ? "bg-slate-100 text-slate-700 hover:bg-slate-200" : "bg-rose-600 text-white hover:bg-rose-700"}`}>
+    <button type="button" role={menu ? "menuitem" : undefined} onClick={() => void logout()} className={`inline-flex min-h-11 items-center justify-center gap-2 font-bold transition ${menu ? "w-full rounded-2xl px-2.5 text-xs text-rose-700 hover:bg-rose-50" : compact ? "rounded-full bg-slate-100 px-5 text-sm text-slate-700 hover:bg-slate-200" : "rounded-full bg-rose-600 px-5 text-sm text-white hover:bg-rose-700"}`}>
       <LogOut size={17} /> Log out
     </button>
   );
