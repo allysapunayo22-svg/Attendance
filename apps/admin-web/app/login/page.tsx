@@ -127,7 +127,7 @@ export default function LoginPage() {
               {form.formState.isSubmitting ? <span className="flex items-center gap-2"><span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />Signing in…</span> : "Sign in"}
             </Button>
           </form>
-          <p className="mt-6 flex items-center justify-center gap-2 border-t border-slate-100 pt-5 text-xs text-slate-500"><ShieldCheck size={15} className="text-student-600" />Secure access for students and administrators</p>
+          <div className="mt-6 border-t border-slate-100 pt-5 text-center"><p className="text-sm text-slate-600">New student? <Link href="/register" className="font-semibold text-student-700 hover:underline">Create an account</Link></p><p className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-500"><ShieldCheck size={15} className="text-student-600" />Secure access for students and administrators</p></div>
         </section>
         <p className="mt-6 text-center text-xs leading-5 text-slate-500">Need help with your account? Contact your school administrator.</p>
       </div>
