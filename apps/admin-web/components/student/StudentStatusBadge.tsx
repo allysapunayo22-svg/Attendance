@@ -6,7 +6,7 @@ const toneClasses: Record<string, string> = {
   ongoing: "bg-emerald-50 text-emerald-700 ring-emerald-200",
   verified: "bg-emerald-50 text-emerald-700 ring-emerald-200",
   completed: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-  excused: "bg-teal-50 text-teal-700 ring-teal-200",
+  excused: "bg-student-50 text-student-700 ring-student-200",
   time_in_recorded: "bg-cyan-50 text-cyan-700 ring-cyan-200",
   late: "bg-amber-50 text-amber-700 ring-amber-200",
   important: "bg-amber-50 text-amber-700 ring-amber-200",

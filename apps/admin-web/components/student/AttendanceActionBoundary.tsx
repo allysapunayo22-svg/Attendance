@@ -24,7 +24,7 @@ export function AttendanceActionBoundary({ event, attendance, offlineFallback = 
     <div className="space-y-4">
       <BrowserDeviceEnrollment key={deviceRevision} onReadyChange={handleReadyChange} offlineCaptureAllowed />
       <AttendanceWorkflow event={event} attendance={attendance} deviceReady={deviceReady || offlineReady} onDeviceInvalid={handleDeviceInvalid} />
-      <div className="text-center"><Link href="/student/attendance" className="inline-flex min-h-11 items-center rounded-full bg-white px-5 text-sm font-bold text-teal-900 shadow-sm ring-1 ring-slate-200 hover:bg-teal-50">View attendance history</Link></div>
+      <div className="text-center"><Link href="/student/attendance" className="inline-flex min-h-11 items-center rounded-full bg-white px-5 text-sm font-bold text-student-900 shadow-sm ring-1 ring-slate-200 hover:bg-student-50">View attendance history</Link></div>
     </div>
   );
 }

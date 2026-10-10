@@ -84,7 +84,7 @@ export function BrowserDeviceEnrollment({ onReadyChange, offlineCaptureAllowed =
   return (
     <section aria-labelledby="browser-device-title" className="rounded-3xl border border-slate-200/80 bg-white p-5 text-slate-950 shadow-sm sm:p-6">
       <div className="flex items-start gap-3">
-        <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${active ? "bg-emerald-100 text-emerald-700" : error ? "bg-red-100 text-red-700" : "bg-teal-50 text-teal-700"}`}>{icon}</span>
+        <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${active ? "bg-emerald-100 text-emerald-700" : error ? "bg-red-100 text-red-700" : "bg-student-50 text-student-700"}`}>{icon}</span>
         <div className="min-w-0 flex-1">
           <h2 id="browser-device-title" className="font-extrabold">Attendance device</h2>
           <p className="mt-1 text-sm font-bold text-slate-800" role="status" aria-live="polite">{loading ? "Checking this browser…" : offlineProvisional ? "Saved browser identity available" : error ? "Browser verification failed" : copy.title}</p>

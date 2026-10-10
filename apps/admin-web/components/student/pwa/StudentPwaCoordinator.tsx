@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Cloud, CloudOff, Download, LoaderCircle, RefreshCw, ShieldAlert, X } from "lucide-react";
+import { Cloud, Download, LoaderCircle, RefreshCw, ShieldAlert, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { useBrowserOnline } from "@/lib/student/offline/connectivity";
@@ -11,6 +11,8 @@ import { localSessionOwnerId } from "@/lib/student/offline/session";
 import { cancelOfflineSync, syncOfflineAttendance } from "@/lib/student/offline/sync";
 import { nextAutomaticRetryAt } from "@/lib/student/offline/sync-core";
 import { PENDING_QUEUE_STATES, type OfflineAttendanceRecord } from "@/lib/student/offline/types";
+
+import { ConnectionToast } from "./ConnectionToast";
 
 interface InstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -161,11 +163,12 @@ export function StudentPwaCoordinator() {
   }
 
   return (
-    <div className="mb-5 space-y-3" aria-live="polite">
-      <section className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-sm ${online ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-amber-200 bg-amber-50 text-amber-950"}`}>
-        <div className="flex min-w-0 items-center gap-2">{online ? <Cloud size={18} /> : <CloudOff size={18} />}<div><strong>{online ? "Online" : "Offline"}</strong><p className="text-xs opacity-80">{pending.length ? `${pending.length} attendance ${pending.length === 1 ? "item" : "items"} waiting to sync` : online ? "All queued attendance has been processed" : "Attendance can be saved on this device and synced later"}</p></div></div>
-        {pending.length || blocked.length ? <Button type="button" className="min-h-9 px-3 py-1.5 text-xs" variant="outline" disabled={!online || syncing} onClick={() => void runSync(true)}>{syncing ? <LoaderCircle className="animate-spin" size={16} /> : <RefreshCw size={16} />} Sync now</Button> : null}
-      </section>
+    <div className={pending.length || blocked.length || syncMessage || authenticationRequired.length || rejected.length || showInstall ? "mb-5 space-y-3" : ""} aria-live="polite">
+      <ConnectionToast />
+      {pending.length || blocked.length ? <section className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-student-200 bg-student-50 px-4 py-3 text-sm text-slate-700">
+        <div className="flex items-center gap-2"><Cloud size={18} /><span>{pending.length} attendance {pending.length === 1 ? "item" : "items"} waiting to sync</span></div>
+        <Button type="button" className="min-h-9 px-3 py-1.5 text-xs" variant="outline" disabled={!online || syncing} onClick={() => void runSync(true)}>{syncing ? <LoaderCircle className="animate-spin" size={16} /> : <RefreshCw size={16} />} Sync now</Button>
+      </section> : null}
       {syncMessage ? <p className="rounded-2xl bg-white px-4 py-3 text-xs text-slate-600 ring-1 ring-slate-200">{syncMessage}</p> : null}
       {blocked.length ? <p className="flex items-start gap-2 rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-950 ring-1 ring-amber-200"><ShieldAlert className="mt-0.5 shrink-0" size={17} /> Register this browser again before syncing {blocked.length} blocked attendance {blocked.length === 1 ? "item" : "items"}.</p> : null}
       {authenticationRequired.length ? <p className="flex items-start gap-2 rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-950 ring-1 ring-amber-200"><ShieldAlert className="mt-0.5 shrink-0" size={17} /> Sign in again with this account to resume {authenticationRequired.length} saved attendance {authenticationRequired.length === 1 ? "item" : "items"}.</p> : null}

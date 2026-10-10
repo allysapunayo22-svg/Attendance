@@ -16,7 +16,7 @@ export function StudentLogoutButton({ compact = false, menu = false }: { compact
   async function logout() {
     const ownerId = await localSessionOwnerId();
     const pending = ownerId ? await countOfflineAttendance(ownerId, PENDING_QUEUE_STATES) : 0;
-    if (pending && !window.confirm(`${pending} attendance ${pending === 1 ? "item is" : "items are"} still saved on this device. The queue will remain isolated to this account and resume when you sign in again. Log out now?`)) return;
+    if (!window.confirm(pending ? `${pending} attendance ${pending === 1 ? "item is" : "items are"} still saved on this device. The queue will remain isolated to this account and resume when you sign in again. Log out now?` : "Log out of your ClickIn account?")) return;
     cancelOfflineSync();
     await supabase.auth.signOut();
     queryClient.clear();
