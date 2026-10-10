@@ -49,45 +49,70 @@ const steps = [
   { icon: History, title: "Track Attendance", description: "View your history, progress, announcements, and notifications." }
 ];
 
+const mobileFeatures = [
+  { icon: QrCode, label: "QR Attendance" },
+  { icon: LocateFixed, label: "GPS Verification" },
+  { icon: Camera, label: "Camera Evidence" },
+  { icon: History, label: "Attendance History" },
+  { icon: WifiOff, label: "Offline Sync" }
+];
+
 export function ClickInLandingPage() {
   return (
     <div className="h-dvh overflow-hidden bg-white text-slate-950 md:min-h-dvh md:h-auto md:overflow-visible">
-      <header className="sticky top-0 z-50 border-b border-blue-100 bg-white/95 pt-[env(safe-area-inset-top)] shadow-[0_1px_12px_rgba(15,23,42,0.04)] backdrop-blur-xl md:pt-0">
+      <header className="absolute inset-x-0 top-0 z-50 border-b border-transparent bg-transparent pt-[env(safe-area-inset-top)] md:sticky md:border-blue-100 md:bg-white/95 md:pt-0 md:shadow-[0_1px_12px_rgba(15,23,42,0.04)] md:backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-5 px-4 sm:px-6 lg:px-8">
           <Link href="#home" className="flex items-center gap-2.5" aria-label="ClickIn home">
             <Image src="/logo.png" alt="" width={38} height={38} className="h-9 w-9 rounded-xl object-contain" priority />
-            <span className="text-xl font-black tracking-tight text-slate-950">ClickIn</span>
+            <span className="text-xl font-black tracking-tight text-white md:text-slate-950">ClickIn</span>
           </Link>
           <nav aria-label="Main navigation" className="hidden items-center gap-7 md:flex">
             {navigation.map((item) => <a key={item.href} href={item.href} className="text-sm font-semibold text-slate-600 transition hover:text-blue-600">{item.label}</a>)}
           </nav>
-          <Link href="/login" className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700"><UserRoundCheck size={17} /> Login</Link>
+          <Link href="/login" className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-white/30 bg-white/15 px-4 text-sm font-bold text-white shadow-sm backdrop-blur-md transition hover:bg-white/25 md:border-transparent md:bg-blue-600 md:hover:bg-blue-700"><UserRoundCheck size={17} /> Login</Link>
         </div>
       </header>
 
       <main>
-        <section id="home" className="h-[calc(100dvh-4rem-env(safe-area-inset-top))] scroll-mt-24 overflow-hidden bg-blue-50 md:h-auto">
-          <div className="mx-auto flex h-full max-w-7xl flex-col gap-3 px-4 py-4 sm:px-6 md:grid md:h-auto md:grid-cols-[0.9fr_1.1fr] md:items-center md:gap-8 md:py-14 lg:gap-10 lg:px-8 lg:py-20">
-            <div className="max-w-2xl">
-              <p className="hidden items-center gap-2 rounded-full border border-blue-200 bg-white px-3 py-1.5 text-xs font-bold text-blue-700 md:inline-flex"><ShieldCheck size={15} /> A Smarter Way to Track Student Attendance</p>
-              <h1 className="text-[clamp(1.9rem,8.5vw,2.5rem)] font-black leading-[1.06] tracking-[-0.035em] text-slate-950 md:mt-5 md:text-5xl lg:text-6xl">Smart Student Attendance <span className="text-blue-600">Made Easy</span></h1>
-              <p className="mt-3 max-w-xl text-sm leading-5 text-slate-600 md:hidden">Access events, securely mark attendance, and track your records in one reliable platform.</p>
-              <p className="mt-5 hidden max-w-xl text-lg leading-8 text-slate-600 md:block">ClickIn helps students easily access events, mark attendance, verify location, scan QR codes, submit required evidence, and monitor attendance history in one secure platform.</p>
-              <div className="mt-4 md:mt-7">
-                <Link href="/login" className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-blue-600 px-5 text-sm font-bold text-white shadow-[0_8px_20px_rgba(37,99,235,0.22)] transition hover:bg-blue-700 md:min-h-12 md:px-6">Get Started <ArrowRight size={17} /></Link>
+        <section id="home" className="relative h-dvh overflow-hidden bg-blue-950 md:hidden">
+          <Image src="/BG.jpeg" alt="" fill priority sizes="100vw" className="object-cover object-[68%_center]" />
+          <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-b from-blue-950/75 via-blue-950/60 to-blue-950/90" />
+          <div className="relative z-10 flex h-full flex-col px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[calc(5rem+env(safe-area-inset-top))] text-white">
+            <div>
+              <p className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-[10px] font-bold text-blue-50 backdrop-blur-md"><ShieldCheck size={14} /> A Smarter Way to Track Student Attendance</p>
+              <h1 className="mt-4 max-w-sm text-[clamp(1.9rem,9vw,2.5rem)] font-black leading-[1.04] tracking-[-0.035em]">Smart Student Attendance <span className="text-blue-300">Made Easy</span></h1>
+              <p className="mt-3 max-w-sm text-sm leading-5 text-blue-50/90">Access events, securely mark attendance, and track your records in one reliable platform.</p>
+              <Link href="/login" className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl bg-white px-5 text-sm font-bold text-blue-800 shadow-[0_8px_24px_rgba(15,23,42,0.22)] transition hover:bg-blue-50">Get Started <ArrowRight size={17} /></Link>
+            </div>
+            <div className="mt-auto">
+              <p className="mb-2 text-[10px] font-extrabold uppercase tracking-[0.16em] text-blue-100">Student essentials</p>
+              <div className="grid grid-cols-2 gap-2">
+                {mobileFeatures.map(({ icon: Icon, label }, index) => <div key={label} className={`flex min-h-10 items-center gap-2 rounded-xl border border-white/20 bg-blue-950/45 px-3 text-[11px] font-bold text-white backdrop-blur-md ${index === mobileFeatures.length - 1 ? "col-span-2" : ""}`}><Icon size={15} className="shrink-0 text-blue-200" />{label}</div>)}
               </div>
-              <div className="mt-8 hidden max-w-xl gap-3 md:grid md:grid-cols-3">
+            </div>
+          </div>
+        </section>
+
+        <section className="hidden scroll-mt-24 overflow-hidden bg-blue-50 md:block">
+          <div className="mx-auto grid max-w-7xl grid-cols-[0.9fr_1.1fr] items-center gap-8 px-6 py-14 lg:gap-10 lg:px-8 lg:py-20">
+            <div className="max-w-2xl">
+              <p className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white px-3 py-1.5 text-xs font-bold text-blue-700"><ShieldCheck size={15} /> A Smarter Way to Track Student Attendance</p>
+              <h1 className="mt-5 text-5xl font-black leading-[1.06] tracking-[-0.035em] text-slate-950 lg:text-6xl">Smart Student Attendance <span className="text-blue-600">Made Easy</span></h1>
+              <p className="mt-5 max-w-xl text-lg leading-8 text-slate-600">ClickIn helps students easily access events, mark attendance, verify location, scan QR codes, submit required evidence, and monitor attendance history in one secure platform.</p>
+              <div className="mt-7">
+                <Link href="/login" className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-blue-600 px-6 text-sm font-bold text-white shadow-[0_8px_20px_rgba(37,99,235,0.22)] transition hover:bg-blue-700">Get Started <ArrowRight size={17} /></Link>
+              </div>
+              <div className="mt-8 grid max-w-xl grid-cols-3 gap-3">
                 <Highlight icon={UserRoundCheck} title="For Students" />
                 <Highlight icon={ShieldCheck} title="Secure & Reliable" />
                 <Highlight icon={WifiOff} title="Offline Ready" />
               </div>
             </div>
 
-            <div className="relative flex min-h-0 flex-1 items-end justify-center md:block md:flex-none">
-              <div aria-hidden="true" className="absolute inset-1 rounded-[2rem] bg-blue-100/70 blur-xl md:-inset-5 md:rounded-[2.5rem] md:blur-2xl" />
-              <div className="relative h-full max-h-full w-full overflow-hidden rounded-2xl border border-blue-200 bg-blue-50 shadow-[0_16px_45px_rgba(30,58,138,0.16)] md:aspect-[3/2] md:h-auto md:rounded-3xl md:bg-white md:shadow-[0_24px_70px_rgba(30,58,138,0.18)]">
-                <Image src="/BG.jpeg" alt="" fill aria-hidden="true" sizes="(max-width: 767px) calc(100vw - 2rem), 1px" className="scale-110 object-cover object-center opacity-20 blur-lg md:hidden" />
-                <Image src="/BG.jpeg" alt="ClickIn student attendance verification on campus" fill priority sizes="(max-width: 767px) calc(100vw - 2rem), 58vw" className="object-contain object-bottom md:object-cover md:object-center" />
+            <div className="relative">
+              <div aria-hidden="true" className="absolute -inset-5 rounded-[2.5rem] bg-blue-100/70 blur-2xl" />
+              <div className="relative aspect-[3/2] overflow-hidden rounded-3xl border border-blue-200 bg-white shadow-[0_24px_70px_rgba(30,58,138,0.18)]">
+                <Image src="/BG.jpeg" alt="ClickIn student attendance verification on campus" fill priority sizes="58vw" className="object-cover object-center" />
                 <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-white/20" />
               </div>
             </div>
