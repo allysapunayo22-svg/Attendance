@@ -77,7 +77,7 @@ export function ClickInLandingPage() {
       <main>
         <section id="home" className="relative h-dvh overflow-hidden bg-blue-50 md:hidden">
           <Image src="/homepage.png" alt="" fill priority sizes="100vw" className="object-cover object-center" />
-          <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(90deg,rgba(239,246,255,0.99)_0%,rgba(239,246,255,0.92)_52%,rgba(219,234,254,0.04)_74%),linear-gradient(180deg,rgba(255,255,255,0.14)_0%,rgba(255,255,255,0)_52%,rgba(219,234,254,0.2)_100%)]" />
+          <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(90deg,rgba(239,246,255,0.58)_0%,rgba(239,246,255,0.4)_52%,rgba(219,234,254,0.02)_74%),linear-gradient(180deg,rgba(255,255,255,0.08)_0%,rgba(255,255,255,0)_52%,rgba(219,234,254,0.08)_100%)]" />
           <div className="relative z-10 h-full px-4 pt-[calc(5rem+env(safe-area-inset-top))] text-blue-950">
             <div className="max-w-[88%]">
               <p className="inline-flex items-center rounded-full border border-blue-300/70 bg-white/45 px-3 py-1.5 text-[clamp(0.65rem,2.8vw,0.78rem)] font-semibold text-blue-700 shadow-sm backdrop-blur-md">A Smarter Way to Track Student Attendance</p>

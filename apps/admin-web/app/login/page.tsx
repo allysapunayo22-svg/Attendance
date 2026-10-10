@@ -83,8 +83,9 @@ export default function LoginPage() {
 
   return (
     <main className="clickin-auth relative flex min-h-dvh items-center justify-center bg-slate-900 px-4 py-10 sm:px-6">
-      <Image src="/loginregister.jpeg" alt="" fill priority sizes="100vw" className="object-cover object-center" />
-      <div aria-hidden="true" className="absolute inset-0 bg-slate-950/45" />
+      <Image src="/loginregister.jpeg" alt="" fill priority sizes="100vw" className="scale-105 object-cover object-center opacity-55 blur-xl" />
+      <Image src="/loginregister.jpeg" alt="" fill priority sizes="100vw" className="object-contain object-center" />
+      <div aria-hidden="true" className="absolute inset-0 bg-slate-950/35" />
       <div className="relative z-10 w-full max-w-md">
         <header className="mb-7 text-center">
           <Image src="/logo.png" alt="ClickIn logo" width={72} height={72} className="mx-auto h-[72px] w-[72px] rounded-2xl border border-student-200 bg-white p-2 object-contain shadow-sm" priority />

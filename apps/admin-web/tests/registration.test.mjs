@@ -39,6 +39,8 @@ test("login exposes registration and the privacy notice route exists", async () 
   await stat(new URL("../public/loginregister.jpeg", import.meta.url));
   assert.match(login, /href="\/register"/);
   assert.match(login, /src="\/loginregister\.jpeg"/);
+  assert.match(login, /object-contain object-center/);
   assert.match(register, /src="\/loginregister\.jpeg"/);
+  assert.match(register, /object-contain object-center/);
   assert.match(privacy, /Attendance privacy notice/);
 });
