@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import test from "node:test";
 import { registerSchema } from "@attendance/validation";
 import { normalizeStudentId, registrationRedirectUrl } from "../lib/auth/registration.ts";
@@ -31,10 +31,14 @@ test("signup callback resolves only the confirmed student's trusted profile", as
 });
 
 test("login exposes registration and the privacy notice route exists", async () => {
-  const [login, privacy] = await Promise.all([
+  const [login, register, privacy] = await Promise.all([
     readFile(new URL("../app/login/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/register/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/privacy/page.tsx", import.meta.url), "utf8")
   ]);
+  await stat(new URL("../public/loginregister.jpeg", import.meta.url));
   assert.match(login, /href="\/register"/);
+  assert.match(login, /src="\/loginregister\.jpeg"/);
+  assert.match(register, /src="\/loginregister\.jpeg"/);
   assert.match(privacy, /Attendance privacy notice/);
 });

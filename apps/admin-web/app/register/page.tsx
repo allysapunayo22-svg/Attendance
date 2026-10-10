@@ -77,15 +77,17 @@ export default function RegisterPage() {
   });
 
   return (
-    <main className="clickin-auth flex min-h-dvh items-center justify-center bg-student-50 px-4 py-10 sm:px-6">
-      <div className="w-full max-w-xl">
+    <main className="clickin-auth relative flex min-h-dvh items-center justify-center bg-slate-900 px-4 py-10 sm:px-6">
+      <Image src="/loginregister.jpeg" alt="" fill priority sizes="100vw" className="object-cover object-center" />
+      <div aria-hidden="true" className="absolute inset-0 bg-slate-950/45" />
+      <div className="relative z-10 w-full max-w-xl">
         <header className="mb-7 text-center">
           <Image src="/logo.png" alt="ClickIn logo" width={68} height={68} className="mx-auto h-[68px] w-[68px] rounded-2xl border border-student-200 bg-white p-2 object-contain shadow-sm" priority />
-          <p className="mt-4 text-3xl font-bold tracking-tight text-slate-800">ClickIn</p>
-          <p className="mt-1 text-sm text-slate-500">Student account registration</p>
+          <p className="mt-4 text-3xl font-bold tracking-tight text-white drop-shadow-sm">ClickIn</p>
+          <p className="mt-1 text-sm text-blue-50">Student account registration</p>
         </header>
 
-        <section className="rounded-3xl border border-student-200 bg-white p-6 shadow-[0_8px_30px_rgba(38,63,86,0.05)] sm:p-8">
+        <section className="rounded-3xl border border-white/70 bg-white/95 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.28)] backdrop-blur-xl sm:p-8">
           {confirmationEmail ? (
             <div className="text-center" role="status">
               <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-student-100 text-student-700"><CheckCircle2 size={26} /></span>

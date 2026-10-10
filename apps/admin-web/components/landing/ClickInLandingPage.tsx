@@ -76,7 +76,7 @@ export function ClickInLandingPage() {
 
       <main>
         <section id="home" className="relative h-dvh overflow-hidden bg-blue-50 md:hidden">
-          <Image src="/BG.jpeg" alt="" fill priority sizes="100vw" className="object-cover object-[55%_center]" />
+          <Image src="/homepage.png" alt="" fill priority sizes="100vw" className="object-cover object-center" />
           <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(90deg,rgba(239,246,255,0.99)_0%,rgba(239,246,255,0.92)_52%,rgba(219,234,254,0.04)_74%),linear-gradient(180deg,rgba(255,255,255,0.14)_0%,rgba(255,255,255,0)_52%,rgba(219,234,254,0.2)_100%)]" />
           <div className="relative z-10 h-full px-4 pt-[calc(5rem+env(safe-area-inset-top))] text-blue-950">
             <div className="max-w-[88%]">
@@ -126,7 +126,7 @@ export function ClickInLandingPage() {
             <div className="relative">
               <div aria-hidden="true" className="absolute -inset-5 rounded-[2.5rem] bg-blue-100/70 blur-2xl" />
               <div className="relative aspect-[3/2] overflow-hidden rounded-3xl border border-blue-200 bg-white shadow-[0_24px_70px_rgba(30,58,138,0.18)]">
-                <Image src="/BG.jpeg" alt="ClickIn student attendance verification on campus" fill priority sizes="58vw" className="object-cover object-center" />
+                <Image src="/homepage.png" alt="ClickIn location-based student attendance" fill priority sizes="58vw" className="object-cover object-center" />
                 <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-white/20" />
               </div>
             </div>

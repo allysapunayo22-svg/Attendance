@@ -82,14 +82,16 @@ export default function LoginPage() {
   });
 
   return (
-    <main className="clickin-auth flex min-h-dvh items-center justify-center bg-student-50 px-4 py-10 sm:px-6">
-      <div className="w-full max-w-md">
+    <main className="clickin-auth relative flex min-h-dvh items-center justify-center bg-slate-900 px-4 py-10 sm:px-6">
+      <Image src="/loginregister.jpeg" alt="" fill priority sizes="100vw" className="object-cover object-center" />
+      <div aria-hidden="true" className="absolute inset-0 bg-slate-950/45" />
+      <div className="relative z-10 w-full max-w-md">
         <header className="mb-7 text-center">
           <Image src="/logo.png" alt="ClickIn logo" width={72} height={72} className="mx-auto h-[72px] w-[72px] rounded-2xl border border-student-200 bg-white p-2 object-contain shadow-sm" priority />
-          <p className="mt-4 text-3xl font-bold tracking-tight text-slate-800">ClickIn</p>
-          <p className="mt-1 text-sm text-slate-500">Caraga State University · Attendance portal</p>
+          <p className="mt-4 text-3xl font-bold tracking-tight text-white drop-shadow-sm">ClickIn</p>
+          <p className="mt-1 text-sm text-blue-50">Caraga State University · Attendance portal</p>
         </header>
-        <section className="rounded-3xl border border-student-200 bg-white p-6 shadow-[0_8px_30px_rgba(38,63,86,0.05)] sm:p-8" aria-labelledby="login-title">
+        <section className="rounded-3xl border border-white/70 bg-white/95 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.28)] backdrop-blur-xl sm:p-8" aria-labelledby="login-title">
           <h1 id="login-title" className="text-2xl font-semibold tracking-tight text-slate-800">Welcome back</h1>
           <p className="mb-7 mt-2 text-sm leading-6 text-slate-500">Sign in to access your campus attendance account.</p>
           <form onSubmit={submit} className="space-y-5">
@@ -129,7 +131,7 @@ export default function LoginPage() {
           </form>
           <div className="mt-6 border-t border-slate-100 pt-5 text-center"><p className="text-sm text-slate-600">New student? <Link href="/register" className="font-semibold text-student-700 hover:underline">Create an account</Link></p><p className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-500"><ShieldCheck size={15} className="text-student-600" />Secure access for students and administrators</p></div>
         </section>
-        <p className="mt-6 text-center text-xs leading-5 text-slate-500">Need help with your account? Contact your school administrator.</p>
+        <p className="mt-6 text-center text-xs leading-5 text-white/85 drop-shadow-sm">Need help with your account? Contact your school administrator.</p>
       </div>
     </main>
   );

@@ -8,14 +8,14 @@ test("landing page uses the supplied hero and existing authentication routes", a
     readFile(new URL("../components/landing/ClickInLandingPage.tsx", import.meta.url), "utf8")
   ]);
 
-  await stat(new URL("../public/BG.jpeg", import.meta.url));
+  await stat(new URL("../public/homepage.png", import.meta.url));
   assert.match(home, /resolveAuthenticatedAccount/);
   assert.match(home, /redirect\(homeForRole\(result\.account\.role\)\)/);
   assert.match(home, /<ClickInLandingPage \/>/);
-  assert.match(landing, /src="\/BG\.jpeg"/);
+  assert.match(landing, /src="\/homepage\.png"/);
   assert.match(landing, /aspect-\[3\/2\]/);
   assert.match(landing, /relative h-dvh overflow-hidden bg-blue-50 md:hidden/);
-  assert.match(landing, /object-cover object-\[55%_center\]/);
+  assert.match(landing, /object-cover object-center/);
   assert.match(landing, /pt-\[calc\(5rem\+env\(safe-area-inset-top\)\)\]/);
   assert.match(landing, /QR Attendance/);
   assert.match(landing, /Camera Evidence/);
