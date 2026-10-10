@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { Megaphone, Paperclip, Search } from "lucide-react";
 import { StudentPageHeader } from "@/components/student/StudentPageHeader";
 import { StudentRefreshButton } from "@/components/student/StudentRefreshButton";
-import { StudentEmpty, StudentError, StudentLoading } from "@/components/student/StudentStates";
+import { StudentEmpty, StudentError, StudentPageLoading } from "@/components/student/StudentStates";
 import { StudentStatusBadge } from "@/components/student/StudentStatusBadge";
 import { useStudentAnnouncements } from "@/components/student/hooks";
 import { formatDateTime } from "@/lib/student/format";
@@ -23,7 +23,7 @@ export default function StudentAnnouncementsPage() {
     return rows.filter((row) => (filter === "all" || row.importance === filter) && (!value || `${row.title} ${row.description}`.toLowerCase().includes(value)));
   }, [filter, rows, search]);
 
-  if (query.isLoading) return <StudentLoading label="Loading announcements" />;
+  if (query.isLoading) return <StudentPageLoading title="Announcements" description="Loading notices available to your account" />;
   if (query.isError) return <StudentError message="Published announcements could not be loaded." retry={() => void query.refetch()} />;
 
   return (

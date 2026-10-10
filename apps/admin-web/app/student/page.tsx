@@ -15,7 +15,7 @@ import {
   ShieldCheck
 } from "lucide-react";
 import { StudentEventCard } from "@/components/student/StudentEventCard";
-import { StudentError, StudentLoading } from "@/components/student/StudentStates";
+import { StudentDashboardLoading, StudentError } from "@/components/student/StudentStates";
 import { StudentStatusBadge } from "@/components/student/StudentStatusBadge";
 import { useStudentAnnouncements, useStudentAttendance, useStudentEvents, useStudentProfile } from "@/components/student/hooks";
 import { attendanceNeedsReview, formatDate, formatDateTime, formatTimeRange, getEventPhase, getEventSortTime, isResolvedAttendance } from "@/lib/student/format";
@@ -33,7 +33,7 @@ export default function StudentHomePage() {
     await Promise.all([profileQuery.refetch(), eventsQuery.refetch(), attendanceQuery.refetch(), announcementsQuery.refetch()]);
   }
 
-  if (loading) return <div className="px-5 pt-6 lg:px-0"><StudentLoading label="Loading your student dashboard" /></div>;
+  if (loading) return <StudentDashboardLoading />;
   if (hasError) return <div className="px-5 pt-6 lg:px-0"><StudentError message="Your student information could not be loaded. Check your connection and try again." retry={() => void refresh()} /></div>;
 
   const profile = profileQuery.data;

@@ -5,7 +5,7 @@ import { CalendarX2, Search } from "lucide-react";
 import { StudentEventCard } from "@/components/student/StudentEventCard";
 import { StudentPageHeader } from "@/components/student/StudentPageHeader";
 import { StudentRefreshButton } from "@/components/student/StudentRefreshButton";
-import { StudentEmpty, StudentError, StudentLoading } from "@/components/student/StudentStates";
+import { StudentEmpty, StudentError, StudentPageLoading } from "@/components/student/StudentStates";
 import { useStudentEvents } from "@/components/student/hooks";
 import { getEventPhase, getEventSortTime } from "@/lib/student/format";
 
@@ -29,7 +29,7 @@ export default function StudentEventsPage() {
       });
   }, [events, filter, search]);
 
-  if (query.isLoading) return <StudentLoading label="Loading your events" />;
+  if (query.isLoading) return <StudentPageLoading title="Events" description="Loading your assigned events" />;
   if (query.isError) return <StudentError message="Your assigned events could not be loaded." retry={() => void query.refetch()} />;
 
   return (

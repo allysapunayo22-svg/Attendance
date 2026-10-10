@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { CalendarCheck2, ChevronRight, Clock3, Search } from "lucide-react";
 import { StudentPageHeader } from "@/components/student/StudentPageHeader";
 import { StudentRefreshButton } from "@/components/student/StudentRefreshButton";
-import { StudentEmpty, StudentError, StudentLoading } from "@/components/student/StudentStates";
+import { StudentEmpty, StudentError, StudentPageLoading } from "@/components/student/StudentStates";
 import { StudentStatusBadge } from "@/components/student/StudentStatusBadge";
 import { useStudentAttendance } from "@/components/student/hooks";
 import { attendanceNeedsReview, formatDateTime, isResolvedAttendance } from "@/lib/student/format";
@@ -27,7 +27,7 @@ export default function StudentAttendancePage() {
     });
   }, [filter, rows, search]);
 
-  if (query.isLoading) return <StudentLoading label="Loading server attendance history" />;
+  if (query.isLoading) return <StudentPageLoading title="Attendance" description="Loading your server attendance history" />;
   if (query.isError) return <StudentError message="Your attendance records could not be loaded from the server." retry={() => void query.refetch()} />;
 
   return (

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import {
   fetchStudentAnnouncements,
@@ -13,48 +13,62 @@ import {
   fetchStudentProfile
 } from "@/lib/student/data";
 import { studentQueryKeys } from "@/lib/student/query-keys";
+import type { StudentAttendanceRecord } from "@/lib/student/types";
+import type { Event } from "@attendance/types";
 
 const standardQueryOptions = {
-  staleTime: 30_000,
-  refetchOnWindowFocus: true
+  staleTime: 2 * 60_000,
+  gcTime: 30 * 60_000,
+  refetchOnWindowFocus: false,
+  refetchOnReconnect: true
 } as const;
 
+export const studentQueryOptions = {
+  profile: () => queryOptions({ queryKey: studentQueryKeys.profile, queryFn: fetchStudentProfile, ...standardQueryOptions, staleTime: 5 * 60_000 }),
+  events: () => queryOptions({ queryKey: studentQueryKeys.events, queryFn: fetchStudentEvents, ...standardQueryOptions }),
+  event: (eventId: string) => queryOptions({ queryKey: studentQueryKeys.event(eventId), queryFn: () => fetchStudentEvent(eventId), enabled: Boolean(eventId), ...standardQueryOptions }),
+  attendance: () => queryOptions({ queryKey: studentQueryKeys.attendance, queryFn: fetchStudentAttendance, ...standardQueryOptions }),
+  attendanceDetail: (attendanceId: string) => queryOptions({ queryKey: studentQueryKeys.attendanceDetail(attendanceId), queryFn: () => fetchStudentAttendanceDetail(attendanceId), enabled: Boolean(attendanceId), ...standardQueryOptions }),
+  announcements: () => queryOptions({ queryKey: studentQueryKeys.announcements, queryFn: fetchStudentAnnouncements, ...standardQueryOptions }),
+  notifications: () => queryOptions({ queryKey: studentQueryKeys.notifications, queryFn: fetchStudentNotifications, ...standardQueryOptions })
+};
+
 export function useStudentProfile() {
-  return useQuery({ queryKey: studentQueryKeys.profile, queryFn: fetchStudentProfile, staleTime: 60_000 });
+  return useQuery(studentQueryOptions.profile());
 }
 
 export function useStudentEvents() {
-  return useQuery({ queryKey: studentQueryKeys.events, queryFn: fetchStudentEvents, ...standardQueryOptions });
+  return useQuery(studentQueryOptions.events());
 }
 
 export function useStudentEvent(eventId: string) {
+  const queryClient = useQueryClient();
   return useQuery({
-    queryKey: studentQueryKeys.event(eventId),
-    queryFn: () => fetchStudentEvent(eventId),
-    enabled: Boolean(eventId),
-    ...standardQueryOptions
+    ...studentQueryOptions.event(eventId),
+    initialData: () => queryClient.getQueryData<Event[]>(studentQueryKeys.events)?.find((event) => event.id === eventId),
+    initialDataUpdatedAt: () => queryClient.getQueryState(studentQueryKeys.events)?.dataUpdatedAt
   });
 }
 
 export function useStudentAttendance() {
-  return useQuery({ queryKey: studentQueryKeys.attendance, queryFn: fetchStudentAttendance, ...standardQueryOptions });
+  return useQuery(studentQueryOptions.attendance());
 }
 
 export function useStudentAttendanceDetail(attendanceId: string) {
+  const queryClient = useQueryClient();
   return useQuery({
-    queryKey: studentQueryKeys.attendanceDetail(attendanceId),
-    queryFn: () => fetchStudentAttendanceDetail(attendanceId),
-    enabled: Boolean(attendanceId),
-    ...standardQueryOptions
+    ...studentQueryOptions.attendanceDetail(attendanceId),
+    initialData: () => queryClient.getQueryData<StudentAttendanceRecord[]>(studentQueryKeys.attendance)?.find((record) => record.id === attendanceId),
+    initialDataUpdatedAt: () => queryClient.getQueryState(studentQueryKeys.attendance)?.dataUpdatedAt
   });
 }
 
 export function useStudentAnnouncements() {
-  return useQuery({ queryKey: studentQueryKeys.announcements, queryFn: fetchStudentAnnouncements, staleTime: 60_000, refetchOnWindowFocus: true });
+  return useQuery(studentQueryOptions.announcements());
 }
 
 export function useStudentNotifications() {
-  return useQuery({ queryKey: studentQueryKeys.notifications, queryFn: fetchStudentNotifications, ...standardQueryOptions });
+  return useQuery(studentQueryOptions.notifications());
 }
 
 export function useStudentRealtimeInvalidation() {

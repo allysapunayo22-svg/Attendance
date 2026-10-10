@@ -1,10 +1,38 @@
 import type { LucideIcon } from "lucide-react";
 import { AlertCircle, LoaderCircle } from "lucide-react";
+import { StudentPageHeader } from "./StudentPageHeader";
 
 export function StudentLoading({ label = "Loading" }: { label?: string }) {
   return (
     <div className="flex min-h-56 items-center justify-center rounded-3xl border border-slate-200/80 bg-white p-8 text-center shadow-sm">
       <div><LoaderCircle className="mx-auto animate-spin text-student-700" size={28} /><p className="mt-3 text-sm font-medium text-slate-600">{label}</p></div>
+    </div>
+  );
+}
+
+export function StudentPageLoading({ title, description = "Loading the latest information" }: { title: string; description?: string }) {
+  return (
+    <div className="space-y-5" role="status" aria-label={`Loading ${title}`}>
+      <StudentPageHeader title={title} description={description} />
+      <div className="space-y-3 rounded-3xl border border-slate-200/80 bg-white p-4 shadow-sm">
+        <div className="h-12 animate-pulse rounded-full bg-slate-100" />
+        <div className="flex gap-2"><div className="h-10 w-20 animate-pulse rounded-full bg-slate-100" /><div className="h-10 w-24 animate-pulse rounded-full bg-slate-100" /><div className="h-10 w-20 animate-pulse rounded-full bg-slate-100" /></div>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {[0, 1, 2].map((item) => <div key={item} className="h-44 animate-pulse rounded-3xl border border-slate-200/70 bg-white shadow-sm" />)}
+      </div>
+      <span className="sr-only">{description}</span>
+    </div>
+  );
+}
+
+export function StudentDashboardLoading() {
+  return (
+    <div className="space-y-5 px-5 pt-5 lg:px-0" role="status" aria-label="Loading student dashboard">
+      <div className="h-40 animate-pulse rounded-[2rem] bg-student-100" />
+      <div className="h-56 animate-pulse rounded-[2rem] border border-student-200 bg-white shadow-sm" />
+      <div className="grid grid-cols-2 gap-3"><div className="h-14 animate-pulse rounded-full bg-white" /><div className="h-14 animate-pulse rounded-full bg-white" /></div>
+      <span className="sr-only">Loading your student dashboard</span>
     </div>
   );
 }

@@ -2,14 +2,14 @@
 
 import { GraduationCap, IdCard, Mail, ShieldCheck, Users } from "lucide-react";
 import { StudentPageHeader } from "@/components/student/StudentPageHeader";
-import { StudentError, StudentLoading } from "@/components/student/StudentStates";
+import { StudentError, StudentPageLoading } from "@/components/student/StudentStates";
 import { StudentStatusBadge } from "@/components/student/StudentStatusBadge";
 import { useStudentProfile } from "@/components/student/hooks";
 import { initials } from "@/lib/student/format";
 
 export default function StudentProfilePage() {
   const query = useStudentProfile();
-  if (query.isLoading) return <StudentLoading label="Loading student profile" />;
+  if (query.isLoading) return <StudentPageLoading title="Profile" description="Loading your verified student information" />;
   if (query.isError) return <StudentError message="Your student profile could not be loaded." retry={() => void query.refetch()} />;
   const profile = query.data;
   if (!profile) return <StudentError message="No active student profile is available for this account." retry={() => void query.refetch()} />;

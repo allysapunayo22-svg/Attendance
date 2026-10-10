@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import { test } from "node:test";
 import {
   attendanceNeedsReview,
@@ -51,4 +52,39 @@ test("notification navigation accepts server identifiers only", () => {
   assert.equal(notificationDestination({ attendance_id: "attendance/id" }), "/student/attendance/attendance%2Fid");
   assert.equal(notificationDestination({ event_id: "event-id" }), "/student/events/event-id");
   assert.equal(notificationDestination({ attendance_local_id: "device-only-id" }), null);
+});
+
+test("student navigation exposes an immediate route shell and warms route data on intent", async () => {
+  const [shell, loading, hooks] = await Promise.all([
+    readFile(new URL("../components/student/StudentShell.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/student/loading.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../components/student/hooks.ts", import.meta.url), "utf8")
+  ]);
+
+  for (const section of ["events", "attendance", "announcements", "notifications", "profile"]) {
+    assert.match(shell, new RegExp(`prefetchQuery\\(studentQueryOptions\\.${section}\\(\\)\\)`));
+  }
+  assert.match(shell, /onTouchStart=.*prepareNavigation/);
+  assert.match(shell, /setPendingNavigation/);
+  assert.match(loading, /StudentPageLoading/);
+  assert.match(loading, /StudentDashboardLoading/);
+  assert.match(hooks, /staleTime: 2 \* 60_000/);
+  assert.match(hooks, /refetchOnWindowFocus: false/);
+  assert.match(hooks, /getQueryData<Event\[]>\(studentQueryKeys\.events\)/);
+  assert.match(hooks, /getQueryData<StudentAttendanceRecord\[]>\(studentQueryKeys\.attendance\)/);
+});
+
+test("cold student routes render their page identity before query data arrives", async () => {
+  const routes = [
+    ["events", "Events"],
+    ["attendance", "Attendance"],
+    ["announcements", "Announcements"],
+    ["notifications", "Notifications"],
+    ["profile", "Profile"]
+  ];
+
+  for (const [route, title] of routes) {
+    const source = await readFile(new URL(`../app/student/${route}/page.tsx`, import.meta.url), "utf8");
+    assert.match(source, new RegExp(`query\\.isLoading.*StudentPageLoading title=\\"${title}\\"`));
+  }
 });

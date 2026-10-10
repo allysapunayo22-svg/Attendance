@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Bell, CheckCheck, Search } from "lucide-react";
 import { StudentPageHeader } from "@/components/student/StudentPageHeader";
 import { StudentRefreshButton } from "@/components/student/StudentRefreshButton";
-import { StudentEmpty, StudentError, StudentLoading } from "@/components/student/StudentStates";
+import { StudentEmpty, StudentError, StudentPageLoading } from "@/components/student/StudentStates";
 import { StudentStatusBadge } from "@/components/student/StudentStatusBadge";
 import { useStudentNotifications } from "@/components/student/hooks";
 import { markStudentNotificationRead, markStudentNotificationsRead } from "@/lib/student/data";
@@ -39,7 +39,7 @@ export default function StudentNotificationsPage() {
     return rows.filter((row) => matchesFilter(row, filter) && (!value || `${row.title} ${row.body}`.toLowerCase().includes(value)));
   }, [filter, rows, search]);
 
-  if (query.isLoading) return <StudentLoading label="Loading notifications" />;
+  if (query.isLoading) return <StudentPageLoading title="Notifications" description="Loading your recent notifications" />;
   if (query.isError) return <StudentError message="Your notification inbox could not be loaded." retry={() => void query.refetch()} />;
 
   function updateReadState(ids: string[], readAt: string) {
