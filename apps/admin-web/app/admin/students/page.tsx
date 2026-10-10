@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, MoreHorizontal, Search, Upload } from "lucide-react";
+import * as Dialog from "@radix-ui/react-dialog";
+import { ChevronLeft, ChevronRight, MoreHorizontal, Plus, Search, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,39 @@ import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { fetchStudents } from "@/lib/queries";
 import { supabase } from "@/lib/supabase";
+
+type AcademicCourse = { id: string; code: string; name: string };
+type AcademicSection = { id: string; course_id: string; name: string; year_level: number };
+type NewRosterStudent = {
+  studentId: string;
+  schoolEmail: string;
+  fullName: string;
+  courseId: string;
+  sectionId: string;
+  yearLevel: string;
+};
+
+const emptyRosterStudent: NewRosterStudent = {
+  studentId: "",
+  schoolEmail: "",
+  fullName: "",
+  courseId: "",
+  sectionId: "",
+  yearLevel: ""
+};
+
+async function fetchAcademicOptions() {
+  const [coursesResult, sectionsResult] = await Promise.all([
+    supabase.from("courses").select("id,code,name").order("code"),
+    supabase.from("sections").select("id,course_id,name,year_level").order("name")
+  ]);
+  if (coursesResult.error) throw coursesResult.error;
+  if (sectionsResult.error) throw sectionsResult.error;
+  return {
+    courses: (coursesResult.data ?? []) as AcademicCourse[],
+    sections: (sectionsResult.data ?? []) as AcademicSection[]
+  };
+}
 
 function splitCsvLine(line: string) {
   const values: string[] = [];
@@ -64,8 +98,13 @@ function parseRosterCsv(text: string) {
 export default function StudentsPage() {
   const queryClient = useQueryClient();
   const query = useQuery({ queryKey: ["students"], queryFn: fetchStudents });
+  const academicQuery = useQuery({ queryKey: ["academic-options"], queryFn: fetchAcademicOptions, staleTime: 5 * 60_000 });
   const [rosterFile, setRosterFile] = useState<File | null>(null);
   const [importing, setImporting] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
+  const [addingStudent, setAddingStudent] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
+  const [newStudent, setNewStudent] = useState<NewRosterStudent>(emptyRosterStudent);
   const [notice, setNotice] = useState<{ tone: "success" | "error"; text: string } | null>(null);
   const [pendingAction, setPendingAction] = useState<{ kind: "toggle" | "reset"; studentId: string; active?: boolean } | null>(null);
   const [actionBusy, setActionBusy] = useState(false);
@@ -87,6 +126,65 @@ export default function StudentsPage() {
   const sections = useMemo(() => Array.from(new Set((query.data ?? []).map((student) => student.section?.name).filter((value): value is string => Boolean(value)))).sort(), [query.data]);
   const pageCount = Math.max(1, Math.ceil(students.length / pageSize));
   const pageRows = students.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize);
+  const availableSections = (academicQuery.data?.sections ?? []).filter((section) => !newStudent.courseId || section.course_id === newStudent.courseId);
+
+  function closeAddStudent() {
+    if (addingStudent) return;
+    setAddOpen(false);
+    setAddError(null);
+    setNewStudent(emptyRosterStudent);
+  }
+
+  async function addRosterStudent(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const studentId = newStudent.studentId.trim().replace(/\s+/g, "").toUpperCase();
+    const schoolEmail = newStudent.schoolEmail.trim().toLowerCase();
+    const fullName = newStudent.fullName.trim();
+    const yearLevel = newStudent.yearLevel ? Number(newStudent.yearLevel) : null;
+
+    if (!/^[A-Z0-9-]{4,32}$/.test(studentId)) {
+      setAddError("Enter a valid student ID using letters, numbers, or hyphens.");
+      return;
+    }
+    if (fullName.length < 3) {
+      setAddError("Enter the student's complete name.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(schoolEmail)) {
+      setAddError("Enter a valid school email address.");
+      return;
+    }
+    if (yearLevel !== null && (!Number.isInteger(yearLevel) || yearLevel < 1 || yearLevel > 6)) {
+      setAddError("Year level must be between 1 and 6.");
+      return;
+    }
+
+    setAddingStudent(true);
+    setAddError(null);
+    try {
+      const { error } = await supabase.from("approved_student_roster").insert({
+        student_id: studentId,
+        school_email: schoolEmail,
+        full_name: fullName,
+        department_code: "CBEA",
+        course_id: newStudent.courseId || null,
+        section_id: newStudent.sectionId || null,
+        year_level: yearLevel,
+        status: "eligible"
+      });
+      if (error) {
+        if (error.code === "23505") throw new Error("That student ID or school email is already on the approved roster.");
+        throw error;
+      }
+      setAddOpen(false);
+      setNewStudent(emptyRosterStudent);
+      setNotice({ tone: "success", text: `${fullName} was added to the approved roster. The student can now register and verify ${schoolEmail}.` });
+    } catch (error) {
+      setAddError(error instanceof Error ? error.message : "Unable to add the student.");
+    } finally {
+      setAddingStudent(false);
+    }
+  }
 
   async function toggle(studentId: string, active: boolean) {
     setActionBusy(true);
@@ -135,7 +233,10 @@ export default function StudentsPage() {
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">Student Management</h1>
           <p className="mt-1 text-sm text-slate-500">Import approved roster entries, manage account access, and reset registered devices.</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <Button type="button" variant="outline" onClick={() => setAddOpen(true)} className="h-10 rounded-xl text-xs font-semibold">
+            <Plus size={15} /> Add student
+          </Button>
           <Input aria-label="Choose student roster CSV" type="file" accept=".csv" className="max-w-64 text-xs" onChange={(event) => setRosterFile(event.target.files?.[0] ?? null)} />
           <Button onClick={() => void importRoster()} disabled={importing} className="h-10 rounded-xl bg-brand-700 hover:bg-brand-800 text-xs font-semibold text-white shadow-xs">
             <Upload size={15} />
@@ -148,7 +249,7 @@ export default function StudentsPage() {
         <CardContent className="p-5">
           <h2 className="font-bold text-slate-900">Approved CBEA Registration Roster</h2>
           <p className="mt-1 text-sm text-slate-500">
-            Registering students must match this roster by student_id and school_email. Required CSV columns: student_id, school_email, full_name, year_level, status.
+            Add one student directly or import a CSV. Registration must match the approved student ID and school email. Required CSV columns: student_id, school_email, full_name.
           </p>
           {notice ? <p role={notice.tone === "error" ? "alert" : "status"} className={`mt-3 rounded-xl border p-3 text-sm font-medium ${notice.tone === "error" ? "border-red-200 bg-red-50 text-red-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`}>{notice.text}</p> : null}
         </CardContent>
@@ -200,6 +301,60 @@ export default function StudentsPage() {
           {!query.isLoading && !query.isError && students.length > 0 ? <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3 text-xs text-slate-600"><span>{students.length} student{students.length === 1 ? "" : "s"} · Page {pageIndex + 1} of {pageCount}</span><div className="flex gap-2"><Button variant="outline" className="h-8 w-8 p-0" disabled={pageIndex === 0} onClick={() => setPageIndex((page) => page - 1)} aria-label="Previous page"><ChevronLeft size={15} /></Button><Button variant="outline" className="h-8 w-8 p-0" disabled={pageIndex >= pageCount - 1} onClick={() => setPageIndex((page) => page + 1)} aria-label="Next page"><ChevronRight size={15} /></Button></div></div> : null}
         </CardContent>
       </Card>
+      <Dialog.Root open={addOpen} onOpenChange={(open) => { if (open) setAddOpen(true); else closeAddStudent(); }}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-40 bg-slate-950/50 backdrop-blur-sm" />
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <Dialog.Title className="text-xl font-black text-slate-950">Add student</Dialog.Title>
+                <Dialog.Description className="mt-1 text-sm leading-6 text-slate-600">Approve one CBEA student for registration. The student must still confirm the school email before the account becomes active.</Dialog.Description>
+              </div>
+              <Dialog.Close asChild><button type="button" disabled={addingStudent} aria-label="Close add student form" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100"><X size={18} /></button></Dialog.Close>
+            </div>
+            <form className="mt-6 space-y-5" onSubmit={(event) => void addRosterStudent(event)}>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormField label="Student ID" htmlFor="new-student-id" required>
+                  <Input id="new-student-id" required autoFocus autoCapitalize="characters" placeholder="e.g. 2026-00123" value={newStudent.studentId} onChange={(event) => setNewStudent((current) => ({ ...current, studentId: event.target.value }))} />
+                </FormField>
+                <FormField label="School email" htmlFor="new-student-email" required>
+                  <Input id="new-student-email" required type="email" autoCapitalize="none" autoComplete="off" placeholder="student@carsu.edu.ph" value={newStudent.schoolEmail} onChange={(event) => setNewStudent((current) => ({ ...current, schoolEmail: event.target.value }))} />
+                </FormField>
+              </div>
+              <FormField label="Full name" htmlFor="new-student-name" required>
+                <Input id="new-student-name" required autoComplete="off" placeholder="Student's complete name" value={newStudent.fullName} onChange={(event) => setNewStudent((current) => ({ ...current, fullName: event.target.value }))} />
+              </FormField>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormField label="Course (optional)" htmlFor="new-student-course">
+                  <select id="new-student-course" value={newStudent.courseId} disabled={academicQuery.isLoading} onChange={(event) => setNewStudent((current) => ({ ...current, courseId: event.target.value, sectionId: "" }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100">
+                    <option value="">Not assigned</option>
+                    {(academicQuery.data?.courses ?? []).map((course) => <option key={course.id} value={course.id}>{course.code} — {course.name}</option>)}
+                  </select>
+                </FormField>
+                <FormField label="Section (optional)" htmlFor="new-student-section">
+                  <select id="new-student-section" value={newStudent.sectionId} disabled={!newStudent.courseId || academicQuery.isLoading} onChange={(event) => { const section = availableSections.find((item) => item.id === event.target.value); setNewStudent((current) => ({ ...current, sectionId: event.target.value, yearLevel: section ? String(section.year_level) : current.yearLevel })); }} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none disabled:bg-slate-50 disabled:text-slate-400 focus:border-brand-600 focus:ring-2 focus:ring-brand-100">
+                    <option value="">Not assigned</option>
+                    {availableSections.map((section) => <option key={section.id} value={section.id}>{section.name} · Year {section.year_level}</option>)}
+                  </select>
+                </FormField>
+              </div>
+              <FormField label="Year level (optional)" htmlFor="new-student-year">
+                <select id="new-student-year" value={newStudent.yearLevel} onChange={(event) => setNewStudent((current) => ({ ...current, yearLevel: event.target.value }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100">
+                  <option value="">Not assigned</option>
+                  {[1, 2, 3, 4, 5, 6].map((year) => <option key={year} value={year}>Year {year}</option>)}
+                </select>
+              </FormField>
+              {academicQuery.isError ? <p className="text-xs text-amber-700">Course and section options could not be loaded. You can still add the student without them.</p> : null}
+              {addError ? <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">{addError}</p> : null}
+              <div className="rounded-xl border border-blue-200 bg-blue-50 p-3 text-xs leading-5 text-blue-900">This creates an eligible roster entry. It does not set a password or bypass school-email verification.</div>
+              <div className="flex flex-wrap justify-end gap-3 border-t border-slate-100 pt-5">
+                <Button type="button" variant="outline" disabled={addingStudent} onClick={closeAddStudent}>Cancel</Button>
+                <Button type="submit" disabled={addingStudent}>{addingStudent ? "Adding…" : "Add approved student"}</Button>
+              </div>
+            </form>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
       <ConfirmDialog open={Boolean(pendingAction)} title={pendingAction?.kind === "reset" ? "Reset registered devices?" : pendingAction?.active ? "Deactivate student account?" : "Activate student account?"} description={pendingAction?.kind === "reset" ? "The student will need to sign in and register this phone again before recording attendance." : pendingAction?.active ? "The student will not be able to use attendance features until the account is activated again." : "The student will regain access to attendance features."} confirmLabel={pendingAction?.kind === "reset" ? "Reset devices" : pendingAction?.active ? "Deactivate" : "Activate"} destructive={pendingAction?.kind === "reset" || Boolean(pendingAction?.active)} busy={actionBusy} onCancel={() => setPendingAction(null)} onConfirm={() => { if (!pendingAction) return; const action = pendingAction; void (action.kind === "reset" ? resetDevices(action.studentId) : toggle(action.studentId, Boolean(action.active))).finally(() => setPendingAction(null)); }} />
     </div>
   );
@@ -207,6 +362,10 @@ export default function StudentsPage() {
 
 type Student = Awaited<ReturnType<typeof fetchStudents>>[number];
 type PendingAction = { kind: "toggle" | "reset"; studentId: string; active?: boolean };
+
+function FormField({ label, htmlFor, required = false, children }: { label: string; htmlFor: string; required?: boolean; children: ReactNode }) {
+  return <div><label htmlFor={htmlFor} className="mb-1.5 block text-sm font-semibold text-slate-700">{label}{required ? <span className="ml-1 text-red-600" aria-hidden="true">*</span> : null}</label>{children}</div>;
+}
 
 function FilterSelect({ label, value, onChange, values }: { label: string; value: string; onChange: (value: string) => void; values: string[] }) {
   return <select aria-label={`Filter by ${label}`} value={value} onChange={(event) => onChange(event.target.value)} className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm"><option value="all">All {label}s</option>{values.map((item) => <option key={item} value={item}>{item}</option>)}</select>;
