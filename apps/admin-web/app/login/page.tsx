@@ -82,43 +82,45 @@ export default function LoginPage() {
   });
 
   return (
-    <main className="clickin-auth relative flex min-h-dvh items-center justify-center bg-slate-900 px-4 py-10 sm:px-6">
-      <Image src="/loginregister.jpeg" alt="" fill priority sizes="100vw" className="scale-105 object-cover object-center opacity-55 blur-xl" />
+    <main className="clickin-auth relative flex min-h-dvh items-start justify-center overflow-hidden bg-blue-50 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(1.25rem,env(safe-area-inset-top))] sm:items-center sm:px-6 sm:py-8">
+      <Image src="/loginregister.jpeg" alt="" fill priority sizes="100vw" className="scale-105 object-cover object-center opacity-35 blur-xl" />
       <Image src="/loginregister.jpeg" alt="" fill priority sizes="100vw" className="object-contain object-center" />
-      <div aria-hidden="true" className="absolute inset-0 bg-slate-950/35" />
-      <div className="relative z-10 w-full max-w-md">
-        <header className="mb-7 text-center">
-          <Image src="/logo.png" alt="ClickIn logo" width={72} height={72} className="mx-auto h-[72px] w-[72px] rounded-2xl border border-student-200 bg-white p-2 object-contain shadow-sm" priority />
-          <p className="mt-4 text-3xl font-bold tracking-tight text-white drop-shadow-sm">ClickIn</p>
-          <p className="mt-1 text-sm text-blue-50">Caraga State University · Attendance portal</p>
+      <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-b from-blue-50/35 via-white/15 to-blue-50/55" />
+      <div className="relative z-10 w-full max-w-sm">
+        <header className="mb-4 text-center">
+          <div className="inline-flex items-center justify-center gap-3 rounded-2xl border border-white/60 bg-blue-50/65 px-4 py-2 shadow-sm backdrop-blur-md">
+            <Image src="/logo.png" alt="ClickIn logo" width={52} height={52} className="h-12 w-12 rounded-xl border border-blue-100 bg-white p-1.5 object-contain shadow-sm" priority />
+            <p className="text-2xl font-extrabold tracking-tight text-blue-950">ClickIn</p>
+          </div>
+          <p className="mt-2 text-xs font-medium text-blue-950/75">Caraga State University · Attendance portal</p>
         </header>
-        <section className="rounded-3xl border border-white/70 bg-white/95 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.28)] backdrop-blur-xl sm:p-8" aria-labelledby="login-title">
-          <h1 id="login-title" className="text-2xl font-semibold tracking-tight text-slate-800">Welcome back</h1>
-          <p className="mb-7 mt-2 text-sm leading-6 text-slate-500">Sign in to access your campus attendance account.</p>
-          <form onSubmit={submit} className="space-y-5">
+        <section className="rounded-[1.4rem] border border-white/80 bg-white/90 p-5 shadow-[0_16px_45px_rgba(30,58,138,0.16)] backdrop-blur-md sm:p-6" aria-labelledby="login-title">
+          <h1 id="login-title" className="text-[1.4rem] font-bold tracking-tight text-slate-800">Welcome back</h1>
+          <p className="mb-5 mt-1 text-sm leading-5 text-slate-600">Sign in to access your campus attendance account.</p>
+          <form onSubmit={submit} className="space-y-4">
             <div>
-              <label htmlFor="account-identifier" className="mb-2 block text-sm font-medium text-slate-700">Email or Student ID</label>
+              <label htmlFor="account-identifier" className="mb-1.5 block text-sm font-semibold text-slate-700">Email or Student ID</label>
               <div className="relative">
                 <Mail size={18} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <Input id="account-identifier" type="text" autoComplete="username" autoCapitalize="none" spellCheck={false}
                   aria-invalid={Boolean(form.formState.errors.identifier)} aria-describedby={form.formState.errors.identifier ? "account-identifier-error" : undefined}
-                  placeholder="Email address or student ID" className="h-12 rounded-xl border-student-200 bg-slate-50/60 pl-11 text-base text-slate-800 placeholder:text-slate-400 focus:border-student-500 focus:ring-student-100"
+                  placeholder="Email address or student ID" className="h-11 rounded-xl border-blue-200 bg-white/75 pl-11 text-base text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-100"
                   {...form.register("identifier")} />
               </div>
               {form.formState.errors.identifier ? <span id="account-identifier-error" role="alert" className="mt-2 block text-xs font-medium text-rose-700">{form.formState.errors.identifier.message}</span> : null}
             </div>
             <div>
-              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                <label htmlFor="admin-password" className="text-sm font-medium text-slate-700">Password</label>
-                <Link href="/forgot-password" className="text-xs font-semibold text-student-700 hover:underline">Forgot password?</Link>
+              <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
+                <label htmlFor="admin-password" className="text-sm font-semibold text-slate-700">Password</label>
+                <Link href="/forgot-password" className="text-xs font-semibold text-blue-700 hover:underline">Forgot password?</Link>
               </div>
               <div className="relative">
                 <Lock size={18} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <Input id="admin-password" type={showPassword ? "text" : "password"} autoComplete="current-password"
                   aria-invalid={Boolean(form.formState.errors.password)} aria-describedby={form.formState.errors.password ? "admin-password-error" : undefined}
-                  placeholder="Enter your password" className="h-12 rounded-xl border-student-200 bg-slate-50/60 pl-11 pr-12 text-base text-slate-800 placeholder:text-slate-400 focus:border-student-500 focus:ring-student-100"
+                  placeholder="Enter your password" className="h-11 rounded-xl border-blue-200 bg-white/75 pl-11 pr-12 text-base text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-100"
                   {...form.register("password")} />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? "Hide password" : "Show password"} aria-pressed={showPassword} className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 hover:bg-student-50 hover:text-student-800">
+                <button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? "Hide password" : "Show password"} aria-pressed={showPassword} className="absolute right-0.5 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 hover:bg-blue-50 hover:text-blue-800">
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
@@ -126,13 +128,13 @@ export default function LoginPage() {
             </div>
             {error ? <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{error}</div> : null}
             {notice ? <div role="status" className="rounded-xl border border-student-200 bg-student-50 p-3 text-sm text-student-800">{notice}</div> : null}
-            <Button type="submit" disabled={form.formState.isSubmitting} className="h-12 w-full rounded-xl bg-student-700 font-semibold text-white shadow-sm hover:bg-student-800 focus:ring-student-200 disabled:opacity-60">
+            <Button type="submit" disabled={form.formState.isSubmitting} className="h-11 w-full rounded-xl bg-blue-600 font-semibold text-white shadow-sm hover:bg-blue-700 focus:ring-blue-200 disabled:opacity-60">
               {form.formState.isSubmitting ? <span className="flex items-center gap-2"><span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />Signing in…</span> : "Sign in"}
             </Button>
           </form>
-          <div className="mt-6 border-t border-slate-100 pt-5 text-center"><p className="text-sm text-slate-600">New student? <Link href="/register" className="font-semibold text-student-700 hover:underline">Create an account</Link></p><p className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-500"><ShieldCheck size={15} className="text-student-600" />Secure access for students and administrators</p></div>
+          <div className="mt-5 border-t border-slate-200/70 pt-4 text-center"><p className="text-sm text-slate-600">New student? <Link href="/register" className="font-semibold text-blue-700 hover:underline">Create an account</Link></p><p className="mt-3 flex items-center justify-center gap-2 text-xs text-slate-500"><ShieldCheck size={15} className="text-blue-600" />Secure access for students and administrators</p></div>
         </section>
-        <p className="mt-6 text-center text-xs leading-5 text-white/85 drop-shadow-sm">Need help with your account? Contact your school administrator.</p>
+        <p className="mx-auto mt-3 w-fit rounded-full bg-white/70 px-3 py-1.5 text-center text-xs leading-5 text-blue-950/80 shadow-sm backdrop-blur-sm">Need help with your account? Contact your school administrator.</p>
       </div>
     </main>
   );
