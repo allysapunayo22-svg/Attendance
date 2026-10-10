@@ -72,7 +72,7 @@ body {
 }
 
 /* Student-only accents also cover shared attendance controls without changing admin styling. */
-.student-app .bg-brand-700 { background-color: #365f83; }
-.student-app .hover\:bg-brand-800:hover { background-color: #2e506e; }
+.student-app .bg-brand-700 { background-color: #2563eb; }
+.student-app .hover\:bg-brand-800:hover { background-color: #1e40af; }
 .student-app :focus-visible,
-.clickin-auth :focus-visible { outline: 3px solid #82aacd; outline-offset: 3px; }
+.clickin-auth :focus-visible { outline: 3px solid #93c5fd; outline-offset: 3px; }

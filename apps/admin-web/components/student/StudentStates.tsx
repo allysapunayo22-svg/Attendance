@@ -28,10 +28,13 @@ export function StudentPageLoading({ title, description = "Loading the latest in
 
 export function StudentDashboardLoading() {
   return (
-    <div className="space-y-5 px-5 pt-5 lg:px-0" role="status" aria-label="Loading student dashboard">
-      <div className="h-40 animate-pulse rounded-[2rem] bg-student-100" />
-      <div className="h-56 animate-pulse rounded-[2rem] border border-student-200 bg-white shadow-sm" />
-      <div className="grid grid-cols-2 gap-3"><div className="h-14 animate-pulse rounded-full bg-white" /><div className="h-14 animate-pulse rounded-full bg-white" /></div>
+    <div className="space-y-4 px-4 pt-4 sm:px-6 lg:px-0 lg:pt-0" role="status" aria-label="Loading student dashboard">
+      <div className="h-32 animate-pulse rounded-3xl border border-student-200 bg-student-100" />
+      <div className="grid gap-4 lg:grid-cols-12">
+        <div className="h-56 animate-pulse rounded-3xl border border-student-200 bg-white shadow-sm lg:col-span-7" />
+        <div className="h-56 animate-pulse rounded-3xl border border-student-200 bg-white shadow-sm lg:col-span-5" />
+      </div>
+      <div className="grid grid-cols-2 gap-3"><div className="h-[76px] animate-pulse rounded-2xl bg-student-100" /><div className="h-[76px] animate-pulse rounded-2xl bg-white" /></div>
       <span className="sr-only">Loading your student dashboard</span>
     </div>
   );

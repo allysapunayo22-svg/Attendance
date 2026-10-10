@@ -110,7 +110,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       <div className="min-w-0 flex-1">
-        <header className="student-safe-top relative z-40 border-b border-student-200 bg-white px-5 pb-3 text-slate-800">
+        <header className="student-safe-top sticky top-0 z-50 border-b border-student-200 bg-white/95 px-5 pb-3 text-slate-800 shadow-[0_1px_10px_rgba(15,23,42,0.04)] backdrop-blur-xl">
           <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
             <Link href="/student" prefetch onPointerEnter={() => prepareNavigation("/student")} onFocus={() => prepareNavigation("/student")} onClick={() => beginNavigation("/student")} className="flex items-center gap-2 rounded-full border border-student-200 bg-student-50 px-3 py-2"><span className="h-2 w-2 rounded-full bg-student-400" /><span className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-student-800"><span className="sm:hidden">CSU · CBEA</span><span className="hidden sm:inline">CSU · CBEA Attendance</span></span></Link>
             <div className="flex items-center gap-2">
@@ -126,7 +126,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
         <main className={`mx-auto w-full ${isHome ? "max-w-none px-0 pb-32 pt-0 lg:max-w-6xl lg:px-8 lg:pb-10 lg:pt-8" : "max-w-6xl px-4 pb-32 pt-5 sm:px-6 sm:pt-7 lg:px-8 lg:pb-10 lg:pt-8"}`}><StudentPwaCoordinator />{children}</main>
 
         <nav aria-label="Primary student navigation" className="student-floating-nav student-safe-bottom fixed inset-x-0 bottom-0 z-40 px-5 pt-2 lg:hidden">
-          <div className="mx-auto grid h-[66px] max-w-[328px] grid-cols-3 items-center rounded-full border border-white/80 bg-white/95 px-2 shadow-[0_8px_32px_rgba(38,63,86,0.10)] backdrop-blur-xl">
+          <div className="mx-auto grid h-[66px] max-w-[360px] grid-cols-3 items-center rounded-full border border-student-100 bg-white/95 px-3 shadow-[0_8px_24px_rgba(15,23,42,0.08)] backdrop-blur-xl">
             {mobileNavigation.map((item) => {
               const Icon = item.icon;
               const active = isActive(activePathname, item);
