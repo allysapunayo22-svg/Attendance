@@ -14,11 +14,13 @@ test("landing page uses the supplied hero and existing authentication routes", a
   assert.match(home, /<ClickInLandingPage \/>/);
   assert.match(landing, /src="\/BG\.jpeg"/);
   assert.match(landing, /aspect-\[3\/2\]/);
-  assert.match(landing, /relative h-dvh overflow-hidden bg-blue-950 md:hidden/);
-  assert.match(landing, /object-cover object-\[68%_center\]/);
+  assert.match(landing, /relative h-dvh overflow-hidden bg-blue-50 md:hidden/);
+  assert.match(landing, /object-cover object-\[55%_center\]/);
   assert.match(landing, /pt-\[calc\(5rem\+env\(safe-area-inset-top\)\)\]/);
   assert.match(landing, /QR Attendance/);
   assert.match(landing, /Camera Evidence/);
+  assert.match(landing, /Student Essentials/);
+  assert.match(landing, /backdrop-blur-xl/);
   assert.match(landing, /h-dvh overflow-hidden/);
   assert.match(landing, /hidden scroll-mt-24 bg-white py-16 md:block/);
   assert.match(landing, /href="\/login"/);

@@ -6,6 +6,7 @@ import {
   CalendarCheck2,
   Camera,
   CheckCircle2,
+  ChevronRight,
   Clock3,
   Download,
   History,
@@ -50,11 +51,11 @@ const steps = [
 ];
 
 const mobileFeatures = [
-  { icon: QrCode, label: "QR Attendance" },
-  { icon: LocateFixed, label: "GPS Verification" },
-  { icon: Camera, label: "Camera Evidence" },
-  { icon: History, label: "Attendance History" },
-  { icon: WifiOff, label: "Offline Sync" }
+  { icon: QrCode, label: "QR Attendance", description: "Scan QR codes to mark attendance." },
+  { icon: LocateFixed, label: "GPS Verification", description: "Ensure you’re at the event location." },
+  { icon: Camera, label: "Camera Evidence", description: "Capture a selfie when required." },
+  { icon: History, label: "Attendance History", description: "View your past attendance records." },
+  { icon: WifiOff, label: "Offline Sync", description: "Works offline and syncs automatically." }
 ];
 
 export function ClickInLandingPage() {
@@ -64,31 +65,44 @@ export function ClickInLandingPage() {
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-5 px-4 sm:px-6 lg:px-8">
           <Link href="#home" className="flex items-center gap-2.5" aria-label="ClickIn home">
             <Image src="/logo.png" alt="" width={38} height={38} className="h-9 w-9 rounded-xl object-contain" priority />
-            <span className="text-xl font-black tracking-tight text-white md:text-slate-950">ClickIn</span>
+            <span className="text-xl font-black tracking-tight text-blue-950 md:text-slate-950">ClickIn</span>
           </Link>
           <nav aria-label="Main navigation" className="hidden items-center gap-7 md:flex">
             {navigation.map((item) => <a key={item.href} href={item.href} className="text-sm font-semibold text-slate-600 transition hover:text-blue-600">{item.label}</a>)}
           </nav>
-          <Link href="/login" className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-white/30 bg-white/15 px-4 text-sm font-bold text-white shadow-sm backdrop-blur-md transition hover:bg-white/25 md:border-transparent md:bg-blue-600 md:hover:bg-blue-700"><UserRoundCheck size={17} /> Login</Link>
+          <Link href="/login" className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-blue-400/40 bg-gradient-to-r from-sky-500 to-blue-600 px-4 text-sm font-bold text-white shadow-[0_8px_22px_rgba(37,99,235,0.25)] transition hover:from-sky-600 hover:to-blue-700 md:border-transparent md:bg-blue-600 md:hover:bg-blue-700"><UserRoundCheck size={17} /> Login</Link>
         </div>
       </header>
 
       <main>
-        <section id="home" className="relative h-dvh overflow-hidden bg-blue-950 md:hidden">
-          <Image src="/BG.jpeg" alt="" fill priority sizes="100vw" className="object-cover object-[68%_center]" />
-          <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-b from-blue-950/75 via-blue-950/60 to-blue-950/90" />
-          <div className="relative z-10 flex h-full flex-col px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[calc(5rem+env(safe-area-inset-top))] text-white">
-            <div>
-              <p className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-[10px] font-bold text-blue-50 backdrop-blur-md"><ShieldCheck size={14} /> A Smarter Way to Track Student Attendance</p>
-              <h1 className="mt-4 max-w-sm text-[clamp(1.9rem,9vw,2.5rem)] font-black leading-[1.04] tracking-[-0.035em]">Smart Student Attendance <span className="text-blue-300">Made Easy</span></h1>
-              <p className="mt-3 max-w-sm text-sm leading-5 text-blue-50/90">Access events, securely mark attendance, and track your records in one reliable platform.</p>
-              <Link href="/login" className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl bg-white px-5 text-sm font-bold text-blue-800 shadow-[0_8px_24px_rgba(15,23,42,0.22)] transition hover:bg-blue-50">Get Started <ArrowRight size={17} /></Link>
+        <section id="home" className="relative h-dvh overflow-hidden bg-blue-50 md:hidden">
+          <Image src="/BG.jpeg" alt="" fill priority sizes="100vw" className="object-cover object-[55%_center]" />
+          <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(90deg,rgba(239,246,255,0.99)_0%,rgba(239,246,255,0.92)_52%,rgba(219,234,254,0.04)_74%),linear-gradient(180deg,rgba(255,255,255,0.14)_0%,rgba(255,255,255,0)_52%,rgba(219,234,254,0.2)_100%)]" />
+          <div className="relative z-10 h-full px-4 pt-[calc(5rem+env(safe-area-inset-top))] text-blue-950">
+            <div className="max-w-[88%]">
+              <p className="inline-flex items-center rounded-full border border-blue-300/70 bg-white/45 px-3 py-1.5 text-[clamp(0.65rem,2.8vw,0.78rem)] font-semibold text-blue-700 shadow-sm backdrop-blur-md">A Smarter Way to Track Student Attendance</p>
+              <h1 className="mt-[clamp(0.65rem,2vh,1rem)] max-w-[18rem] text-[clamp(2rem,9.8vw,2.65rem)] font-black leading-[0.98] tracking-[-0.04em]">Smart Student Attendance <span className="text-blue-600">Made Easy</span></h1>
+              <p className="mt-[clamp(0.55rem,1.7vh,0.8rem)] max-w-[15.5rem] text-[clamp(0.75rem,3.5vw,0.9rem)] font-medium leading-[1.35] text-blue-950/80">Access events, securely mark attendance, and track your records in one reliable platform.</p>
+              <Link href="/login" className="mt-[clamp(0.65rem,2vh,1rem)] inline-flex min-h-11 min-w-40 items-center justify-center gap-4 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 px-5 text-sm font-extrabold text-white shadow-[0_10px_26px_rgba(37,99,235,0.3)] transition hover:from-sky-600 hover:to-blue-700">Get Started <ArrowRight size={19} /></Link>
             </div>
-            <div className="mt-auto">
-              <p className="mb-2 text-[10px] font-extrabold uppercase tracking-[0.16em] text-blue-100">Student essentials</p>
-              <div className="grid grid-cols-2 gap-2">
-                {mobileFeatures.map(({ icon: Icon, label }, index) => <div key={label} className={`flex min-h-10 items-center gap-2 rounded-xl border border-white/20 bg-blue-950/45 px-3 text-[11px] font-bold text-white backdrop-blur-md ${index === mobileFeatures.length - 1 ? "col-span-2" : ""}`}><Icon size={15} className="shrink-0 text-blue-200" />{label}</div>)}
-              </div>
+          </div>
+
+          <div className="absolute inset-x-2 bottom-[max(0.5rem,env(safe-area-inset-bottom))] z-20 rounded-[1.55rem] border border-white/75 bg-blue-50/75 p-2.5 shadow-[0_18px_50px_rgba(15,23,42,0.18)] backdrop-blur-xl">
+            <div className="px-1 pb-1.5">
+              <h2 className="text-lg font-black leading-none tracking-tight text-blue-950">Student Essentials</h2>
+              <p className="mt-1 text-[11px] font-medium text-blue-950/60">All the features you need in one place.</p>
+            </div>
+            <div className="grid grid-cols-2 gap-1.5">
+              {mobileFeatures.map(({ icon: Icon, label, description }, index) => (
+                <div key={label} className={`flex h-[clamp(2.6rem,7.4vh,3rem)] items-center gap-2 overflow-hidden rounded-2xl border border-white/90 bg-white/80 px-2 shadow-sm ${index === mobileFeatures.length - 1 ? "col-span-2" : ""}`}>
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-100/90 text-blue-600"><Icon size={15} /></span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[clamp(0.65rem,2.9vw,0.78rem)] font-extrabold leading-tight text-blue-950">{label}</span>
+                    <span className="mt-0.5 line-clamp-2 text-[clamp(0.48rem,2vw,0.6rem)] leading-[1.15] text-blue-950/65">{description}</span>
+                  </span>
+                  <ChevronRight size={14} className="shrink-0 text-blue-400" />
+                </div>
+              ))}
             </div>
           </div>
         </section>
