@@ -77,74 +77,113 @@ export default function RegisterPage() {
   });
 
   return (
-    <main className="clickin-auth relative flex min-h-dvh items-center justify-center bg-slate-900 px-4 py-10 sm:px-6">
-      <Image src="/loginregister.jpeg" alt="" fill priority sizes="100vw" className="scale-105 object-cover object-center opacity-55 blur-xl" />
+    <main className="clickin-auth relative flex min-h-dvh items-center justify-center overflow-hidden bg-blue-50 px-3 py-4 sm:px-6 sm:py-6">
+      <Image src="/loginregister.jpeg" alt="" fill priority sizes="100vw" className="scale-105 object-cover object-center opacity-35 blur-xl" />
       <Image src="/loginregister.jpeg" alt="" fill priority sizes="100vw" className="object-contain object-center" />
-      <div aria-hidden="true" className="absolute inset-0 bg-slate-950/35" />
-      <div className="relative z-10 w-full max-w-xl">
-        <header className="mb-7 text-center">
-          <Image src="/logo.png" alt="ClickIn logo" width={68} height={68} className="mx-auto h-[68px] w-[68px] rounded-2xl border border-student-200 bg-white p-2 object-contain shadow-sm" priority />
-          <p className="mt-4 text-3xl font-bold tracking-tight text-white drop-shadow-sm">ClickIn</p>
-          <p className="mt-1 text-sm text-blue-50">Student account registration</p>
+      <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-b from-blue-50/35 via-white/15 to-blue-50/55" />
+      <div className="relative z-10 w-full max-w-lg">
+        <header className="mb-2 text-center sm:mb-3">
+          <div className="inline-flex items-center justify-center gap-2.5 rounded-2xl border border-white/60 bg-blue-50/65 px-3.5 py-1.5 shadow-sm backdrop-blur-md">
+            <Image src="/logo.png" alt="ClickIn logo" width={40} height={40} className="h-9 w-9 rounded-xl border border-blue-100 bg-white p-1 object-contain shadow-sm" priority />
+            <p className="text-xl font-extrabold tracking-tight text-blue-950">ClickIn</p>
+          </div>
+          <p className="mt-1 text-[11px] font-medium text-blue-950/75">Caraga State University · Student Registration</p>
         </header>
 
-        <section className="rounded-3xl border border-white/70 bg-white/95 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.28)] backdrop-blur-xl sm:p-8">
+        <section className="rounded-[1.4rem] border border-white/80 bg-white/90 p-4 shadow-[0_16px_45px_rgba(30,58,138,0.16)] backdrop-blur-md sm:p-5" aria-labelledby="register-title">
           {confirmationEmail ? (
-            <div className="text-center" role="status">
-              <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-student-100 text-student-700"><CheckCircle2 size={26} /></span>
-              <h1 className="mt-4 text-2xl font-semibold text-slate-800">Check your school email</h1>
-              <p className="mt-3 text-sm leading-6 text-slate-600">We sent a confirmation link to <strong>{confirmationEmail}</strong>. Open it to verify your identity and activate your student account.</p>
-              <p className="mt-3 rounded-xl bg-student-50 p-3 text-xs leading-5 text-student-800">The link must be opened in a browser allowed by ClickIn. Check your spam folder if it does not arrive.</p>
-              <Link href="/login" className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-student-700 px-5 text-sm font-semibold text-white hover:bg-student-800"><ArrowLeft size={16} /> Return to sign in</Link>
+            <div className="text-center py-2" role="status">
+              <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-700"><CheckCircle2 size={24} /></span>
+              <h1 id="register-title" className="mt-3 text-xl font-bold text-slate-800">Check your school email</h1>
+              <p className="mt-2 text-xs leading-5 text-slate-600">We sent a confirmation link to <strong>{confirmationEmail}</strong>. Open it to verify your identity and activate your student account.</p>
+              <p className="mt-3 rounded-xl bg-blue-50/80 p-2.5 text-[11px] leading-4 text-blue-900 border border-blue-100">The link must be opened in a browser allowed by ClickIn. Check your spam folder if it does not arrive.</p>
+              <Link href="/login" className="mt-4 inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-xs font-semibold text-white shadow-sm hover:bg-blue-700"><ArrowLeft size={14} /> Return to sign in</Link>
             </div>
           ) : (
             <>
-              <h1 className="text-2xl font-semibold tracking-tight text-slate-800">Create your account</h1>
-              <p className="mt-2 text-sm leading-6 text-slate-500">Your student ID and school email must match the approved CBEA roster.</p>
-              <form onSubmit={submit} className="mt-7 space-y-5">
-                <div className="grid gap-5 sm:grid-cols-2">
+              <div className="mb-3">
+                <h1 id="register-title" className="text-lg font-bold tracking-tight text-slate-800 sm:text-xl">Create your account</h1>
+                <p className="mt-0.5 text-xs text-slate-600">Your student ID and school email must match the approved CBEA roster.</p>
+              </div>
+
+              <form onSubmit={submit} className="space-y-2.5">
+                <div className="grid gap-2.5 sm:grid-cols-2">
                   <RegistrationField label="Student ID" icon={IdCard} error={form.formState.errors.studentId?.message} errorId="student-id-error">
-                    <Input type="text" autoComplete="username" autoCapitalize="characters" placeholder="e.g. 2026-00123" aria-invalid={Boolean(form.formState.errors.studentId)} aria-describedby={form.formState.errors.studentId ? "student-id-error" : undefined} className="h-12 border-student-200 bg-slate-50/60 pl-11 text-base focus:border-student-500 focus:ring-student-100" {...form.register("studentId")} />
+                    <Input type="text" autoComplete="username" autoCapitalize="characters" placeholder="e.g. 2026-00123" aria-invalid={Boolean(form.formState.errors.studentId)} aria-describedby={form.formState.errors.studentId ? "student-id-error" : undefined} className="h-9.5 rounded-xl border-blue-200 bg-white/75 pl-10 text-xs text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-100 sm:h-10 sm:text-sm" {...form.register("studentId")} />
                   </RegistrationField>
                   <RegistrationField label="Full name" icon={UserRound} error={form.formState.errors.fullName?.message} errorId="full-name-error">
-                    <Input type="text" autoComplete="name" placeholder="Your complete name" aria-invalid={Boolean(form.formState.errors.fullName)} aria-describedby={form.formState.errors.fullName ? "full-name-error" : undefined} className="h-12 border-student-200 bg-slate-50/60 pl-11 text-base focus:border-student-500 focus:ring-student-100" {...form.register("fullName")} />
+                    <Input type="text" autoComplete="name" placeholder="Your complete name" aria-invalid={Boolean(form.formState.errors.fullName)} aria-describedby={form.formState.errors.fullName ? "full-name-error" : undefined} className="h-9.5 rounded-xl border-blue-200 bg-white/75 pl-10 text-xs text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-100 sm:h-10 sm:text-sm" {...form.register("fullName")} />
                   </RegistrationField>
                 </div>
+
                 <RegistrationField label="School email" icon={Mail} error={form.formState.errors.schoolEmail?.message} errorId="school-email-error">
-                  <Input type="email" autoComplete="email" autoCapitalize="none" placeholder="Your approved school email" aria-invalid={Boolean(form.formState.errors.schoolEmail)} aria-describedby={form.formState.errors.schoolEmail ? "school-email-error" : undefined} className="h-12 border-student-200 bg-slate-50/60 pl-11 text-base focus:border-student-500 focus:ring-student-100" {...form.register("schoolEmail")} />
+                  <Input type="email" autoComplete="email" autoCapitalize="none" placeholder="Your approved school email" aria-invalid={Boolean(form.formState.errors.schoolEmail)} aria-describedby={form.formState.errors.schoolEmail ? "school-email-error" : undefined} className="h-9.5 rounded-xl border-blue-200 bg-white/75 pl-10 text-xs text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-100 sm:h-10 sm:text-sm" {...form.register("schoolEmail")} />
                 </RegistrationField>
-                <div className="grid gap-5 sm:grid-cols-2">
+
+                <div className="grid gap-2.5 sm:grid-cols-2">
                   <RegistrationField label="Password" icon={Lock} error={form.formState.errors.password?.message} errorId="password-error">
-                    <PasswordInput visible={showPasswords} autoComplete="new-password" placeholder="At least 8 characters" invalid={Boolean(form.formState.errors.password)} describedBy={form.formState.errors.password ? "password-error" : undefined} register={form.register("password")} />
+                    <PasswordInput visible={showPasswords} autoComplete="new-password" placeholder="At least 8 characters" invalid={Boolean(form.formState.errors.password)} describedBy={form.formState.errors.password ? "password-error" : undefined} register={form.register("password")} onToggle={() => setShowPasswords((v) => !v)} />
                   </RegistrationField>
                   <RegistrationField label="Confirm password" icon={Lock} error={form.formState.errors.confirmPassword?.message} errorId="confirm-password-error">
-                    <PasswordInput visible={showPasswords} autoComplete="new-password" placeholder="Repeat your password" invalid={Boolean(form.formState.errors.confirmPassword)} describedBy={form.formState.errors.confirmPassword ? "confirm-password-error" : undefined} register={form.register("confirmPassword")} />
+                    <PasswordInput visible={showPasswords} autoComplete="new-password" placeholder="Repeat password" invalid={Boolean(form.formState.errors.confirmPassword)} describedBy={form.formState.errors.confirmPassword ? "confirm-password-error" : undefined} register={form.register("confirmPassword")} onToggle={() => setShowPasswords((v) => !v)} />
                   </RegistrationField>
                 </div>
-                <button type="button" onClick={() => setShowPasswords((visible) => !visible)} aria-pressed={showPasswords} className="inline-flex min-h-10 items-center gap-2 text-xs font-semibold text-student-700 hover:underline">{showPasswords ? <EyeOff size={15} /> : <Eye size={15} />}{showPasswords ? "Hide passwords" : "Show passwords"}</button>
-                <div>
-                  <div className="flex min-h-12 items-start gap-3 rounded-xl border border-slate-200 p-3 text-sm leading-6 text-slate-700">
-                    <input id="accept-privacy" type="checkbox" className="mt-1 h-4 w-4 rounded border-slate-300 accent-student-700" {...form.register("acceptPrivacy")} />
-                    <span><label htmlFor="accept-privacy" className="cursor-pointer">I confirm that my information is accurate and accept the </label><Link href="/privacy" target="_blank" className="font-semibold text-student-700 hover:underline">attendance privacy notice</Link>.</span>
-                  </div>
-                  {form.formState.errors.acceptPrivacy ? <p role="alert" className="mt-2 text-xs font-medium text-rose-700">{form.formState.errors.acceptPrivacy.message}</p> : null}
+
+                <div className="pt-0.5">
+                  <label htmlFor="accept-privacy" className="flex cursor-pointer items-start gap-2 rounded-xl border border-blue-100 bg-blue-50/40 p-2 text-xs leading-4 text-slate-700">
+                    <input id="accept-privacy" type="checkbox" className="mt-0.5 h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500" {...form.register("acceptPrivacy")} />
+                    <span>I confirm my information is accurate and accept the <Link href="/privacy" target="_blank" className="font-semibold text-blue-700 hover:underline">privacy notice</Link>.</span>
+                  </label>
+                  {form.formState.errors.acceptPrivacy ? <p role="alert" className="mt-1 text-[11px] font-medium text-rose-700">{form.formState.errors.acceptPrivacy.message}</p> : null}
                 </div>
-                {error ? <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm leading-6 text-rose-800">{error}</div> : null}
-                <Button type="submit" disabled={form.formState.isSubmitting} className="h-12 w-full rounded-xl bg-student-700 font-semibold text-white shadow-sm hover:bg-student-800 focus:ring-student-200">{form.formState.isSubmitting ? "Creating account…" : "Create account"}</Button>
+
+                {error ? <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-2 text-xs text-rose-800">{error}</div> : null}
+
+                <Button type="submit" disabled={form.formState.isSubmitting} className="h-10 w-full rounded-xl bg-blue-600 font-semibold text-white shadow-sm hover:bg-blue-700 focus:ring-blue-200 disabled:opacity-60 text-xs sm:text-sm">
+                  {form.formState.isSubmitting ? <span className="flex items-center justify-center gap-2"><span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />Creating account…</span> : "Create account"}
+                </Button>
               </form>
-              <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-5 text-xs"><Link href="/login" className="inline-flex items-center gap-1.5 font-semibold text-student-700 hover:underline"><ArrowLeft size={14} /> Back to sign in</Link><span className="inline-flex items-center gap-1.5 text-slate-500"><ShieldCheck size={14} /> Roster-verified registration</span></div>
+
+              <div className="mt-3.5 flex items-center justify-between border-t border-slate-200/70 pt-2.5 text-xs">
+                <Link href="/login" className="inline-flex items-center gap-1 font-semibold text-blue-700 hover:underline">
+                  <ArrowLeft size={13} /> Back to sign in
+                </Link>
+                <span className="inline-flex items-center gap-1 text-[11px] text-slate-500">
+                  <ShieldCheck size={13} className="text-blue-600" /> CBEA Verified
+                </span>
+              </div>
             </>
           )}
         </section>
+
+        <p className="mx-auto mt-2.5 w-fit rounded-full bg-white/70 px-3 py-1 text-center text-[11px] text-blue-950/80 shadow-sm backdrop-blur-sm">Need help registering? Contact your school administrator.</p>
       </div>
     </main>
   );
 }
 
 function RegistrationField({ label, icon: Icon, error, errorId, children }: { label: string; icon: typeof IdCard; error: string | undefined; errorId: string; children: ReactNode }) {
-  return <label className="block"><span className="mb-2 block text-sm font-medium text-slate-700">{label}</span><span className="relative block"><Icon size={18} className="pointer-events-none absolute left-3.5 top-1/2 z-10 -translate-y-1/2 text-slate-400" />{children}</span>{error ? <span id={errorId} role="alert" className="mt-2 block text-xs font-medium text-rose-700">{error}</span> : null}</label>;
+  return (
+    <div>
+      <label className="mb-1 block text-xs font-semibold text-slate-700">{label}</label>
+      <div className="relative">
+        <Icon size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        {children}
+      </div>
+      {error ? <span id={errorId} role="alert" className="mt-1 block text-[11px] font-medium text-rose-700">{error}</span> : null}
+    </div>
+  );
 }
 
-function PasswordInput({ visible, autoComplete, placeholder, invalid, describedBy, register }: { visible: boolean; autoComplete: string; placeholder: string; invalid: boolean; describedBy: string | undefined; register: UseFormRegisterReturn }) {
-  return <Input type={visible ? "text" : "password"} autoComplete={autoComplete} placeholder={placeholder} aria-invalid={invalid} aria-describedby={describedBy} className="h-12 border-student-200 bg-slate-50/60 pl-11 text-base focus:border-student-500 focus:ring-student-100" {...register} />;
+function PasswordInput({ visible, autoComplete, placeholder, invalid, describedBy, register, onToggle }: { visible: boolean; autoComplete: string; placeholder: string; invalid: boolean; describedBy: string | undefined; register: UseFormRegisterReturn; onToggle?: () => void }) {
+  return (
+    <div className="relative">
+      <Input type={visible ? "text" : "password"} autoComplete={autoComplete} placeholder={placeholder} aria-invalid={invalid} aria-describedby={describedBy} className="h-9.5 rounded-xl border-blue-200 bg-white/75 pl-10 pr-9 text-xs text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-100 sm:h-10 sm:text-sm" {...register} />
+      {onToggle ? (
+        <button type="button" onClick={onToggle} aria-label={visible ? "Hide password" : "Show password"} className="absolute right-0.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 hover:bg-blue-50 hover:text-blue-800">
+          {visible ? <EyeOff size={15} /> : <Eye size={15} />}
+        </button>
+      ) : null}
+    </div>
+  );
 }
