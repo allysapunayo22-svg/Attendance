@@ -35,48 +35,87 @@ export default function ForgotPasswordForm({ invalidLink }: { invalidLink: boole
   });
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-[#070f26] via-[#0b1633] to-[#040817] p-4 sm:p-6">
-      <div className="pointer-events-none absolute -top-40 left-1/2 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-blue-600/15 blur-[140px]" />
-      <div className="relative w-full max-w-md">
-        <div className="mb-6 flex flex-col items-center text-center">
-          <Image src="/logo.png" alt="ClickIn logo" width={72} height={72} className="mb-3 h-20 w-20 rounded-3xl object-contain" priority />
-          <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Reset your password</h1>
-          <p className="mt-2 text-sm leading-6 text-slate-400">Enter the email registered to your Attendance account.</p>
-        </div>
+    <main className="clickin-auth relative flex min-h-dvh items-center justify-center overflow-hidden bg-blue-50 px-4 py-8 sm:px-6">
+      <Image src="/loginregister.jpeg" alt="" fill priority sizes="100vw" className="scale-105 object-cover object-center opacity-35 blur-xl" />
+      <Image src="/loginregister.jpeg" alt="" fill priority sizes="100vw" className="object-contain object-center" />
+      <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-b from-blue-50/35 via-white/15 to-blue-50/55" />
+      <div className="relative z-10 w-full max-w-sm">
+        <header className="mb-4 text-center">
+          <div className="inline-flex items-center justify-center gap-3 rounded-2xl border border-white/60 bg-blue-50/65 px-4 py-2 shadow-sm backdrop-blur-md">
+            <Image src="/logo.png" alt="ClickIn logo" width={52} height={52} className="h-12 w-12 rounded-xl border border-blue-100 bg-white p-1.5 object-contain shadow-sm" priority />
+            <p className="text-2xl font-extrabold tracking-tight text-blue-950">ClickIn</p>
+          </div>
+          <p className="mt-2 text-xs font-medium text-blue-950/75">Caraga State University · Password Recovery</p>
+        </header>
 
-        <div className="rounded-3xl border border-white/10 bg-slate-900/85 p-6 shadow-2xl backdrop-blur-2xl sm:p-8">
+        <section className="rounded-[1.4rem] border border-white/80 bg-white/90 p-5 shadow-[0_16px_45px_rgba(30,58,138,0.16)] backdrop-blur-md sm:p-6" aria-labelledby="forgot-title">
+          <h1 id="forgot-title" className="text-[1.4rem] font-bold tracking-tight text-slate-800">Reset your password</h1>
+          <p className="mb-5 mt-1 text-sm leading-5 text-slate-600">Enter the email address associated with your account.</p>
+
           {invalidLink ? (
-            <div role="alert" className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-100">
+            <div role="alert" className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
               That reset link is invalid or expired. Request a new link below.
             </div>
           ) : null}
+
           {sent ? (
-            <div role="status" className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm leading-6 text-emerald-100">
+            <div role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm leading-6 text-emerald-800">
               {NEUTRAL_CONFIRMATION}
             </div>
           ) : (
             <form onSubmit={submit} className="space-y-4">
               <div>
-                <label htmlFor="recovery-email" className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-300">Email</label>
+                <label htmlFor="recovery-email" className="mb-1.5 block text-sm font-semibold text-slate-700">Email address</label>
                 <div className="relative">
-                  <Mail size={17} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <Input id="recovery-email" type="email" autoComplete="email" placeholder="you@csu.edu.ph"
-                    aria-invalid={Boolean(form.formState.errors.email)} className="h-12 rounded-xl border-white/10 bg-white/5 pl-10 text-white placeholder:text-slate-500"
-                    {...form.register("email")} />
+                  <Mail size={18} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <Input
+                    id="recovery-email"
+                    type="email"
+                    autoComplete="email"
+                    placeholder="you@csu.edu.ph"
+                    aria-invalid={Boolean(form.formState.errors.email)}
+                    aria-describedby={form.formState.errors.email ? "recovery-email-error" : undefined}
+                    className="h-11 rounded-xl border-blue-200 bg-white/75 pl-11 text-base text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-100"
+                    {...form.register("email")}
+                  />
                 </div>
-                {form.formState.errors.email ? <p role="alert" className="mt-1.5 text-xs font-semibold text-rose-400">{form.formState.errors.email.message}</p> : null}
+                {form.formState.errors.email ? (
+                  <span id="recovery-email-error" role="alert" className="mt-2 block text-xs font-medium text-rose-700">
+                    {form.formState.errors.email.message}
+                  </span>
+                ) : null}
               </div>
-              <Button type="submit" disabled={form.formState.isSubmitting} className="h-12 w-full rounded-xl bg-brand-700 font-semibold text-white hover:bg-brand-800 disabled:opacity-60">
-                {form.formState.isSubmitting ? "Sending…" : "Send reset link"}
+
+              <Button
+                type="submit"
+                disabled={form.formState.isSubmitting}
+                className="h-11 w-full rounded-xl bg-blue-600 font-semibold text-white shadow-sm hover:bg-blue-700 focus:ring-blue-200 disabled:opacity-60"
+              >
+                {form.formState.isSubmitting ? (
+                  <span className="flex items-center gap-2">
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                    Sending reset link…
+                  </span>
+                ) : (
+                  "Send reset link"
+                )}
               </Button>
             </form>
           )}
 
-          <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4 text-xs">
-            <Link href="/login" className="inline-flex items-center gap-1.5 font-semibold text-blue-300 hover:text-blue-200"><ArrowLeft size={14} /> Back to sign in</Link>
-            <span className="inline-flex items-center gap-1.5 text-slate-500"><ShieldCheck size={14} /> Secure recovery</span>
+          <div className="mt-5 flex items-center justify-between border-t border-slate-200/70 pt-4 text-xs">
+            <Link href="/login" className="inline-flex items-center gap-1 font-semibold text-blue-700 hover:underline">
+              <ArrowLeft size={14} /> Back to sign in
+            </Link>
+            <span className="inline-flex items-center gap-1.5 text-slate-500">
+              <ShieldCheck size={14} className="text-blue-600" /> Secure recovery
+            </span>
           </div>
-        </div>
+        </section>
+
+        <p className="mx-auto mt-3 w-fit rounded-full bg-white/70 px-3 py-1.5 text-center text-xs leading-5 text-blue-950/80 shadow-sm backdrop-blur-sm">
+          Need help with your account? Contact your school administrator.
+        </p>
       </div>
     </main>
   );
